@@ -15,14 +15,14 @@ class Socket
 	private:
 		std::string hostname;
 		int socketDescriptor, port;
-		struct sockaddr_in server_addr;
-    	struct hostent *server;
+		struct sockaddr_in serverAddress;
 
-    	bool doConnect();
+    	void doConnect();
 
 	public:
 		Socket(const std::string, const int);
 		Socket(const int);
+		Socket(const Socket&);
 		void closeSocket();
 		void sendMessage(const std::string, int severity = 0) const;
 		std::string receiveAmount(int) const;

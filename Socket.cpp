@@ -14,7 +14,7 @@ Socket::Socket(const std::string hostname, const int port)
 	this->port = port;
 
 	// Construct socket
-	server = gethostbyname(this->hostname.c_str());
+	struct hostent* server = gethostbyname(this->hostname.c_str());
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
     if (socketDescriptor < 0)
@@ -23,29 +23,33 @@ Socket::Socket(const std::string hostname, const int port)
         return;
     }
 
-    bzero((char *) &server_addr, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    bcopy((char *) server->h_addr, (char *) &server_addr.sin_addr.s_addr, server->h_length);
-    server_addr.sin_port = htons(this->port);
+    bzero((char *) &serverAddress, sizeof(serverAddress));
+    serverAddress.sin_family = AF_INET;
+    bcopy((char *) server->h_addr, (char *) &serverAddress.sin_addr.s_addr, server->h_length);
+    serverAddress.sin_port = htons(this->port);
 
-    if (!this->doConnect())
-    {
-    	std::cerr << "Error connecting to host..." << std::endl;
-    }
+	this->doConnect();
 }
 
 Socket::Socket(const int socketDescriptor)
 {
 	this->socketDescriptor = socketDescriptor;
+	this->hostname = "";
+	this->port = 0;
 }
 
-bool Socket::doConnect()
+Socket::Socket(const Socket& socket)
 {
-	if(connect(socketDescriptor,(struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
-    {
-    	return false;
-    }
-    return true;
+	this->hostname = socket.hostname;
+	this->port = socket.port;
+	this->socketDescriptor = socket.socketDescriptor;
+
+	this->serverAddress = socket.serverAddress;
+}
+
+void Socket::doConnect()
+{
+	connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
 }
 
 void Socket::closeSocket()
@@ -93,7 +97,8 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 		{
 			return data;
 		}
+		data += temp[0];
 	} while (temp[0] != delimiter);
 
-	return data;
+	return data.substr(0, (data.size() - 1));
 }

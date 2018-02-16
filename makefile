@@ -1,5 +1,5 @@
 CC = g++
-FLAGS = -Wall
+FLAGS = -Wall -std=c++11 -pthread
 
 all:	TestSockets
 
@@ -18,3 +18,5 @@ ServerSocket.o:	ServerSocket.cpp ServerSocket.h
 
 clean:
 	rm *.o
+
+rebuild: clean TestSockets

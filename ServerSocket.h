@@ -15,8 +15,8 @@ class ServerSocket
 {
 	private:
 		int socketDescriptor, port;
-		struct sockaddr_in server_addr;
-    	socklen_t size;
+		struct sockaddr_in serverAddress;
+    	socklen_t socketSize;
 
     	void doConnect();
 

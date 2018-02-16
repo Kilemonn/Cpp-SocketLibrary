@@ -27,17 +27,17 @@ void ServerSocket::doConnect()
         return;
     }
 
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htons(INADDR_ANY);
-    server_addr.sin_port = htons(this->port);
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = htons(INADDR_ANY);
+    serverAddress.sin_port = htons(this->port);
 
-    if ( bind(socketDescriptor, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) 
+    if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) 
     {
         std::cerr << "Error binding connection, the socket is already being used..." << std::endl;
         return;
     }
 
-    size = sizeof(server_addr);
+    socketSize = sizeof(serverAddress);
 
     if(listen(socketDescriptor, 1) != 0)
     {
@@ -49,7 +49,7 @@ void ServerSocket::doConnect()
 
 Socket ServerSocket::acceptConnection()
 {
-	int temp = accept(socketDescriptor, (struct sockaddr *) &server_addr, &size);
+	int temp = accept(socketDescriptor, (struct sockaddr *) &serverAddress, &socketSize);
 
 	return Socket(temp);
 }
