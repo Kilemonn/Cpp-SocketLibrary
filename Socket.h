@@ -17,8 +17,6 @@ class Socket
 		int socketDescriptor, port;
 		struct sockaddr_in serverAddress;
 
-    	void doConnect();
-
 	public:
 		Socket(const std::string, const int);
 		Socket(const int);

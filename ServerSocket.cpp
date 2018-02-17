@@ -14,12 +14,7 @@ ServerSocket::ServerSocket(const int port)
 {
 	this->port = port;
 
-	this->doConnect();
-}
-
-void ServerSocket::doConnect()
-{
-    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+	socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
     if (socketDescriptor < 0) 
     {

@@ -18,8 +18,6 @@ class ServerSocket
 		struct sockaddr_in serverAddress;
     	socklen_t socketSize;
 
-    	void doConnect();
-
 	public:
 		ServerSocket(const int);
 		Socket acceptConnection();

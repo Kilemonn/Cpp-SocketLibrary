@@ -28,7 +28,7 @@ Socket::Socket(const std::string hostname, const int port)
     bcopy((char *) server->h_addr, (char *) &serverAddress.sin_addr.s_addr, server->h_length);
     serverAddress.sin_port = htons(this->port);
 
-	this->doConnect();
+	connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
 }
 
 Socket::Socket(const int socketDescriptor)
@@ -45,11 +45,6 @@ Socket::Socket(const Socket& socket)
 	this->socketDescriptor = socket.socketDescriptor;
 
 	this->serverAddress = socket.serverAddress;
-}
-
-void Socket::doConnect()
-{
-	connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
 }
 
 void Socket::closeSocket()
