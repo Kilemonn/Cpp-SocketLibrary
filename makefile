@@ -5,7 +5,7 @@ POSTFLAGS = -lbluetooth
 all:	TestSockets
 
 TestSockets:	Socket/Socket.o Socket/Socket.h ServerSocket/ServerSocket.o ServerSocket/ServerSocket.h
-	$(CC) $(PREFLAGS) ServerSocket/ServerSocket.o Socket/Socket.o test.cpp $(POSTFLAGS)
+	$(CC) $(PREFLAGS) ServerSocket/ServerSocket.o Socket/Socket.o test.cpp -o TestSockets $(POSTFLAGS)
 
 Socket:	Socket.o Socket.h
 
