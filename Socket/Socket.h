@@ -31,7 +31,7 @@ class Socket
 		Socket(const Socket&); // Copy Constructor
 		
 		void closeSocket();
-		void sendMessage(const std::string, int severity = 0) const;
+		bool sendMessage(const std::string, int severity = 0) const;
 		std::string receiveAmount(int) const;
 		std::string receiveToDelimiter(const char) const;
 };

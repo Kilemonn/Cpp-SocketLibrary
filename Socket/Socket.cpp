@@ -82,9 +82,23 @@ void Socket::closeSocket()
 	close(socketDescriptor);
 }
 
-void Socket::sendMessage(const std::string message, int serverity) const
+bool Socket::sendMessage(const std::string message, int serverity) const
 {
-	send(socketDescriptor, message.c_str(), message.size(), serverity);
+	if (isWifi)
+	{
+		if (send(socketDescriptor, message.c_str(), message.size(), serverity) == -1) 
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (write(socketDescriptor, message.c_str(), message.size()) == -1)
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 std::string Socket::receiveAmount(const int amountToReceive) const
@@ -96,7 +110,15 @@ std::string Socket::receiveAmount(const int amountToReceive) const
 	while (counter < amountToReceive)
 	{
 		bzero(&data, amountToReceive);
-		flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
+		if (isWifi)
+		{
+			flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
+		}
+		else
+		{
+			flag = read(socketDescriptor, data, (amountToReceive - counter));
+		}
+		
 		if (flag == 0)
 		{
 			return std::string(result);
@@ -116,8 +138,15 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 	do
 	{
 		bzero(&temp, sizeof(temp));
-		flag = recv(socketDescriptor, temp, 1, 0);
-
+		if (isWifi)
+		{
+			flag = recv(socketDescriptor, temp, 1, 0);
+		}
+		else
+		{
+			flag = read(socketDescriptor, temp, 1);
+		}
+		
 		if (flag == 0)
 		{
 			return data;
