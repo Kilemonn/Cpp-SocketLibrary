@@ -1,6 +1,6 @@
 
 #include "ServerSocket.h"
-#include "Socket.h"
+#include "../Socket/Socket.h"
 
 #include <iostream>
 #include <cstring>

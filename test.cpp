@@ -2,8 +2,8 @@
 #include <iostream>
 #include <thread>
 
-#include "Socket.h"
-#include "ServerSocket.h"
+#include "Socket/Socket.h"
+#include "ServerSocket/ServerSocket.h"
 
 void serverFunction();
 

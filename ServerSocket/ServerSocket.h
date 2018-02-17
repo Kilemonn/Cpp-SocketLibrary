@@ -2,7 +2,7 @@
 #ifndef _SERVER_SOCKET_H__
 #define _SERVER_SOCKET_H__
 
-#include "Socket.h"
+#include "../Socket/Socket.h"
 
 #include <cstring>
 
