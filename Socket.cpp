@@ -7,13 +7,59 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/rfcomm.h>
+#include <bluetooth/hci.h>
 
-Socket::Socket(const std::string hostname, const int port)
+
+Socket::Socket(const std::string hostname, const int port, const bool isWifi)
 {
+	this->isWifi = isWifi;
 	this->hostname = hostname;
 	this->port = port;
 
-	// Construct socket
+	if (isWifi)
+	{
+		this->constructWifiSocket();
+	}
+	else
+	{
+		this->constructBluetoothSocket();
+	}
+}
+
+Socket::Socket(const int socketDescriptor, const bool isWifi)
+{
+	this->socketDescriptor = socketDescriptor;
+	this->hostname = "";
+	this->port = 0;
+	this->isWifi = isWifi;
+}
+
+Socket::Socket(const Socket& socket)
+{
+	this->socketDescriptor = socket.socketDescriptor;
+	this->hostname = socket.hostname;
+	this->port = socket.port;
+	this->isWifi = socket.isWifi;
+
+	this->bluetoothAddress = socket.bluetoothAddress;
+	this->serverAddress = socket.serverAddress;
+}
+
+void Socket::constructBluetoothSocket()
+{
+	socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+
+    bluetoothAddress.rc_family = AF_BLUETOOTH;
+    bluetoothAddress.rc_channel = (uint8_t) port;
+    str2ba(this->hostname.c_str(), &bluetoothAddress.rc_bdaddr);
+
+   	connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress));
+}
+
+void Socket::constructWifiSocket()
+{
 	struct hostent* server = gethostbyname(this->hostname.c_str());
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -29,22 +75,6 @@ Socket::Socket(const std::string hostname, const int port)
     serverAddress.sin_port = htons(this->port);
 
 	connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
-}
-
-Socket::Socket(const int socketDescriptor)
-{
-	this->socketDescriptor = socketDescriptor;
-	this->hostname = "";
-	this->port = 0;
-}
-
-Socket::Socket(const Socket& socket)
-{
-	this->hostname = socket.hostname;
-	this->port = socket.port;
-	this->socketDescriptor = socket.socketDescriptor;
-
-	this->serverAddress = socket.serverAddress;
 }
 
 void Socket::closeSocket()

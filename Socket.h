@@ -9,18 +9,27 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/rfcomm.h>
+#include <bluetooth/hci.h>
 
 class Socket
 {
 	private:
 		std::string hostname;
 		int socketDescriptor, port;
-		struct sockaddr_in serverAddress;
+		struct sockaddr_in serverAddress; // For Wifi
+		struct sockaddr_rc bluetoothAddress; // For Bluetooth
+		bool isWifi;
+
+		void constructBluetoothSocket();
+		void constructWifiSocket();
 
 	public:
-		Socket(const std::string, const int);
-		Socket(const int);
-		Socket(const Socket&);
+		Socket(const std::string, const int, const bool); // Create Wi-Fi/Bluetooth Socket
+		Socket(const int, const bool); // Construct Socket from just descriptor
+		Socket(const Socket&); // Copy Constructor
+		
 		void closeSocket();
 		void sendMessage(const std::string, int severity = 0) const;
 		std::string receiveAmount(int) const;

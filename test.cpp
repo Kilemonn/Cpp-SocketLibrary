@@ -13,7 +13,7 @@ int main()
 
 	std::cout << "HERE!!!" << std::endl;
 
-	Socket socket("127.0.0.1", 3000);
+	Socket socket("127.0.0.1", 3000, true);
 	std::cout << "Connected" << std::endl;
 
 	std::string received = socket.receiveToDelimiter('\n');
@@ -29,9 +29,9 @@ int main()
 
 void serverFunction()
 {
-	ServerSocket server(3000);
+	ServerSocket server(3000, true);
 
-	Socket client(server.acceptConnection());
+	Socket client(server.acceptWifiConnection());
 	std::cout << "Accepted" << std::endl;
 
 	client.sendMessage("HEY\n");
