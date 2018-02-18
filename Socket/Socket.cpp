@@ -3,6 +3,8 @@
 
 #include <cstring>
 #include <iostream>
+#include <vector>
+#include <utility>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -10,6 +12,7 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
+#include <bluetooth/hci_lib.h>
 
 
 Socket::Socket(const std::string hostname, const int port, const bool isWifi)
@@ -155,4 +158,52 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 	} while (temp[0] != delimiter);
 
 	return data.substr(0, (data.size() - 1));
+}
+
+std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
+{
+	std::vector<std::pair<std::string, std::string> > devices;
+	std::pair<std::string, std::string> tempPair;
+
+	inquiry_info *ii = NULL;
+    int max_rsp, num_rsp;
+    int dev_id, tempSocket, len, flags;
+    int i;
+    char addr[19] = { 0 };
+    char name[248] = { 0 };
+
+    dev_id = hci_get_route(NULL);
+    tempSocket = hci_open_dev( dev_id );
+    if (dev_id < 0 || tempSocket < 0) 
+    {
+        perror("opening socket");
+    }
+
+    len  = 8;
+    max_rsp = 255;
+    flags = IREQ_CACHE_FLUSH;
+    ii = new inquiry_info[max_rsp * sizeof(inquiry_info)];
+    // ii = (inquiry_info*)malloc(max_rsp * sizeof(inquiry_info));
+    
+    num_rsp = hci_inquiry(dev_id, len, max_rsp, NULL, &ii, flags);
+    if( num_rsp < 0 ) perror("hci_inquiry");
+
+    for (i = 0; i < num_rsp; i++) 
+    {
+        ba2str( &(ii + i)->bdaddr, addr);
+        memset(name, 0, sizeof(name));
+        if (hci_read_remote_name(tempSocket, &(ii+i)->bdaddr, sizeof(name), name, 0) < 0)
+        {
+        	strcpy(name, "[unknown]");
+        }
+        printf("%s  %s\n", addr, name);
+        tempPair = std::make_pair<std::string, std::string>(addr, name);
+        devices.push_back(tempPair);
+
+    }
+
+    delete ii;
+    close( tempSocket );
+
+	return devices;
 }

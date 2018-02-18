@@ -5,6 +5,8 @@
 
 #include <iostream>
 #include <cstring>
+#include <vector>
+#include <utility>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -34,6 +36,8 @@ class Socket
 		bool sendMessage(const std::string, int severity = 0) const;
 		std::string receiveAmount(int) const;
 		std::string receiveToDelimiter(const char) const;
+
+		static std::vector<std::pair<std::string, std::string> > scanDevices();
 };
 
 #endif //_SOCKET_H__

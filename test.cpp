@@ -13,6 +13,8 @@ void testBluetooth();
 
 int main()
 {
+	Socket::scanDevices();
+
 	testWifi();
 
 	testBluetooth();
@@ -55,7 +57,7 @@ void testBluetooth()
 	std::cout << "TESTING BLUETOOTH" << std::endl;
 	std::thread t1(bluetoothFunction);
 
-	Socket socket("127.0.0.1", 1, false);
+	Socket socket("08:6A:0A:DF:8F:B6", 1, false);
 	std::cout << "Connected" << std::endl;
 
 	std::string received = socket.receiveToDelimiter('\n');
