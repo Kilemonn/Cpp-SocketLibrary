@@ -4,20 +4,16 @@ POSTFLAGS = -lbluetooth
 
 all:	TestSockets
 
-TestSockets:	Socket/Socket.o Socket/Socket.h ServerSocket/ServerSocket.o ServerSocket/ServerSocket.h
-	$(CC) $(PREFLAGS) ServerSocket/ServerSocket.o Socket/Socket.o test.cpp -o TestSockets $(POSTFLAGS)
-
-Socket:	Socket.o Socket.h
-
-ServerSocket:	ServerSocket.o ServerSocket.h
+TestSockets:	Socket.o Socket/Socket.h ServerSocket.o ServerSocket/ServerSocket.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o test.cpp -o TestSockets $(POSTFLAGS)
 
 Socket.o:	Socket/Socket.cpp Socket/Socket.h
-	$(CC) $(PREFLAGS) -c Socket.cpp $(POSTFLAGS)
+	$(CC) $(PREFLAGS) -c Socket/Socket.cpp $(POSTFLAGS)
 
 ServerSocket.o:	ServerSocket/ServerSocket.cpp ServerSocket/ServerSocket.h
-	$(CC) $(PREFLAGS) -c ServerSocket.cpp $(POSTFLAGS)
+	$(CC) $(PREFLAGS) -c ServerSocket/ServerSocket.cpp $(POSTFLAGS)
 
 clean:
-	rm ./*/*.o
+	rm *.o
 
 rebuild: clean TestSockets
