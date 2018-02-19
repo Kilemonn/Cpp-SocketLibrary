@@ -13,7 +13,7 @@ void testBluetooth();
 
 int main()
 {
-	std::system("hciconfig hci0 piscan");
+	std::system("sudo hciconfig hci0 piscan");
 
 	std::vector<std::pair<std::string, std::string> > devices = Socket::scanDevices();
 
