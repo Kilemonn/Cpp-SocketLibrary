@@ -67,11 +67,20 @@ void Socket::constructBluetoothSocket()
 {
 	socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
+	if (socketDescriptor < 0)
+    {
+    	std::cerr << "Error establishing Bluetooth socket..." << std::endl;
+        return;
+    }
+
     bluetoothAddress.rc_family = AF_BLUETOOTH;
     bluetoothAddress.rc_channel = (uint8_t) port;
     str2ba(this->hostname.c_str(), &bluetoothAddress.rc_bdaddr);
 
-   	connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress));
+   	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
+   	{
+		std::cerr << "Error connecting to Bluetooth server" << std::endl;
+	}
 }
 
 void Socket::constructWifiSocket()
@@ -81,7 +90,7 @@ void Socket::constructWifiSocket()
 
     if (socketDescriptor < 0)
     {
-    	std::cerr << "Error establishing socket..." << std::endl;
+    	std::cerr << "Error establishing Wifi socket..." << std::endl;
         return;
     }
 
@@ -90,7 +99,10 @@ void Socket::constructWifiSocket()
     bcopy((char *) server->h_addr, (char *) &serverAddress.sin_addr.s_addr, server->h_length);
     serverAddress.sin_port = htons(this->port);
 
-	connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
+	if (connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
+	{
+		std::cerr << "Error connecting to Wifi server" << std::endl;
+	}
 }
 
 void Socket::closeSocket()
