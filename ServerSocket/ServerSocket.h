@@ -27,8 +27,7 @@ class ServerSocket
 		ServerSocket(const ServerSocket&);
 		ServerSocket& operator=(const ServerSocket&);
 
-		Socket acceptWifiConnection();
-		Socket acceptBluetoothConnection();
+		Socket acceptConnection();
 };
 
 #endif // _SERVER_SOCKET_H__

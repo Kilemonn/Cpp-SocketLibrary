@@ -88,9 +88,9 @@ void ServerSocket::constructWifiSocket()
     }
 }
 
-Socket ServerSocket::acceptWifiConnection()
+Socket ServerSocket::acceptConnection()
 {
-	int temp = accept(socketDescriptor, (struct sockaddr *) &serverAddress, &socketSize);
+    int temp = accept(socketDescriptor, (struct sockaddr *) &serverAddress, &socketSize);
 
-	return Socket(temp, true);
+    return Socket(temp, isWifi);
 }
