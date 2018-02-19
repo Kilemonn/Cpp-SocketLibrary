@@ -24,6 +24,9 @@ class ServerSocket
 
 	public:
 		ServerSocket(const int, const bool);
+		ServerSocket(const ServerSocket&);
+		ServerSocket& operator=(const ServerSocket&);
+
 		Socket acceptWifiConnection();
 		Socket acceptBluetoothConnection();
 };

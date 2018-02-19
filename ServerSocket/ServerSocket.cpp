@@ -25,6 +25,24 @@ ServerSocket::ServerSocket(const int port, const bool isWifi)
     }
 }
 
+ServerSocket::ServerSocket(const ServerSocket& socket)
+{
+    this->port = socket.port;
+    this->isWifi = socket.isWifi;
+    this->serverAddress = socket.serverAddress;
+    this->socketSize = socket.socketSize;
+}
+
+ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
+{
+    this->port = socket.port;
+    this->isWifi = socket.isWifi;
+    this->serverAddress = socket.serverAddress;
+    this->socketSize = socket.socketSize;
+
+    return *this;
+}
+
 void ServerSocket::constructBluetoothSocket()
 {
     struct sockaddr_rc localAddress = {0};
