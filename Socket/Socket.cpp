@@ -50,6 +50,19 @@ Socket::Socket(const Socket& socket)
 	this->serverAddress = socket.serverAddress;
 }
 
+Socket& Socket::operator=(const Socket& socket)
+{
+	this->socketDescriptor = socket.socketDescriptor;
+	this->hostname = socket.hostname;
+	this->port = socket.port;
+	this->isWifi = socket.isWifi;
+
+	this->bluetoothAddress = socket.bluetoothAddress;
+	this->serverAddress = socket.serverAddress;
+
+	return *this;
+}
+
 void Socket::constructBluetoothSocket()
 {
 	socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -205,5 +218,5 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
     delete ii;
     close( tempSocket );
 
-	return devices;
+	return std::move(devices);
 }
