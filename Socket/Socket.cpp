@@ -179,27 +179,27 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
 	std::pair<std::string, std::string> tempPair;
 
 	inquiry_info *ii = NULL;
-    int max_rsp = 255, num_rsp, dev_id, tempSocket, len = 8, flags;
+    int maxResponse = 255, len = 8, numberOfResponses, ownId, tempSocket, flags;
     char deviceAddress[19];
     char deviceName[248];
 
-    dev_id = hci_get_route(NULL);
-    tempSocket = hci_open_dev( dev_id );
-    if (dev_id < 0 || tempSocket < 0) 
+    ownId = hci_get_route(NULL);
+    tempSocket = hci_open_dev( ownId );
+    if (ownId < 0 || tempSocket < 0) 
     {
         perror("opening socket");
     }
 
     flags = IREQ_CACHE_FLUSH;
-    ii = new inquiry_info[max_rsp * sizeof(inquiry_info)];
+    ii = new inquiry_info[maxResponse * sizeof(inquiry_info)];
     
-    num_rsp = hci_inquiry(dev_id, len, max_rsp, NULL, &ii, flags);
-    if( num_rsp < 0 )
+    numberOfResponses = hci_inquiry(ownId, len, maxResponse, NULL, &ii, flags);
+    if( numberOfResponses < 0 )
     {
     	perror("hci_inquiry");
     }
 
-    for (int i = 0; i < num_rsp; i++) 
+    for (int i = 0; i < numberOfResponses; i++) 
     {
         ba2str( &(ii + i)->bdaddr, deviceAddress);
         bzero(&deviceName, sizeof(deviceName));
@@ -207,7 +207,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
         {
         	strcpy(deviceName, "[unknown]");
         }
-        
+
         tempPair = std::make_pair<std::string, std::string>(deviceAddress, deviceName);
         devices.push_back(tempPair);
 
