@@ -1,6 +1,9 @@
 
 # Install bluetooth library
-sudo apt-get install libbluetooth-dev
+sudo apt install libbluetooth-dev
 
 # Include glib-2.0
-sudo apt-get install libglib2.0-dev
+sudo apt install libglib2.0-dev
+
+# Install for hciconfig
+sudo apt install bluez
