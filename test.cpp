@@ -13,7 +13,14 @@ void testBluetooth();
 
 int main()
 {
-	Socket::scanDevices();
+	std::system("hciconfig hci0 piscan");
+
+	std::vector<std::pair<std::string, std::string> > devices = Socket::scanDevices();
+
+	for (unsigned int i = 0; i < devices.size(); i++)
+	{
+		std::cout << i << " - " << devices[i].first << " -> " << devices[i].second << "\n";
+	}
 
 	testWifi();
 
