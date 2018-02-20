@@ -196,7 +196,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
 
     ownId = hci_get_route(nullptr);
     tempSocket = hci_open_dev( ownId );
-    if (ownId < 0 || tempSocket < 0) 
+    if (ownId < 0 || tempSocket < 0)
     {
         throw SocketError("Error opening Bluetooth socket for scanning...");
     }
@@ -207,6 +207,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
     numberOfResponses = hci_inquiry(ownId, len, maxResponse, nullptr, &ii, flags);
     if( numberOfResponses < 0 )
     {
+    	delete ii;
     	throw SocketError("Error scanning for bluetooth devices");
     }
 
