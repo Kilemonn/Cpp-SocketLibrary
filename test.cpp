@@ -5,6 +5,7 @@
 
 #include "Socket/Socket.h"
 #include "ServerSocket/ServerSocket.h"
+#include "SocketError/SocketError.hpp"
 
 void wifiFunction(int const &);
 void bluetoothFunction(int const &);
@@ -18,19 +19,17 @@ int main()
 {
 	try
 	{
+		//std::system("sudo hciconfig hci0 piscan");
+
 		doScan();
 
 		testWifi();
 
 		testBluetooth();
 	}
-	catch (const std::runtime_error& rex)
+	catch (const SocketError& se)
 	{
-		std::cout << rex.what() << std::endl;
-	}
-	catch (...)
-	{
-		std::cout << "OK?" << std::endl;
+		std::cout << se.what() << std::endl;
 	}
 
 	return 0;
@@ -38,8 +37,6 @@ int main()
 
 void doScan()
 {
-	std::system("sudo hciconfig hci0 piscan");
-
 	std::vector<std::pair<std::string, std::string> > devices = Socket::scanDevices();
 
 	for (unsigned int i = 0; i < devices.size(); i++)
@@ -52,7 +49,7 @@ void testWifi()
 {
 	std::cout << "\nTESTING WIFI\n";
 
-	ServerSocket server(Socket::WIFI);
+	ServerSocket server(ServerSocket::WIFI);
 
 	int p = server.getPort();
 	std::thread t1(wifiFunction, p);
@@ -91,7 +88,7 @@ void testBluetooth()
 {
 	std::cout << "\nTESTING BLUETOOTH\n";
 
-	ServerSocket server(Socket::BLUETOOTH);
+	ServerSocket server(ServerSocket::BLUETOOTH);
 
 	int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);

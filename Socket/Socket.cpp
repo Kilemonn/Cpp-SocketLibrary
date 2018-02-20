@@ -1,10 +1,10 @@
 
 #include "Socket.h"
+#include "../SocketError/SocketError.hpp"
 
 #include <iostream>
 #include <vector>
 #include <utility>
-#include <stdexcept>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -15,7 +15,7 @@
 #include <bluetooth/hci_lib.h>
 
 
-// Throws runtime_error when can't connect to server
+// Throws SocketError when can't connect to server
 Socket::Socket(const std::string hostname, const int port, const bool isWifi)
 {
 	this->isWifi = isWifi;
@@ -70,7 +70,7 @@ void Socket::constructBluetoothSocket()
 
 	if (socketDescriptor < 0)
     {
-    	throw new std::runtime_error("Error establishing Bluetooth socket...");
+    	throw SocketError("Error establishing Bluetooth socket...");
     }
 
     bluetoothAddress.rc_family = AF_BLUETOOTH;
@@ -79,7 +79,7 @@ void Socket::constructBluetoothSocket()
 
    	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
    	{
-   		throw new std::runtime_error("Error connecting to Bluetooth server");
+   		throw SocketError("Error connecting to Bluetooth server");
 	}
 }
 
@@ -90,7 +90,7 @@ void Socket::constructWifiSocket()
 
     if (socketDescriptor < 0)
     {
-    	throw new std::runtime_error("Error establishing Wifi socket...");
+    	throw SocketError("Error establishing Wifi socket...");
     }
 
     bzero((char *) &serverAddress, sizeof(serverAddress));
@@ -100,7 +100,7 @@ void Socket::constructWifiSocket()
 
 	if (connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 	{
-		throw new std::runtime_error("Error connecting to Wifi server");
+		throw SocketError("Error connecting to Wifi server");
 	}
 }
 
@@ -198,7 +198,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
     tempSocket = hci_open_dev( ownId );
     if (ownId < 0 || tempSocket < 0) 
     {
-        perror("opening socket");
+        throw SocketError("Error opening Bluetooth socket for scanning...");
     }
 
     flags = IREQ_CACHE_FLUSH;
@@ -207,7 +207,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
     numberOfResponses = hci_inquiry(ownId, len, maxResponse, nullptr, &ii, flags);
     if( numberOfResponses < 0 )
     {
-    	perror("hci_inquiry");
+    	throw SocketError("Error scanning for bluetooth devices");
     }
 
     for (int i = 0; i < numberOfResponses; i++) 

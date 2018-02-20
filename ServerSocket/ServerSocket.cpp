@@ -1,18 +1,18 @@
 
 #include "ServerSocket.h"
 #include "../Socket/Socket.h"
+#include "../SocketError/SocketError.hpp"
 
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include <stdexcept>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 
-// Throws runtime_error when instance cannot bind or listen
+// Throws SocketError when instance cannot bind or listen
 ServerSocket::ServerSocket(const bool isWifi, const int port)
 {
 	this->port = port;
@@ -31,7 +31,7 @@ ServerSocket::ServerSocket(const bool isWifi, const int port)
                 this->constructSocket();
                 done = true;
             }
-            catch(std::runtime_error rex)
+            catch(SocketError rex)
             {
                 // Nothing to do
             }
@@ -82,7 +82,7 @@ void ServerSocket::constructBluetoothSocket()
 
     if (socketDescriptor < 0) 
     {
-        throw new std::runtime_error("Error establishing BT server socket...");
+        throw SocketError("Error establishing BT server socket...");
     }
 
     localAddress.rc_family = AF_BLUETOOTH;
@@ -90,13 +90,13 @@ void ServerSocket::constructBluetoothSocket()
     localAddress.rc_channel = (uint8_t) port;
     if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) < 0)
     {
-        throw new std::runtime_error("Error binding connection, the port is already being used...");
+        throw SocketError("Error binding connection, the port is already being used...");
     }
 
     if (listen(socketDescriptor, 1) != 0)
     {
         close(socketDescriptor);
-        throw new std::runtime_error("Error Listening on port " + std::to_string(this->port));
+        throw SocketError("Error Listening on port " + std::to_string(this->port));
     }
 }
 
@@ -106,7 +106,7 @@ void ServerSocket::constructWifiSocket()
 
     if (socketDescriptor < 0) 
     {
-        throw new std::runtime_error("Error establishing wifi server socket...");
+        throw SocketError("Error establishing wifi server socket...");
     }
 
     serverAddress.sin_family = AF_INET;
@@ -115,7 +115,7 @@ void ServerSocket::constructWifiSocket()
 
     if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) 
     {
-        throw new std::runtime_error("Error binding connection, the port is already being used...");
+        throw SocketError("Error binding connection, the port is already being used...");
     }
 
     socketSize = sizeof(serverAddress);
@@ -123,7 +123,7 @@ void ServerSocket::constructWifiSocket()
     if(listen(socketDescriptor, 1) != 0)
     {
         close(socketDescriptor);
-        throw new std::runtime_error("Error Listening on port " + std::to_string(this->port));
+        throw SocketError("Error Listening on port " + std::to_string(this->port));
     }
 }
 
