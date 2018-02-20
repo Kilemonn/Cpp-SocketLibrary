@@ -17,16 +17,15 @@ class ServerSocket
 		struct sockaddr_in serverAddress;
     	socklen_t socketSize;
 
-    	bool constructSocket();
-    	bool constructBluetoothSocket();
-		bool constructWifiSocket();
+    	void constructSocket();
+    	void constructBluetoothSocket();
+		void constructWifiSocket();
 
 	public:
 		const static bool WIFI = true;
 		const static bool BLUETOOTH = false;
 
-		ServerSocket(const bool);
-		ServerSocket(const int, const bool);
+		ServerSocket(const bool, const int = 0);
 		ServerSocket(const ServerSocket&);
 		ServerSocket& operator=(const ServerSocket&);
 

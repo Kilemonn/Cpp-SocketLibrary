@@ -5,41 +5,41 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <stdexcept>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 
-ServerSocket::ServerSocket(const bool isWifi)
-{
-    this->isWifi = isWifi;
-
-    std::srand(std::time(nullptr));
-
-    do 
-    {
-        this->port = std::rand() % 65535;
-    } while ( !this->constructSocket());
-}
-
-ServerSocket::ServerSocket(const int port, const bool isWifi)
+// Throws runtime_error when instance cannot bind or listen
+ServerSocket::ServerSocket(const bool isWifi, const int port)
 {
 	this->port = port;
     this->isWifi = isWifi;
+    bool done = false;
 
-    this->constructSocket();
-}
-
-bool ServerSocket::constructSocket()
-{
-    if (this->isWifi)
+    if (this->port == 0)
     {
-        return this->constructWifiSocket();
+        std::srand(std::time(nullptr));
+
+        while (!done)
+        {
+            try
+            {
+                this->port = std::rand() % 65535;
+                this->constructSocket();
+                done = true;
+            }
+            catch(std::runtime_error rex)
+            {
+                // Nothing to do
+            }
+        }
     }
     else
     {
-        return this->constructBluetoothSocket();
+        this->constructSocket();
     }
 }
 
@@ -61,7 +61,19 @@ ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
     return *this;
 }
 
-bool ServerSocket::constructBluetoothSocket()
+void ServerSocket::constructSocket()
+{
+    if (this->isWifi)
+    {
+        this->constructWifiSocket();
+    }
+    else
+    {
+        this->constructBluetoothSocket();
+    }
+}
+
+void ServerSocket::constructBluetoothSocket()
 {
     struct sockaddr_rc localAddress = {0};
     bdaddr_t tmp = { };
@@ -70,8 +82,7 @@ bool ServerSocket::constructBluetoothSocket()
 
     if (socketDescriptor < 0) 
     {
-        std::cerr << "Error establishing BT server socket..." << std::endl;
-        return false;
+        throw new std::runtime_error("Error establishing BT server socket...");
     }
 
     localAddress.rc_family = AF_BLUETOOTH;
@@ -79,28 +90,23 @@ bool ServerSocket::constructBluetoothSocket()
     localAddress.rc_channel = (uint8_t) port;
     if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) < 0)
     {
-        std::cerr << "Error binding connection, the port is already being used..." << std::endl;
-        return false;
+        throw new std::runtime_error("Error binding connection, the port is already being used...");
     }
 
     if (listen(socketDescriptor, 1) != 0)
     {
-        std::cerr << "Error Listening on socket " << socketDescriptor << std::endl;
         close(socketDescriptor);
-        return false;
+        throw new std::runtime_error("Error Listening on port " + std::to_string(this->port));
     }
-
-    return true;
 }
 
-bool ServerSocket::constructWifiSocket()
+void ServerSocket::constructWifiSocket()
 {
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
     if (socketDescriptor < 0) 
     {
-        std::cerr << "Error establishing wifi server socket..." << std::endl;
-        return false;
+        throw new std::runtime_error("Error establishing wifi server socket...");
     }
 
     serverAddress.sin_family = AF_INET;
@@ -109,20 +115,16 @@ bool ServerSocket::constructWifiSocket()
 
     if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) 
     {
-        std::cerr << "Error binding connection, the port is already being used..." << std::endl;
-        return false;
+        throw new std::runtime_error("Error binding connection, the port is already being used...");
     }
 
     socketSize = sizeof(serverAddress);
 
     if(listen(socketDescriptor, 1) != 0)
     {
-        std::cerr << "Error Listening on socket " << socketDescriptor << std::endl;
         close(socketDescriptor);
-        return false;
+        throw new std::runtime_error("Error Listening on port " + std::to_string(this->port));
     }
-
-    return true;
 }
 
 Socket ServerSocket::acceptConnection()

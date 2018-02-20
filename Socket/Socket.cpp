@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <stdexcept>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -14,6 +15,7 @@
 #include <bluetooth/hci_lib.h>
 
 
+// Throws runtime_error when can't connect to server
 Socket::Socket(const std::string hostname, const int port, const bool isWifi)
 {
 	this->isWifi = isWifi;
@@ -68,8 +70,7 @@ void Socket::constructBluetoothSocket()
 
 	if (socketDescriptor < 0)
     {
-    	std::cerr << "Error establishing Bluetooth socket..." << std::endl;
-        return;
+    	throw new std::runtime_error("Error establishing Bluetooth socket...");
     }
 
     bluetoothAddress.rc_family = AF_BLUETOOTH;
@@ -78,7 +79,7 @@ void Socket::constructBluetoothSocket()
 
    	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
    	{
-		std::cerr << "Error connecting to Bluetooth server" << std::endl;
+   		throw new std::runtime_error("Error connecting to Bluetooth server");
 	}
 }
 
@@ -89,8 +90,7 @@ void Socket::constructWifiSocket()
 
     if (socketDescriptor < 0)
     {
-    	std::cerr << "Error establishing Wifi socket..." << std::endl;
-        return;
+    	throw new std::runtime_error("Error establishing Wifi socket...");
     }
 
     bzero((char *) &serverAddress, sizeof(serverAddress));
@@ -100,7 +100,7 @@ void Socket::constructWifiSocket()
 
 	if (connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 	{
-		std::cerr << "Error connecting to Wifi server" << std::endl;
+		throw new std::runtime_error("Error connecting to Wifi server");
 	}
 }
 

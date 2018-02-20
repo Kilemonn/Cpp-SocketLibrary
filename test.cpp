@@ -1,12 +1,13 @@
 
 #include <iostream>
 #include <thread>
+#include <stdexcept>
 
 #include "Socket/Socket.h"
 #include "ServerSocket/ServerSocket.h"
 
 void wifiFunction(int const &);
-void bluetoothFunction();
+void bluetoothFunction(int const &);
 
 void testWifi();
 void testBluetooth();
@@ -15,11 +16,22 @@ void doScan();
 
 int main()
 {
-	doScan();
+	try
+	{
+		doScan();
 
-	testWifi();
+		testWifi();
 
-	testBluetooth();
+		testBluetooth();
+	}
+	catch (const std::runtime_error& rex)
+	{
+		std::cout << rex.what() << std::endl;
+	}
+	catch (...)
+	{
+		std::cout << "OK?" << std::endl;
+	}
 
 	return 0;
 }
@@ -40,7 +52,7 @@ void testWifi()
 {
 	std::cout << "\nTESTING WIFI\n";
 
-	ServerSocket server(8756, Socket::WIFI);
+	ServerSocket server(Socket::WIFI);
 
 	int p = server.getPort();
 	std::thread t1(wifiFunction, p);
@@ -79,9 +91,10 @@ void testBluetooth()
 {
 	std::cout << "\nTESTING BLUETOOTH\n";
 
-	ServerSocket server(1, Socket::BLUETOOTH);
+	ServerSocket server(Socket::BLUETOOTH);
 
-	std::thread t1(bluetoothFunction);
+	int p = server.getPort();
+	std::thread t1(bluetoothFunction, p);
 
 	Socket client(server.acceptConnection());
 	std::cout << "(BT) Accepted\n";
@@ -101,9 +114,9 @@ void testBluetooth()
 	t1.join();
 }
 
-void bluetoothFunction()
+void bluetoothFunction(int const & p)
 {
-	Socket socket("08:6A:0A:DF:8F:B6", 1, Socket::BLUETOOTH);
+	Socket socket("08:6A:0A:DF:8F:B6", p, Socket::BLUETOOTH);
 	std::cout << "(BT) Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');
