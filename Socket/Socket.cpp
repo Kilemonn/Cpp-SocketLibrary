@@ -1,7 +1,6 @@
 
 #include "Socket.h"
 
-#include <cstring>
 #include <iostream>
 #include <vector>
 #include <utility>
@@ -190,12 +189,12 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
 	std::vector<std::pair<std::string, std::string> > devices;
 	std::pair<std::string, std::string> tempPair;
 
-	inquiry_info *ii = NULL;
+	inquiry_info *ii = nullptr;
     int maxResponse = 255, len = 8, numberOfResponses, ownId, tempSocket, flags;
     char deviceAddress[19];
     char deviceName[248];
 
-    ownId = hci_get_route(NULL);
+    ownId = hci_get_route(nullptr);
     tempSocket = hci_open_dev( ownId );
     if (ownId < 0 || tempSocket < 0) 
     {
@@ -205,7 +204,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
     flags = IREQ_CACHE_FLUSH;
     ii = new inquiry_info[maxResponse * sizeof(inquiry_info)];
     
-    numberOfResponses = hci_inquiry(ownId, len, maxResponse, NULL, &ii, flags);
+    numberOfResponses = hci_inquiry(ownId, len, maxResponse, nullptr, &ii, flags);
     if( numberOfResponses < 0 )
     {
     	perror("hci_inquiry");

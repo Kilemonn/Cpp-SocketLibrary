@@ -3,25 +3,43 @@
 #include "../Socket/Socket.h"
 
 #include <iostream>
-#include <cstring>
+#include <cstdlib>
+#include <ctime>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 
+ServerSocket::ServerSocket(const bool isWifi)
+{
+    this->isWifi = isWifi;
+
+    std::srand(std::time(nullptr));
+
+    do 
+    {
+        this->port = std::rand() % 65535;
+    } while ( !this->constructSocket());
+}
+
 ServerSocket::ServerSocket(const int port, const bool isWifi)
 {
 	this->port = port;
     this->isWifi = isWifi;
 
+    this->constructSocket();
+}
+
+bool ServerSocket::constructSocket()
+{
     if (this->isWifi)
     {
-        this->constructWifiSocket();
+        return this->constructWifiSocket();
     }
     else
     {
-        this->constructBluetoothSocket();
+        return this->constructBluetoothSocket();
     }
 }
 
@@ -43,29 +61,46 @@ ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
     return *this;
 }
 
-void ServerSocket::constructBluetoothSocket()
+bool ServerSocket::constructBluetoothSocket()
 {
     struct sockaddr_rc localAddress = {0};
     bdaddr_t tmp = { };
 
     socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
+    if (socketDescriptor < 0) 
+    {
+        std::cerr << "Error establishing BT server socket..." << std::endl;
+        return false;
+    }
+
     localAddress.rc_family = AF_BLUETOOTH;
     localAddress.rc_bdaddr = tmp;
     localAddress.rc_channel = (uint8_t) port;
-    bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress));
+    if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) < 0)
+    {
+        std::cerr << "Error binding connection, the port is already being used..." << std::endl;
+        return false;
+    }
 
-    listen(socketDescriptor, 1);
+    if (listen(socketDescriptor, 1) != 0)
+    {
+        std::cerr << "Error Listening on socket " << socketDescriptor << std::endl;
+        close(socketDescriptor);
+        return false;
+    }
+
+    return true;
 }
 
-void ServerSocket::constructWifiSocket()
+bool ServerSocket::constructWifiSocket()
 {
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
     if (socketDescriptor < 0) 
     {
-        std::cerr << "\nError establishing socket..." << std::endl;
-        return;
+        std::cerr << "Error establishing wifi server socket..." << std::endl;
+        return false;
     }
 
     serverAddress.sin_family = AF_INET;
@@ -74,8 +109,8 @@ void ServerSocket::constructWifiSocket()
 
     if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) 
     {
-        std::cerr << "Error binding connection, the socket is already being used..." << std::endl;
-        return;
+        std::cerr << "Error binding connection, the port is already being used..." << std::endl;
+        return false;
     }
 
     socketSize = sizeof(serverAddress);
@@ -84,8 +119,10 @@ void ServerSocket::constructWifiSocket()
     {
         std::cerr << "Error Listening on socket " << socketDescriptor << std::endl;
         close(socketDescriptor);
-        return;
+        return false;
     }
+
+    return true;
 }
 
 Socket ServerSocket::acceptConnection()
@@ -93,4 +130,9 @@ Socket ServerSocket::acceptConnection()
     int temp = accept(socketDescriptor, (struct sockaddr *) &serverAddress, &socketSize);
 
     return Socket(temp, isWifi);
+}
+
+int ServerSocket::getPort() const
+{
+    return this->port;
 }

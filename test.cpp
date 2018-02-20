@@ -5,13 +5,26 @@
 #include "Socket/Socket.h"
 #include "ServerSocket/ServerSocket.h"
 
-void wifiFunction();
+void wifiFunction(int const &);
 void bluetoothFunction();
 
 void testWifi();
 void testBluetooth();
 
+void doScan();
+
 int main()
+{
+	doScan();
+
+	testWifi();
+
+	testBluetooth();
+
+	return 0;
+}
+
+void doScan()
 {
 	std::system("sudo hciconfig hci0 piscan");
 
@@ -21,77 +34,81 @@ int main()
 	{
 		std::cout << i << " - " << devices[i].first << " -> " << devices[i].second << "\n";
 	}
-
-	testWifi();
-
-	testBluetooth();
-
-	return 0;
 }
 
 void testWifi()
 {
-	std::cout << "TESTING WIFI" << std::endl;
-	std::thread t1(wifiFunction);
+	std::cout << "\nTESTING WIFI\n";
 
-	Socket socket("127.0.0.1", 3000, true);
-	std::cout << "Connected" << std::endl;
+	ServerSocket server(8756, Socket::WIFI);
+
+	int p = server.getPort();
+	std::thread t1(wifiFunction, p);
+
+	Socket client(server.acceptConnection());
+	std::cout << "Accepted\n";
+
+	if (client.sendMessage("HEY\n"))
+	{
+		std::cout << "SENT! (Wifi)\n";
+	}
+	else
+	{
+		std::cout << "NOT SENT! (Wifi)\n";
+	}
+
+	std::string res = client.receiveAmount(4);
+	std::cout << "RES: " << res << std::endl;
+
+	t1.join();
+}
+
+void wifiFunction(int const & p)
+{
+	Socket socket("127.0.0.1", p, Socket::WIFI);
+	std::cout << "Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');
 	std::cout << "RECIEVED: " << received << std::endl;
 
 	socket.sendMessage("12345");
 	socket.closeSocket();
-
-	t1.join();
-}
-
-void wifiFunction()
-{
-	ServerSocket server(3000, true);
-
-	Socket client(server.acceptConnection());
-	std::cout << "Accepted" << std::endl;
-
-	client.sendMessage("HEY\n");
-
-	std::string res = client.receiveAmount(4);
-	std::cout << "RES: " << res << std::endl;
 }
 
 void testBluetooth()
 {
-	std::cout << "TESTING BLUETOOTH" << std::endl;
+	std::cout << "\nTESTING BLUETOOTH\n";
+
+	ServerSocket server(1, Socket::BLUETOOTH);
+
 	std::thread t1(bluetoothFunction);
 
-	Socket socket("08:6A:0A:DF:8F:B6", 1, false);
-	std::cout << "(BT) Connected" << std::endl;
+	Socket client(server.acceptConnection());
+	std::cout << "(BT) Accepted\n";
 
-	std::string received = socket.receiveToDelimiter('\n');
-	std::cout << "(BT) RECIEVED: " << received << std::endl;
+	if (client.sendMessage("HEY\n"))
+	{
+		std::cout << "SENT! (BT)\n";
+	}
+	else
+	{
+		std::cout << "NOT SENT! (BT)\n";
+	}
 
-	socket.sendMessage("12345");
-	socket.closeSocket();
+	std::string res = client.receiveAmount(4);
+	std::cout << "(BT) RES: " << res << std::endl;
 
 	t1.join();
 }
 
 void bluetoothFunction()
 {
-	ServerSocket server(1, false);
+	Socket socket("08:6A:0A:DF:8F:B6", 1, Socket::BLUETOOTH);
+	std::cout << "(BT) Connected\n";
 
-	Socket client(server.acceptConnection());
-	std::cout << "(BT) Accepted" << std::endl;
+	std::string received = socket.receiveToDelimiter('\n');
+	std::cout << "(BT) RECIEVED: " << received << std::endl;
 
-	if (client.sendMessage("HEY\n"))
-	{
-		std::cout << "SENT! (BT)" << std::endl;
-	}
-	else
-	{
-		std::cout << "NOT SENT! (BT)" << std::endl;
-	}
-
-	std::string res = client.receiveAmount(4);
-	std::cout << "(BT) RES: " << res << std::endl;
+	socket.sendMessage("12345");
+	socket.closeSocket();	
 }
