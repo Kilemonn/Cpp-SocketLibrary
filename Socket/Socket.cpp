@@ -119,21 +119,14 @@ void Socket::closeSocket()
 
 bool Socket::sendMessage(const std::string message, int serverity) const
 {
-	if (isWifi)
+	if (send(socketDescriptor, message.c_str(), message.size(), serverity) == -1) 
 	{
-		if (send(socketDescriptor, message.c_str(), message.size(), serverity) == -1) 
-		{
-			return false;
-		}
+		return false;
 	}
 	else
 	{
-		if (write(socketDescriptor, message.c_str(), message.size()) == -1)
-		{
-			return false;
-		}
+		return true;
 	}
-	return true;
 }
 
 bool Socket::ready() const
@@ -170,14 +163,8 @@ std::string Socket::receiveAmount(const int amountToReceive) const
 	while (counter < amountToReceive)
 	{
 		bzero(&data, amountToReceive);
-		if (isWifi)
-		{
-			flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
-		}
-		else
-		{
-			flag = read(socketDescriptor, data, (amountToReceive - counter));
-		}
+
+		flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
 		
 		if (flag == 0)
 		{
@@ -198,14 +185,8 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 	do
 	{
 		bzero(&temp, sizeof(temp));
-		if (isWifi)
-		{
-			flag = recv(socketDescriptor, temp, 1, 0);
-		}
-		else
-		{
-			flag = read(socketDescriptor, temp, 1);
-		}
+			
+		flag = recv(socketDescriptor, temp, 1, 0);
 		
 		if (flag == 0)
 		{
