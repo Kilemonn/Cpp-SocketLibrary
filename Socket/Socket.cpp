@@ -128,6 +128,31 @@ bool Socket::sendMessage(const std::string message, int serverity) const
 	return true;
 }
 
+bool Socket::ready() const
+{
+	fd_set sready;
+	struct timeval nowait;
+
+	FD_ZERO(&sready);
+	FD_SET((unsigned int)this->socketDescriptor, &sready);
+	memset((char*) &nowait, 0, sizeof(nowait));
+
+	select(this->socketDescriptor + 1, &sready, nullptr, nullptr, &nowait);
+	if (FD_ISSET(this->socketDescriptor, &sready))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+char Socket::get() const
+{
+	return this->receiveAmount(1)[0];
+}
+
 std::string Socket::receiveAmount(const int amountToReceive) const
 {
 	char data[amountToReceive];

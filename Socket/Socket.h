@@ -36,7 +36,9 @@ class Socket
 		Socket& operator=(const Socket&);
 		
 		void closeSocket();
+		bool ready() const;
 		bool sendMessage(const std::string, int severity = 0) const;
+		char get() const;
 		std::string receiveAmount(int) const;
 		std::string receiveToDelimiter(const char) const;
 
