@@ -21,7 +21,7 @@ int main()
 	{
 		//std::system("sudo hciconfig hci0 piscan");
 
-		doScan();
+		// doScan();
 
 		testWifi();
 
@@ -49,7 +49,7 @@ void testWifi()
 {
 	std::cout << "\nTESTING WIFI\n";
 
-	ServerSocket server(ServerSocket::WIFI);
+	ServerSocket server(ServerSocket::WIFI, 9986);
 
 	int p = server.getPort();
 	std::thread t1(wifiFunction, p);

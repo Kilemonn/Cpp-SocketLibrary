@@ -96,7 +96,7 @@ void Socket::constructWifiSocket()
 	struct hostent* server = gethostbyname(this->hostname.c_str());
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (socketDescriptor != 0)
+    if (socketDescriptor == -1)
     {
     	throw SocketError("Error establishing Wifi socket...");
     }
