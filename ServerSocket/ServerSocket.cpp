@@ -89,7 +89,7 @@ void ServerSocket::constructBluetoothSocket()
 
     socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
-    if (socketDescriptor < 0) 
+    if (socketDescriptor == -1) 
     {
         throw SocketError("Error establishing BT server socket...");
     }
