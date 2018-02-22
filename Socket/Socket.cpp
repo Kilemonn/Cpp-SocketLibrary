@@ -68,7 +68,7 @@ void Socket::constructBluetoothSocket()
 {
 	socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
-	if (socketDescriptor < 0)
+	if (socketDescriptor != 0)
     {
     	throw SocketError("Error establishing Bluetooth socket...");
     }
@@ -88,7 +88,7 @@ void Socket::constructWifiSocket()
 	struct hostent* server = gethostbyname(this->hostname.c_str());
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (socketDescriptor < 0)
+    if (socketDescriptor != 0)
     {
     	throw SocketError("Error establishing Wifi socket...");
     }

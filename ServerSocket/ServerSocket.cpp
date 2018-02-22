@@ -19,6 +19,7 @@ ServerSocket::ServerSocket(const bool isWifi, const int port)
     this->isWifi = isWifi;
     bool done = false;
 
+    // Randomly allocate port
     if (this->port == 0)
     {
         std::srand(std::time(nullptr));
@@ -31,7 +32,7 @@ ServerSocket::ServerSocket(const bool isWifi, const int port)
                 this->constructSocket();
                 done = true;
             }
-            catch(SocketError rex)
+            catch(SocketError serr)
             {
                 // Nothing to do
             }
@@ -88,7 +89,7 @@ void ServerSocket::constructBluetoothSocket()
     localAddress.rc_family = AF_BLUETOOTH;
     localAddress.rc_bdaddr = tmp;
     localAddress.rc_channel = (uint8_t) port;
-    if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) < 0)
+    if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) != 0)
     {
         throw SocketError("Error binding connection, the port is already being used...");
     }
@@ -104,7 +105,7 @@ void ServerSocket::constructWifiSocket()
 {
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (socketDescriptor < 0) 
+    if (socketDescriptor != 0) 
     {
         throw SocketError("Error establishing wifi server socket...");
     }
@@ -113,7 +114,7 @@ void ServerSocket::constructWifiSocket()
     serverAddress.sin_addr.s_addr = htons(INADDR_ANY);
     serverAddress.sin_port = htons(this->port);
 
-    if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) 
+    if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) != 0) 
     {
         throw SocketError("Error binding connection, the port is already being used...");
     }
