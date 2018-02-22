@@ -16,7 +16,7 @@
 
 
 // Throws SocketError when can't connect to server
-Socket::Socket(const std::string hostname, const int port, const bool isWifi)
+Socket::Socket(const std::string& hostname, const int& port, const bool isWifi)
 {
 	this->isWifi = isWifi;
 	this->hostname = hostname;
@@ -32,7 +32,7 @@ Socket::Socket(const std::string hostname, const int port, const bool isWifi)
 	}
 }
 
-Socket::Socket(const int socketDescriptor, const bool isWifi)
+Socket::Socket(const int& socketDescriptor, const bool isWifi)
 {
 	this->socketDescriptor = socketDescriptor;
 	this->hostname = "";

@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 // Throws SocketError when instance cannot bind or listen
-ServerSocket::ServerSocket(const bool isWifi, const int port)
+ServerSocket::ServerSocket(const bool isWifi, const int& port)
 {
 	this->port = port;
     this->isWifi = isWifi;

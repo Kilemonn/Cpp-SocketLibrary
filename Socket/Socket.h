@@ -30,8 +30,8 @@ class Socket
 		const static bool WIFI = true;
 		const static bool BLUETOOTH = false;
 
-		Socket(const std::string, const int, const bool); // Create Wi-Fi/Bluetooth Socket
-		Socket(const int, const bool); // Construct Socket from just descriptor
+		Socket(const std::string&, const int&, const bool); // Create Wi-Fi/Bluetooth Socket
+		Socket(const int&, const bool); // Construct Socket from just descriptor
 		Socket(const Socket&); // Copy Constructor
 		Socket& operator=(const Socket&);
 		

@@ -25,7 +25,7 @@ class ServerSocket
 		const static bool WIFI = true;
 		const static bool BLUETOOTH = false;
 
-		ServerSocket(const bool, const int = 0);
+		ServerSocket(const bool, const int& = 0);
 		ServerSocket(const ServerSocket&);
 		ServerSocket& operator=(const ServerSocket&);
 
