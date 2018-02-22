@@ -7,10 +7,18 @@
 #include <cstdlib>
 #include <ctime>
 
+#ifdef _WIN32
+
+#include <windows.h>
+
+#elif __linux__
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+
+#endif
 
 // Throws SocketError when instance cannot bind or listen
 ServerSocket::ServerSocket(const bool isWifi, const int& port)

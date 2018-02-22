@@ -7,12 +7,20 @@
 #include <vector>
 #include <utility>
 
+#ifdef _WIN32
+
+#include <windows.h>
+
+#elif __linux__
+
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
+
+#endif
 
 class Socket
 {
