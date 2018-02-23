@@ -67,7 +67,10 @@ void testWifi()
 		std::cout << "NOT SENT! (Wifi)\n";
 	}
 
-	std::string res = client.receiveAmount(4);
+	std::string res = client.receiveAmount(2);
+	std::cout << "RES: " << res << std::endl;
+
+	res = client.receiveAmount(2);
 	std::cout << "RES: " << res << std::endl;
 
 	t1.join();
