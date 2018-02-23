@@ -101,7 +101,7 @@ void ServerSocket::constructBluetoothSocket()
     localAddress.rc_channel = (uint8_t) port;
     if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) != 0)
     {
-        throw BindingError("Error binding connection, the port is already being used...");
+        throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
     }
 
     if (listen(socketDescriptor, 1) != 0)
@@ -126,7 +126,7 @@ void ServerSocket::constructWifiSocket()
 
     if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) != 0) 
     {
-        throw BindingError("Error binding connection, the port is already being used...");
+        throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
     }
 
     socketSize = sizeof(serverAddress);
