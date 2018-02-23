@@ -1,6 +1,6 @@
 
 #include "Socket.h"
-#include "../SocketError/SocketError.hpp"
+#include "../SocketExceptions/SocketError.hpp"
 
 #include <iostream>
 #include <vector>

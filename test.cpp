@@ -5,7 +5,8 @@
 
 #include "Socket/Socket.h"
 #include "ServerSocket/ServerSocket.h"
-#include "SocketError/SocketError.hpp"
+#include "SocketExceptions/SocketError.hpp"
+#include "SocketExceptions/BindingError.hpp"
 
 void wifiFunction(int const &);
 void bluetoothFunction(int const &);
@@ -49,7 +50,7 @@ void testWifi()
 {
 	std::cout << "\nTESTING WIFI\n";
 
-	ServerSocket server(ServerSocket::WIFI, 9986);
+	ServerSocket server(ServerSocket::WIFI);
 
 	int p = server.getPort();
 	std::thread t1(wifiFunction, p);

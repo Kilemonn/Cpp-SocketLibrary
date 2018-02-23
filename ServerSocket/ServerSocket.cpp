@@ -1,7 +1,8 @@
 
 #include "ServerSocket.h"
 #include "../Socket/Socket.h"
-#include "../SocketError/SocketError.hpp"
+#include "../SocketExceptions/SocketError.hpp"
+#include "../SocketExceptions/BindingError.hpp"
 
 #include <iostream>
 #include <cstdlib>
@@ -40,7 +41,7 @@ ServerSocket::ServerSocket(const bool isWifi, const int& port)
                 this->constructSocket();
                 done = true;
             }
-            catch(SocketError serr)
+            catch(BindingError be)
             {
                 // Nothing to do
             }
@@ -99,7 +100,7 @@ void ServerSocket::constructBluetoothSocket()
     localAddress.rc_channel = (uint8_t) port;
     if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) != 0)
     {
-        throw SocketError("Error binding connection, the port is already being used...");
+        throw BindingError("Error binding connection, the port is already being used...");
     }
 
     if (listen(socketDescriptor, 1) != 0)
@@ -124,7 +125,7 @@ void ServerSocket::constructWifiSocket()
 
     if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) != 0) 
     {
-        throw SocketError("Error binding connection, the port is already being used...");
+        throw BindingError("Error binding connection, the port is already being used...");
     }
 
     socketSize = sizeof(serverAddress);
