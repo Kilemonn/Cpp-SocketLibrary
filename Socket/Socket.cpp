@@ -182,6 +182,7 @@ std::string Socket::receiveAmount(const int amountToReceive) const
 	return std::string(result);
 }
 
+// Do not pass in '\0' as a delimiter
 std::string Socket::receiveToDelimiter(const char delimiter) const
 {
 	std::string data = "";
