@@ -64,12 +64,19 @@ ServerSocket::ServerSocket(const ServerSocket& socket)
 
 ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
 {
+    this->close();
+
     this->port = socket.port;
     this->isWifi = socket.isWifi;
     this->serverAddress = socket.serverAddress;
     this->socketSize = socket.socketSize;
 
     return *this;
+}
+
+ServerSocket::~ServerSocket()
+{
+    this->close();
 }
 
 void ServerSocket::constructSocket()
@@ -106,7 +113,7 @@ void ServerSocket::constructBluetoothSocket()
 
     if (listen(socketDescriptor, 1) != 0)
     {
-        close(socketDescriptor);
+        this->close();
         throw SocketError("Error Listening on port " + std::to_string(this->port));
     }
 }
@@ -133,7 +140,7 @@ void ServerSocket::constructWifiSocket()
 
     if(listen(socketDescriptor, 1) != 0)
     {
-        close(socketDescriptor);
+        this->close();
         throw SocketError("Error Listening on port " + std::to_string(this->port));
     }
 }
@@ -148,4 +155,9 @@ Socket ServerSocket::accept()
 int ServerSocket::getPort() const
 {
     return this->port;
+}
+
+void ServerSocket::close()
+{
+    ::close(socketDescriptor);
 }

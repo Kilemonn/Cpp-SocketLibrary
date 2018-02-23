@@ -73,8 +73,9 @@ void testWifi()
 	res = client.receiveAmount(2);
 	std::cout << "RES: " << res << std::endl;
 
-	client.send("DAMN SON\0");
-	client.close();
+	client.send("DAMN SON!");
+
+	client.send("HI");
 
 	t1.join();
 }
@@ -92,10 +93,14 @@ void wifiFunction(int const & p)
 	received = socket.receiveToDelimiter(' ');
 	std::cout << "RECIEVED: " << received << std::endl;
 
-	received = socket.receiveToDelimiter('\0');
+	received = socket.receiveToDelimiter('!');
 	std::cout << "RECIEVED: " << received << std::endl;
-
-	socket.close();
+	
+	while (socket.ready())
+	{
+		char c = socket.get();
+		std::cout << "Char c: " << c << "\n";	
+	}
 }
 
 void testBluetooth()
@@ -134,5 +139,4 @@ void bluetoothFunction(int const & p)
 	std::cout << "(BT) RECIEVED: " << received << std::endl;
 
 	socket.send("12345");
-	socket.close();	
 }

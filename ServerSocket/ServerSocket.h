@@ -36,9 +36,11 @@ class ServerSocket
 		ServerSocket(const bool, const int& = 0);
 		ServerSocket(const ServerSocket&);
 		ServerSocket& operator=(const ServerSocket&);
+		~ServerSocket();
 
 		Socket accept();
 		int getPort() const;
+		void close();
 };
 
 #endif // _SERVER_SOCKET_H__

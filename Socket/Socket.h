@@ -42,6 +42,7 @@ class Socket
 		Socket(const int&, const bool); // Construct Socket from just descriptor
 		Socket(const Socket&); // Copy Constructor
 		Socket& operator=(const Socket&);
+		~Socket();
 		
 		void close();
 		bool ready() const;

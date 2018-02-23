@@ -61,6 +61,8 @@ Socket::Socket(const Socket& socket)
 
 Socket& Socket::operator=(const Socket& socket)
 {
+	this->close();
+
 	this->socketDescriptor = socket.socketDescriptor;
 	this->hostname = socket.hostname;
 	this->port = socket.port;
@@ -70,6 +72,11 @@ Socket& Socket::operator=(const Socket& socket)
 	this->serverAddress = socket.serverAddress;
 
 	return *this;
+}
+
+Socket::~Socket()
+{
+	this->close();
 }
 
 void Socket::constructBluetoothSocket()
@@ -165,7 +172,7 @@ std::string Socket::receiveAmount(const int amountToReceive) const
 		bzero(&data, (amountToReceive + 1));
 		flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
 		
-		if (flag == 0)
+		if (flag == -1)
 		{
 			return std::string(result);
 		}
@@ -186,8 +193,8 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 		bzero(&temp, sizeof(temp));
 			
 		flag = recv(socketDescriptor, temp, 1, 0);
-		
-		if (flag == 0)
+
+		if (flag == -1)
 		{
 			return data;
 		}
