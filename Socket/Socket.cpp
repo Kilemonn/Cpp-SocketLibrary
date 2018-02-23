@@ -112,14 +112,14 @@ void Socket::constructWifiSocket()
 	}
 }
 
-void Socket::closeSocket()
+void Socket::close()
 {
-	close(socketDescriptor);
+	::close(socketDescriptor);
 }
 
-bool Socket::sendMessage(const std::string message, int serverity) const
+bool Socket::send(const std::string message, int serverity) const
 {
-	if (send(socketDescriptor, message.c_str(), message.size(), serverity) == -1) 
+	if (::send(socketDescriptor, message.c_str(), message.size(), serverity) == -1) 
 	{
 		return false;
 	}
@@ -171,8 +171,6 @@ std::string Socket::receiveAmount(const int amountToReceive) const
 		}
 		result += std::string(data);
 		counter += flag;
-
-		std::cout << "res: " << result << " resLen: " << result.size() << " flag: " << flag << " counter: " << counter << "\n";
 	}
 	return std::string(result);
 }
@@ -241,7 +239,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
     }
 
     delete ii;
-    close( tempSocket );
+    ::close( tempSocket );
 
 	return std::move(devices);
 }

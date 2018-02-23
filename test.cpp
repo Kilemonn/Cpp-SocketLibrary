@@ -55,10 +55,10 @@ void testWifi()
 	int p = server.getPort();
 	std::thread t1(wifiFunction, p);
 
-	Socket client(server.acceptConnection());
+	Socket client(server.accept());
 	std::cout << "Accepted\n";
 
-	if (client.sendMessage("HEY\n"))
+	if (client.send("HEY\n"))
 	{
 		std::cout << "SENT! (Wifi)\n";
 	}
@@ -73,6 +73,9 @@ void testWifi()
 	res = client.receiveAmount(2);
 	std::cout << "RES: " << res << std::endl;
 
+	client.send("DAMN SON\0");
+	client.close();
+
 	t1.join();
 }
 
@@ -84,8 +87,15 @@ void wifiFunction(int const & p)
 	std::string received = socket.receiveToDelimiter('\n');
 	std::cout << "RECIEVED: " << received << std::endl;
 
-	socket.sendMessage("12345");
-	socket.closeSocket();
+	socket.send("12345");
+
+	received = socket.receiveToDelimiter(' ');
+	std::cout << "RECIEVED: " << received << std::endl;
+
+	received = socket.receiveToDelimiter('\0');
+	std::cout << "RECIEVED: " << received << std::endl;
+
+	socket.close();
 }
 
 void testBluetooth()
@@ -97,10 +107,10 @@ void testBluetooth()
 	int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);
 
-	Socket client(server.acceptConnection());
+	Socket client(server.accept());
 	std::cout << "(BT) Accepted\n";
 
-	if (client.sendMessage("HEY\n"))
+	if (client.send("HEY\n"))
 	{
 		std::cout << "SENT! (BT)\n";
 	}
@@ -123,6 +133,6 @@ void bluetoothFunction(int const & p)
 	std::string received = socket.receiveToDelimiter('\n');
 	std::cout << "(BT) RECIEVED: " << received << std::endl;
 
-	socket.sendMessage("12345");
-	socket.closeSocket();	
+	socket.send("12345");
+	socket.close();	
 }

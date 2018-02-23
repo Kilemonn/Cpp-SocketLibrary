@@ -43,9 +43,9 @@ class Socket
 		Socket(const Socket&); // Copy Constructor
 		Socket& operator=(const Socket&);
 		
-		void closeSocket();
+		void close();
 		bool ready() const;
-		bool sendMessage(const std::string, int severity = 0) const;
+		bool send(const std::string, int severity = 0) const;
 		char get() const;
 		std::string receiveAmount(int) const;
 		std::string receiveToDelimiter(const char) const;

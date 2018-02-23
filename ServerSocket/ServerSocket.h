@@ -37,7 +37,7 @@ class ServerSocket
 		ServerSocket(const ServerSocket&);
 		ServerSocket& operator=(const ServerSocket&);
 
-		Socket acceptConnection();
+		Socket accept();
 		int getPort() const;
 };
 
