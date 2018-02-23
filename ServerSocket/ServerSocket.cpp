@@ -37,7 +37,8 @@ ServerSocket::ServerSocket(const bool isWifi, const int& port)
         {
             try
             {
-                this->port = std::rand() % 65535;
+                // Random a port number inside the 'dynamic' port range (49152 - 65535)
+                this->port = (std::rand() % (65535 - 49152)) + 49152;
                 this->constructSocket();
                 done = true;
             }
