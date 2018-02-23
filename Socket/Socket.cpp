@@ -156,14 +156,13 @@ char Socket::get() const
 
 std::string Socket::receiveAmount(const int amountToReceive) const
 {
-	char data[amountToReceive];
+	char data[(amountToReceive + 1)];
 	int counter = 0, flag = 0;
 	std::string result = "";
 
 	while (counter < amountToReceive)
 	{
-		bzero(&data, amountToReceive);
-
+		bzero(&data, (amountToReceive + 1));
 		flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
 		
 		if (flag == 0)
@@ -172,6 +171,8 @@ std::string Socket::receiveAmount(const int amountToReceive) const
 		}
 		result += std::string(data);
 		counter += flag;
+
+		std::cout << "res: " << result << " resLen: " << result.size() << " flag: " << flag << " counter: " << counter << "\n";
 	}
 	return std::string(result);
 }
