@@ -107,7 +107,7 @@ void testBluetooth()
 {
 	std::cout << "\nTESTING BLUETOOTH\n";
 
-	ServerSocket server(ServerSocket::BLUETOOTH);
+	ServerSocket server(ServerSocket::BLUETOOTH, 3);
 
 	int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);
