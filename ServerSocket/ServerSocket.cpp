@@ -37,8 +37,16 @@ ServerSocket::ServerSocket(const bool isWifi, const int& port)
         {
             try
             {
-                // Random a port number inside the 'dynamic' port range (49152 - 65535)
-                this->port = (std::rand() % (65535 - 49152)) + 49152;
+                if (isWifi)
+                {
+                    // Random a port number inside the 'dynamic' port range (49152 - 65535)
+                    this->port = (std::rand() % (65535 - 49152)) + 49152;
+                }
+                else
+                {
+                    this->port = (std::rand() % 10) + 1;
+                }
+                
                 this->constructSocket();
                 done = true;
             }
@@ -94,7 +102,8 @@ void ServerSocket::constructSocket()
 void ServerSocket::constructBluetoothSocket()
 {
     struct sockaddr_rc localAddress = {0};
-    bdaddr_t tmp = { };
+    bdaddr_t tmp = ((bdaddr_t) {{0, 0, 0, 0, 0, 0}});
+    this->socketSize = sizeof(localAddress);
 
     socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
@@ -106,7 +115,7 @@ void ServerSocket::constructBluetoothSocket()
     localAddress.rc_family = AF_BLUETOOTH;
     localAddress.rc_bdaddr = tmp;
     localAddress.rc_channel = (uint8_t) port;
-    if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) != 0)
+    if (bind(socketDescriptor, (struct sockaddr *)&localAddress, this->socketSize) != 0)
     {
         throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
     }
@@ -120,6 +129,7 @@ void ServerSocket::constructBluetoothSocket()
 
 void ServerSocket::constructWifiSocket()
 {
+    this->socketSize = sizeof(serverAddress);
     socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
     if (socketDescriptor == -1) 
@@ -131,12 +141,10 @@ void ServerSocket::constructWifiSocket()
     serverAddress.sin_addr.s_addr = htons(INADDR_ANY);
     serverAddress.sin_port = htons(this->port);
 
-    if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) != 0) 
+    if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, this->socketSize) != 0) 
     {
         throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
     }
-
-    socketSize = sizeof(serverAddress);
 
     if(listen(socketDescriptor, 1) != 0)
     {
