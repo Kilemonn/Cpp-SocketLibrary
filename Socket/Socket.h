@@ -48,7 +48,7 @@ class Socket
 		bool ready() const;
 		bool send(const std::string, int severity = 0) const;
 		char get() const;
-		std::string receiveAmount(int) const;
+		std::string receiveAmount(const int) const;
 		std::string receiveToDelimiter(const char) const;
 
 		static std::vector<std::pair<std::string, std::string> > scanDevices();
