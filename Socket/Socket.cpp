@@ -30,12 +30,23 @@ Socket::Socket(const std::string& hostname, const int& port, const bool isWifi)
 	this->hostname = hostname;
 	this->port = port;
 
+	this->serverAddress = { 0 };
+	this->bluetoothAddress = { 0 };
+
 	if (isWifi)
 	{
+		if (this->hostname == "")
+		{
+			this->hostname = "127.0.0.1";
+		}
 		this->constructWifiSocket();
 	}
 	else
 	{
+		if (this->hostname == "")
+		{
+			// this->hostname = "127.0.0.1";
+		}
 		this->constructBluetoothSocket();
 	}
 }
@@ -91,6 +102,7 @@ void Socket::constructBluetoothSocket()
     bluetoothAddress.rc_family = AF_BLUETOOTH;
     bluetoothAddress.rc_channel = (uint8_t) port;
     str2ba(this->hostname.c_str(), &bluetoothAddress.rc_bdaddr);
+    std::cout << "Address: " << bluetoothAddress.rc_bdaddr.b << "\n";
 
    	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
    	{
@@ -188,6 +200,11 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 	std::string data = "";
 	char temp[2];
 	int flag;
+
+	if (delimiter == '\0')
+	{
+		return data;
+	}
 
 	do
 	{
