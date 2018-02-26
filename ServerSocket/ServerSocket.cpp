@@ -115,12 +115,13 @@ void ServerSocket::constructBluetoothSocket()
     localAddress.rc_family = AF_BLUETOOTH;
     localAddress.rc_bdaddr = tmp;
     localAddress.rc_channel = static_cast<uint8_t>(port);
-    if (bind(socketDescriptor, (struct sockaddr *)&localAddress, this->socketSize) != 0)
+    
+    if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
     {
         throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
     }
 
-    if (listen(socketDescriptor, 1) != 0)
+    if (listen(socketDescriptor, 1) == -1)
     {
         this->close();
         throw SocketError("Error Listening on port " + std::to_string(this->port));
@@ -141,12 +142,12 @@ void ServerSocket::constructWifiSocket()
     serverAddress.sin_addr.s_addr = htons(INADDR_ANY);
     serverAddress.sin_port = htons(this->port);
 
-    if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, this->socketSize) != 0) 
+    if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) == -1) 
     {
         throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
     }
 
-    if(listen(socketDescriptor, 1) != 0)
+    if(listen(socketDescriptor, 1) == -1)
     {
         this->close();
         throw SocketError("Error Listening on port " + std::to_string(this->port));

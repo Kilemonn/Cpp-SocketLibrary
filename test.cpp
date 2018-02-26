@@ -20,9 +20,9 @@ int main()
 {
 	try
 	{
-		//std::system("sudo hciconfig hci0 piscan");
+		std::system("sudo hciconfig hci0 piscan");
 
-		// doScan();
+		doScan();
 
 		testWifi();
 
@@ -132,7 +132,7 @@ void testBluetooth()
 
 void bluetoothFunction(int const & p)
 {
-	Socket socket("08:6A:0A:DF:8F:B6", p, Socket::BLUETOOTH);
+	Socket socket("B8:27:EB:99:F4:E6", p, Socket::BLUETOOTH);
 	std::cout << "(BT) Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');
