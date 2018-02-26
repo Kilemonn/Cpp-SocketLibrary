@@ -114,7 +114,7 @@ void ServerSocket::constructBluetoothSocket()
 
     localAddress.rc_family = AF_BLUETOOTH;
     localAddress.rc_bdaddr = tmp;
-    localAddress.rc_channel = (uint8_t) port;
+    localAddress.rc_channel = static_cast<uint8_t>(port);
     if (bind(socketDescriptor, (struct sockaddr *)&localAddress, this->socketSize) != 0)
     {
         throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
