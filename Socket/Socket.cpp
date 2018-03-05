@@ -102,7 +102,6 @@ void Socket::constructBluetoothSocket()
     bluetoothAddress.rc_family = AF_BLUETOOTH;
     bluetoothAddress.rc_channel = (uint8_t) port;
     str2ba(this->hostname.c_str(), &bluetoothAddress.rc_bdaddr);
-    std::cout << "Address: " << bluetoothAddress.rc_bdaddr << "\n";
 
    	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
    	{
