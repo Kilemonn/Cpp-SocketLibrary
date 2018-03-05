@@ -102,7 +102,7 @@ void Socket::constructBluetoothSocket()
     bluetoothAddress.rc_family = AF_BLUETOOTH;
     bluetoothAddress.rc_channel = (uint8_t) port;
     str2ba(this->hostname.c_str(), &bluetoothAddress.rc_bdaddr);
-    std::cout << "Address: " << bluetoothAddress.rc_bdaddr.b << "\n";
+    std::cout << "Address: " << bluetoothAddress.rc_bdaddr << "\n";
 
    	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
    	{
@@ -222,13 +222,13 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 	return data.substr(0, (data.size() - 1));
 }
 
-std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
+std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 {
 	std::vector<std::pair<std::string, std::string> > devices;
 	std::pair<std::string, std::string> tempPair;
 
 	inquiry_info *ii = nullptr;
-    int maxResponse = 255, len = 8, numberOfResponses, ownId, tempSocket, flags;
+    int maxResponse = 255, numberOfResponses, ownId, tempSocket, flags;
     char deviceAddress[19];
     char deviceName[248];
 
@@ -242,7 +242,7 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices()
     flags = IREQ_CACHE_FLUSH;
     ii = new inquiry_info[maxResponse * sizeof(inquiry_info)];
     
-    numberOfResponses = hci_inquiry(ownId, len, maxResponse, nullptr, &ii, flags);
+    numberOfResponses = hci_inquiry(ownId, duration, maxResponse, nullptr, &ii, flags);
     if( numberOfResponses < 0 )
     {
     	delete ii;

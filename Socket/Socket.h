@@ -51,7 +51,7 @@ class Socket
 		std::string receiveAmount(const int) const;
 		std::string receiveToDelimiter(const char) const;
 
-		static std::vector<std::pair<std::string, std::string> > scanDevices();
+		static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int duration = 5);
 };
 
 #endif //_SOCKET_H__

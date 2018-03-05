@@ -16,6 +16,8 @@ void testBluetooth();
 
 void doScan();
 
+const std::string bluetoothLocalAddress = "B8:27:EB:99:F4:E6";
+
 int main()
 {
 	try
@@ -132,7 +134,7 @@ void testBluetooth()
 
 void bluetoothFunction(int const & p)
 {
-	Socket socket("B8:27:EB:99:F4:E6", p, Socket::BLUETOOTH);
+	Socket socket(bluetoothLocalAddress, p, Socket::BLUETOOTH);
 	std::cout << "(BT) Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');
