@@ -22,7 +22,7 @@
 #endif
 
 // Throws SocketError when instance cannot bind or listen
-ServerSocket::ServerSocket(const bool isWifi, const int& port)
+ServerSocket::ServerSocket(const bool isWifi, const unsigned int& port)
 {
 	this->port = port;
     this->isWifi = isWifi;
@@ -40,11 +40,11 @@ ServerSocket::ServerSocket(const bool isWifi, const int& port)
                 if (isWifi)
                 {
                     // Random a port number inside the 'dynamic' port range (49152 - 65535)
-                    this->port = (std::rand() % (65535 - 49152)) + 49152;
+                    this->port = static_cast<unsigned int>((std::rand() % (65535 - 49152)) + 49152);
                 }
                 else
                 {
-                    this->port = (std::rand() % 10) + 1;
+                    this->port = static_cast<unsigned int>((std::rand() % 10) + 1);
                 }
                 
                 this->constructSocket();
@@ -161,7 +161,7 @@ Socket ServerSocket::accept()
     return Socket(temp, isWifi);
 }
 
-int ServerSocket::getPort() const
+unsigned int ServerSocket::getPort() const
 {
     return this->port;
 }

@@ -20,7 +20,8 @@
 class ServerSocket
 {
 	private:
-		int socketDescriptor, port;
+		int socketDescriptor;
+		unsigned int port;
 		bool isWifi;
 		struct sockaddr_in serverAddress;
     	socklen_t socketSize;
@@ -33,13 +34,13 @@ class ServerSocket
 		const static bool WIFI = true;
 		const static bool BLUETOOTH = false;
 
-		ServerSocket(const bool, const int& = 0);
+		ServerSocket(const bool, const unsigned int& = 0);
 		ServerSocket(const ServerSocket&);
 		ServerSocket& operator=(const ServerSocket&);
 		~ServerSocket();
 
 		Socket accept();
-		int getPort() const;
+		unsigned int getPort() const;
 		void close();
 };
 

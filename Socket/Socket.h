@@ -26,7 +26,8 @@ class Socket
 {
 	private:
 		std::string hostname;
-		int socketDescriptor, port;
+		int socketDescriptor;
+		unsigned int port;
 		struct sockaddr_in serverAddress; // For Wifi
 		struct sockaddr_rc bluetoothAddress; // For Bluetooth
 		bool isWifi;
@@ -38,7 +39,7 @@ class Socket
 		const static bool WIFI = true;
 		const static bool BLUETOOTH = false;
 
-		Socket(const std::string&, const int&, const bool); // Create Wi-Fi/Bluetooth Socket
+		Socket(const std::string&, const unsigned int&, const bool); // Create Wi-Fi/Bluetooth Socket
 		Socket(const int&, const bool); // Construct Socket from just descriptor
 		Socket(const Socket&); // Copy Constructor
 		Socket& operator=(const Socket&);

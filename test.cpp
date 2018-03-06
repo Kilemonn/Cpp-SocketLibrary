@@ -8,8 +8,8 @@
 #include "SocketExceptions/SocketError.hpp"
 #include "SocketExceptions/BindingError.hpp"
 
-void wifiFunction(int const &);
-void bluetoothFunction(int const &);
+void wifiFunction(unsigned int const &);
+void bluetoothFunction(unsigned int const &);
 
 void testWifi();
 void testBluetooth();
@@ -22,9 +22,9 @@ int main()
 {
 	try
 	{
-		std::system("sudo hciconfig hci0 piscan");
+		// std::system("sudo hciconfig hci0 piscan");
 
-		doScan();
+		// doScan();
 
 		testWifi();
 
@@ -40,7 +40,7 @@ int main()
 
 void doScan()
 {
-	std::vector<std::pair<std::string, std::string> > devices = Socket::scanDevices();
+	std::vector<std::pair<std::string, std::string> > devices = Socket::scanDevices(1);
 
 	for (unsigned int i = 0; i < devices.size(); i++)
 	{
@@ -54,7 +54,7 @@ void testWifi()
 
 	ServerSocket server(ServerSocket::WIFI);
 
-	int p = server.getPort();
+	unsigned int p = server.getPort();
 	std::thread t1(wifiFunction, p);
 
 	Socket client(server.accept());
@@ -82,7 +82,7 @@ void testWifi()
 	t1.join();
 }
 
-void wifiFunction(int const & p)
+void wifiFunction(unsigned int const & p)
 {
 	Socket socket("127.0.0.1", p, Socket::WIFI);
 	std::cout << "Connected\n";
@@ -111,7 +111,7 @@ void testBluetooth()
 
 	ServerSocket server(ServerSocket::BLUETOOTH, 3);
 
-	int p = server.getPort();
+	unsigned int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);
 
 	Socket client(server.accept());
@@ -132,7 +132,7 @@ void testBluetooth()
 	t1.join();
 }
 
-void bluetoothFunction(int const & p)
+void bluetoothFunction(unsigned int const & p)
 {
 	Socket socket(bluetoothLocalAddress, p, Socket::BLUETOOTH);
 	std::cout << "(BT) Connected\n";
