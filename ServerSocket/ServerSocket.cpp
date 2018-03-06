@@ -5,7 +5,7 @@
 #include "../SocketExceptions/BindingError.hpp"
 
 #include <iostream>
-#include <cstdlib>
+#include <random>
 #include <ctime>
 
 #ifdef _WIN32
@@ -31,22 +31,25 @@ ServerSocket::ServerSocket(const bool isWifi, const unsigned int& port)
     // Randomly allocate port
     if (this->port == 0)
     {
-        std::srand(std::time(nullptr));
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        // Random port number inside the 'dynamic' port range (49152 - 65535)
+        std::uniform_int_distribution<> wifiRand(49152, 65535);
+        // Random bluetooth ports from 1-10
+        std::uniform_int_distribution<> btRand(1, 10);
 
         while (!done)
         {
             try
             {
                 if (isWifi)
-                {
-                    // Random a port number inside the 'dynamic' port range (49152 - 65535)
-                    this->port = static_cast<unsigned int>((std::rand() % (65535 - 49152)) + 49152);
+                {          
+                    this->port = wifiRand(gen);     
                 }
                 else
                 {
-                    this->port = static_cast<unsigned int>((std::rand() % 10) + 1);
+                    this->port = btRand(gen);
                 }
-                
                 this->constructSocket();
                 done = true;
             }
