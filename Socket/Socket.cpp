@@ -5,13 +5,21 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <string>
 
 #ifdef _WIN32
 
-#include <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#define _WIN32_WINNT 0x501
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+
+#include <windows.h>
 
 #elif __linux__
 
@@ -25,14 +33,43 @@
 
 #endif
 
+#ifdef _WIN32
 
-// Throws SocketError when can't connect to server
-Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
+Socket::Socket(const std::string& host, const unsigned int& portNum, const bool isWifiFlag) : hostname(host), port(portNum), isWifi(isWifiFlag)
 {
-	this->isWifi = isWifi;
-	this->hostname = hostname;
-	this->port = port;
+	this->serverAddress = nullptr;
+	this->ptr = nullptr;
+	this->socketDescriptor = INVALID_SOCKET;
 
+	WSADATA wsaData;
+	int res = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (res != 0)
+    {
+    	throw SocketError("WSAStartup Failed. " + std::to_string(res));
+    }
+
+    if (isWifi)
+    {
+    	if (this->hostname == "")
+		{
+			this->hostname = "127.0.0.1";
+		}
+		this->constructWifiSocket();
+    }
+    else
+    {
+    	if (this->hostname == "")
+		{
+			// this->hostname = "" - loop back for bluetooth?
+		}
+		this->constructBluetoothSocket();
+    }
+}
+
+#elif __linux__
+// Throws SocketError when can't connect to server
+Socket::Socket(const std::string& host, const unsigned int& portNum, const bool isWifiFlag) : hostname(host), port(portNum), isWifi(isWifiFlag)
+{
 	this->serverAddress = { 0 };
 	this->bluetoothAddress = { 0 };
 
@@ -54,13 +91,37 @@ Socket::Socket(const std::string& hostname, const unsigned int& port, const bool
 	}
 }
 
-Socket::Socket(const int& socketDescriptor, const bool isWifi)
+#endif
+
+#ifdef _WIN32
+
+Socket::Socket(const SOCKET& socket, const bool isWifiFlag) : socketDescriptor(socket), isWifi(isWifiFlag), port(0), hostname("")
 {
-	this->socketDescriptor = socketDescriptor;
-	this->hostname = "";
-	this->port = 0;
-	this->isWifi = isWifi;
+	// Nothing to do
 }
+
+#elif __linux__
+
+Socket::Socket(const int& socket, const bool isWifiFlag) : socketDescriptor(socket), isWifi(isWifiFlag), port(0), hostname("")
+{
+	// Nothing to do
+}
+
+#endif
+
+#ifdef _WIN32
+
+Socket::Socket(const Socket& socket)
+{
+	this->socketDescriptor = socket.socketDescriptor;
+	this->hostname = socket.hostname;
+	this->port = socket.port;
+	this->isWifi = socket.isWifi;
+
+	this->serverAddress = socket.serverAddress;
+}
+
+#elif __linux__
 
 Socket::Socket(const Socket& socket)
 {
@@ -72,6 +133,26 @@ Socket::Socket(const Socket& socket)
 	this->bluetoothAddress = socket.bluetoothAddress;
 	this->serverAddress = socket.serverAddress;
 }
+
+#endif
+
+#ifdef _WIN32
+
+Socket& Socket::operator=(const Socket& socket)
+{
+	this->close();
+
+	this->socketDescriptor = socket.socketDescriptor;
+	this->hostname = socket.hostname;
+	this->port = socket.port;
+	this->isWifi = socket.isWifi;
+
+	this->serverAddress = socket.serverAddress;
+
+	return *this;
+}
+
+#elif __linux__
 
 Socket& Socket::operator=(const Socket& socket)
 {
@@ -88,10 +169,29 @@ Socket& Socket::operator=(const Socket& socket)
 	return *this;
 }
 
+#endif
+
 Socket::~Socket()
 {
+	#ifdef _WIN32
+
+	WSACleanup();
+	freeaddrinfo(serverAddress);
+
+	#endif
+
 	this->close();
 }
+
+
+#ifdef _WIN32
+
+void Socket::constructBluetoothSocket()
+{
+	throw SocketError("Bluetooth sockets are not yet supported on windows");
+}
+
+#elif __linux__
 
 void Socket::constructBluetoothSocket()
 {
@@ -112,6 +212,42 @@ void Socket::constructBluetoothSocket()
 	}
 }
 
+#endif
+
+#ifdef _WIN32
+
+void Socket::constructWifiSocket()
+{
+	int res;
+	ZeroMemory( &hints, sizeof(hints) );
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	res = getaddrinfo(hostname.c_str(), std::to_string(port).c_str(), &hints, &serverAddress);
+
+	if (res != 0) 
+	{
+	    throw SocketError("Unable to retrieving host address.");
+	}
+
+	ptr = serverAddress;
+
+	socketDescriptor = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+	if (socketDescriptor == INVALID_SOCKET) 
+	{
+	    throw SocketError("Error establishing Wifi socket.");
+	}
+
+    res = connect(socketDescriptor, ptr->ai_addr, (int)ptr->ai_addrlen);
+	if(res == SOCKET_ERROR)
+	{
+		throw SocketError("Error connecting to Wifi server.");
+	}
+}
+
+#elif __linux__
+
 void Socket::constructWifiSocket()
 {
 	struct hostent* server = gethostbyname(this->hostname.c_str());
@@ -119,7 +255,7 @@ void Socket::constructWifiSocket()
 
     if (socketDescriptor == -1)
     {
-    	throw SocketError("Error establishing Wifi socket...");
+    	throw SocketError("Error establishing Wifi socket.");
     }
 
     bzero((char *) &serverAddress, sizeof(serverAddress));
@@ -129,13 +265,23 @@ void Socket::constructWifiSocket()
 
 	if (connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 	{
-		throw SocketError("Error connecting to Wifi server");
+		throw SocketError("Error connecting to Wifi server.");
 	}
 }
 
+#endif
+
 void Socket::close()
 {
+	#ifdef _WIN32
+
+	closesocket(socketDescriptor);
+
+	#elif __linux__
+
 	::close(socketDescriptor);
+
+	#endif
 }
 
 bool Socket::send(const std::string message, int serverity) const
@@ -149,6 +295,16 @@ bool Socket::send(const std::string message, int serverity) const
 		return true;
 	}
 }
+
+
+#ifdef _WIN32
+
+bool Socket::ready() const
+{
+	throw SocketError("Bluetooth sockets are not yet supported on windows");
+}
+
+#elif __linux__
 
 bool Socket::ready() const
 {
@@ -170,6 +326,8 @@ bool Socket::ready() const
 	}
 }
 
+#endif
+
 char Socket::get() const
 {
 	return this->receiveAmount(1)[0];
@@ -185,7 +343,16 @@ std::string Socket::receiveAmount(const unsigned int amountToReceive) const
 
 	while (counter < amountToReceive)
 	{
+		#ifdef _WIN32
+
+		ZeroMemory (&data, (amountToReceive + 1));
+
+		#elif __linux__
+
 		bzero(&data, (amountToReceive + 1));
+
+		#endif
+
 		flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
 		
 		if (flag == -1)
@@ -212,7 +379,15 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 
 	do
 	{
+		#ifdef _WIN32
+
+		ZeroMemory (&temp, sizeof(temp));
+
+		#elif __linux__
+
 		bzero(&temp, sizeof(temp));
+
+		#endif
 			
 		flag = recv(socketDescriptor, temp, 1, 0);
 
@@ -225,6 +400,15 @@ std::string Socket::receiveToDelimiter(const char delimiter) const
 
 	return data.substr(0, (data.size() - 1));
 }
+
+#ifdef _WIN32
+
+std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
+{
+	throw SocketError("Not supported for Windows platform yet.");
+}
+
+#elif __linux__
 
 std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 {
@@ -272,3 +456,5 @@ std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned i
 
 	return std::move(devices);
 }
+
+#endif

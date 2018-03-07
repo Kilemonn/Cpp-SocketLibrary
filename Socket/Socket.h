@@ -9,10 +9,17 @@
 
 #ifdef _WIN32
 
-#include <windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#define _WIN32_WINNT 0x501
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+
+#include <windows.h>
 
 #elif __linux__
 
@@ -35,10 +42,10 @@ class Socket
 		#ifdef _WIN32
 
 		// Wifi Properties
-		struct addrinfo *result = nullptr;
-        struct addrinfo *ptr = nullptr;
+		struct addrinfo *serverAddress;
+        struct addrinfo *ptr;
         struct addrinfo hints;
-    	SOCKET ConnectSocket = INVALID_SOCKET;
+    	SOCKET socketDescriptor;
 
 		#elif __linux__
 
