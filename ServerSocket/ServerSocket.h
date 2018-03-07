@@ -6,6 +6,16 @@
 
 #ifdef _WIN32
 
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
+
+#define _WIN32_WINNT 0x501
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+
 #include <windows.h>
 
 #elif __linux__
@@ -20,11 +30,23 @@
 class ServerSocket
 {
 	private:
-		int socketDescriptor;
 		unsigned int port;
 		bool isWifi;
+
+		#ifdef _WIN32
+
+		// Wifi properties
+		struct addrinfo *serverAddress;
+        struct addrinfo hints;
+		SOCKET socketDescriptor;
+
+		#elif __linux__
+
+		int socketDescriptor;
 		struct sockaddr_in serverAddress;
     	socklen_t socketSize;
+
+    	#endif
 
     	void constructSocket();
     	void constructBluetoothSocket();

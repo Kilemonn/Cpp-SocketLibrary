@@ -38,7 +38,6 @@
 Socket::Socket(const std::string& host, const unsigned int& portNum, const bool isWifiFlag) : hostname(host), port(portNum), isWifi(isWifiFlag)
 {
 	this->serverAddress = nullptr;
-	this->ptr = nullptr;
 	this->socketDescriptor = INVALID_SOCKET;
 
 	WSADATA wsaData;
@@ -231,15 +230,13 @@ void Socket::constructWifiSocket()
 	    throw SocketError("Unable to retrieving host address.");
 	}
 
-	ptr = serverAddress;
-
-	socketDescriptor = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+	socketDescriptor = socket(serverAddress->ai_family, serverAddress->ai_socktype, serverAddress->ai_protocol);
 	if (socketDescriptor == INVALID_SOCKET) 
 	{
 	    throw SocketError("Error establishing Wifi socket.");
 	}
 
-    res = connect(socketDescriptor, ptr->ai_addr, (int)ptr->ai_addrlen);
+    res = connect(socketDescriptor, serverAddress->ai_addr, (int)serverAddress->ai_addrlen);
 	if(res == SOCKET_ERROR)
 	{
 		throw SocketError("Error connecting to Wifi server.");

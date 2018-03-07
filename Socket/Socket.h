@@ -43,7 +43,6 @@ class Socket
 
 		// Wifi Properties
 		struct addrinfo *serverAddress;
-        struct addrinfo *ptr;
         struct addrinfo hints;
     	SOCKET socketDescriptor;
 
