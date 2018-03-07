@@ -9,6 +9,10 @@
 #ifdef _WIN32
 
 #include <windows.h>
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
 
 #elif __linux__
 
@@ -45,7 +49,7 @@ Socket::Socket(const std::string& hostname, const unsigned int& port, const bool
 	{
 		if (this->hostname == "")
 		{
-			// this->hostname = "127.0.0.1";
+			// this->hostname = "" - loop back for bluetooth?
 		}
 		this->constructBluetoothSocket();
 	}
@@ -172,11 +176,13 @@ char Socket::get() const
 	return this->receiveAmount(1)[0];
 }
 
-std::string Socket::receiveAmount(const int amountToReceive) const
+std::string Socket::receiveAmount(const unsigned int amountToReceive) const
 {
 	char data[(amountToReceive + 1)];
-	int counter = 0, flag = 0;
-	std::string result = "";
+	unsigned int counter = 0;
+	int flag = 0;
+	std::string result;
+	result.reserve(amountToReceive);
 
 	while (counter < amountToReceive)
 	{
