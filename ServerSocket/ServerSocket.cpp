@@ -19,7 +19,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
-#include <ws2bth.h>
+// #include <ws2bth.h>
 
 #include <windows.h>
 
@@ -232,7 +232,7 @@ void ServerSocket::constructBluetoothSocket()
     bluetoothAddress.addressFamily = AF_BTH;
     bluetoothAddress.port = this->port;
 
-    if (bind(LocalSocket, (struct sockaddr *) &bluetoothAddress, this->socketSize ) == SOCKET_ERROR) 
+    if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, this->socketSize ) == SOCKET_ERROR) 
     {
         throw BindingError("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
     }
