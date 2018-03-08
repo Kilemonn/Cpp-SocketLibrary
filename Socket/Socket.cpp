@@ -18,6 +18,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+#include <ws2bth.h>
 
 #include <windows.h>
 
@@ -187,7 +188,23 @@ Socket::~Socket()
 
 void Socket::constructBluetoothSocket()
 {
-	throw SocketError("Bluetooth sockets are not yet supported on windows");
+	throw SocketError("Bluetooth servers are not supported in Windows.");
+	
+	socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+
+	if (socketDescriptor == INVALID_SOCKET)
+	{
+		throw SocketError("Error establishing Bluetooth socket...");
+	}
+
+	bluetoothAddress.addressFamily = AF_BTH;
+    bluetoothAddress.btAddr = this->hostname;
+    bluetoothAddress.port = this->port;
+
+    if (connect(LocalSocket, (struct sockaddr *) &SockAddrBthServer, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
+    {
+    	throw SocketError("Error connecting to Bluetooth server");
+    }
 }
 
 #elif __linux__

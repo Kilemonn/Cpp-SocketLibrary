@@ -19,6 +19,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+#include <ws2bth.h>
 
 #include <windows.h>
 
@@ -217,6 +218,30 @@ void ServerSocket::constructSocket()
 void ServerSocket::constructBluetoothSocket()
 {
     throw SocketError("Bluetooth servers are not supported in Windows.");
+
+    SOCKADDR_BTH bluetoothAddress;
+    this->socketSize = sizeof(SOCKADDR_BTH);
+
+    socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+
+    if (socketDescriptor == INVALID_SOCKET)
+    {
+        throw SocketError("Error establishing BT server socket...");
+    }
+
+    bluetoothAddress.addressFamily = AF_BTH;
+    bluetoothAddress.port = this->port;
+
+    if (bind(LocalSocket, (struct sockaddr *) &bluetoothAddress, this->socketSize ) == SOCKET_ERROR) 
+    {
+        throw BindingError("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
+    }
+
+    if (listen(socketDescriptor, 1) == SOCKET_ERROR) 
+    {
+        this->close();
+        throw SocketError("Error Listening on port " + std::to_string(this->port));
+    }
 }
 
 #elif __linux__
@@ -240,7 +265,7 @@ void ServerSocket::constructBluetoothSocket()
     
     if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
     {
-        throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
+        throw BindingError("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
     }
 
     if (listen(socketDescriptor, 1) == -1)

@@ -15,6 +15,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+#include <ws2bth.h>
 
 #include <windows.h>
 
@@ -38,6 +39,7 @@ class ServerSocket
 		// Wifi properties
 		struct addrinfo *serverAddress;
         struct addrinfo hints;
+        SOCKADDR_BTH bluetoothAddress;
 		SOCKET socketDescriptor;
 
 		#elif __linux__

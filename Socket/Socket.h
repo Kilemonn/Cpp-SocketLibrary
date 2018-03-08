@@ -18,6 +18,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+#include <ws2bth.h>
 
 #include <windows.h>
 
@@ -30,7 +31,7 @@
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
 
-#endif // Platform
+#endif // _WIN32 / __linux__
 
 class Socket
 {
@@ -46,13 +47,15 @@ class Socket
         struct addrinfo hints;
     	SOCKET socketDescriptor;
 
+    	SOCKADDR_BTH bluetoothAddress;
+
 		#elif __linux__
 
 		int socketDescriptor;
 		struct sockaddr_in serverAddress; // For Wifi
 		struct sockaddr_rc bluetoothAddress; // For Bluetooth
 
-		#endif // Platform
+		#endif // _WIN32 / __linux__
 
 		void constructBluetoothSocket();
 		void constructWifiSocket();
