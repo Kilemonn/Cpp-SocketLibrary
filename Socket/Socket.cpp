@@ -36,8 +36,11 @@
 
 #ifdef _WIN32
 
-Socket::Socket(const std::string& host, const unsigned int& portNum, const bool isWifiFlag) : hostname(host), port(portNum), isWifi(isWifiFlag)
+Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
 {
+	this->hostname = hostname;
+	this->port = port;
+	this->isWifi = isWifi;
 	this->serverAddress = nullptr;
 	this->socketDescriptor = INVALID_SOCKET;
 
@@ -68,8 +71,11 @@ Socket::Socket(const std::string& host, const unsigned int& portNum, const bool 
 
 #elif __linux__
 // Throws SocketError when can't connect to server
-Socket::Socket(const std::string& host, const unsigned int& portNum, const bool isWifiFlag) : hostname(host), port(portNum), isWifi(isWifiFlag)
+Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
 {
+	this->hostname = hostname;
+	this->port = port;
+	this->isWifi = isWifi;
 	this->serverAddress = { 0 };
 	this->bluetoothAddress = { 0 };
 
@@ -95,16 +101,18 @@ Socket::Socket(const std::string& host, const unsigned int& portNum, const bool 
 
 #ifdef _WIN32
 
-Socket::Socket(const SOCKET& socket, const bool isWifiFlag) : socketDescriptor(socket), isWifi(isWifiFlag), port(0), hostname("")
+Socket::Socket(const SOCKET& socketDescriptor, const bool isWifi)
 {
-	// Nothing to do
+	this->socketDescriptor = socketDescriptor;
+	this->isWifi = isWifi;
 }
 
 #elif __linux__
 
-Socket::Socket(const int& socket, const bool isWifiFlag) : socketDescriptor(socket), isWifi(isWifiFlag), port(0), hostname("")
+Socket::Socket(const int& socketDescriptor, const bool isWifi)
 {
-	// Nothing to do
+	this->socketDescriptor = socketDescriptor;
+	this->isWifi = isWifi;
 }
 
 #endif
@@ -189,7 +197,7 @@ Socket::~Socket()
 void Socket::constructBluetoothSocket()
 {
 	throw SocketError("Bluetooth servers are not supported in Windows.");
-	
+
 	socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
 	if (socketDescriptor == INVALID_SOCKET)
