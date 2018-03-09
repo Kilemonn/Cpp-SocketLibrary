@@ -15,7 +15,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
-// #include <ws2bth.h>
+#include <windows.h>
+#include <ws2bth.h>
 
 #include <windows.h>
 
