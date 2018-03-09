@@ -1,2 +1,122 @@
 # Cpp-SocketLibrary
-C++ socket library.
+
+## C++ Wifi and Bluetooth socket library.
+
+### Set up:
+
+#### Linux
+
+- Run make
+
+#### Windows
+
+- Manual compilation
+- Required libraries:
+	- windows.h
+	- winsock2.h
+	- ws2tcpip.h
+	- iphlpapi.h
+
+### Usage:
+
+- Create a new Wifi Socket:
+
+```cpp
+	Socket socket("127.0.0.1", 52123, Socket::WIFI);
+```
+
+- Create a new Wifi ServerSocket:
+
+```cpp
+	ServerSocket server(ServerSocket::WIFI);
+```
+
+### Upcoming Features:
+
+- Adding to namespace
+- UDP protocol support
+- Bluetooth support on Windows
+
+
+## API Documentation
+
+### Socket
+
+#### Socket(const std::string&, const int&, bool)
+
+- A constructor which will immediately attempt to connect to the host via the port specified.
+- **std::string** - The hostname of the device to connect to.
+- **int** - The port number.
+- **bool** - Determines whether this socket is a wifi or bluetooth socket. *true* is Wifi, *false* is Bluetooth. (You can use Socket::Wifi and Socket::Bluetooth to get the expect values).
+- **Throws** SocketError - If the Socket is unable to be instanciated or connect to server.
+- **Throws** BindingError - If the Socket is unable to bind to the specific port specified.
+
+
+#### Socket(const SOCKET&/int&, bool)
+
+- A constructor used by ServerSocket to create and copy of a currently connected socket.
+- **SOCKET/int** - Is the file descriptor for the connection.
+- **bool** - Determines whether this socket is a wifi or bluetooth socket. *true* is Wifi, *false* is Bluetooth. (You can use Socket::Wifi and Socket::Bluetooth to get the expect values).
+
+
+#### Socket(const Socket&)
+
+- A copy constructor for the Socket class. Will copy the object members and assume that it is already connected to the endpoint.
+- **Socket** - A Socket object to be copied.
+
+
+#### Socket& operator=(const Socket&)
+
+- An assignment operator overload for the Socket object. Will close the current instance of Socket then copy the members.
+- **Socket** - A Socket object to be copied.
+
+
+#### ~Socket()
+
+- Socket object destructor. Ensures that the connection is closed before the resources are freed.
+
+
+#### void close()
+
+- Closes the existing connection. If no connection is open, then it will do nothing.
+
+
+#### bool ready() const
+
+- Determines whether the stream has data to read.
+- **Returns** - *true* if there is data to read and *false* otherwise.
+
+
+#### bool send(const std::string, int flag = 0) const
+
+- Sends data as a std::string to the receiver.
+- **std::string** - The message to send to the receiver.
+- **int** - A flag value to specify additional behaviour for this message. *Defaults to 0 if no argument is passed*.
+- **Returns** - *true* if the message was sent without error, else *false*.
+
+
+#### char get() const
+
+- Reads and returns a single character from the reciever.
+- **Returns** - The character read.
+
+
+#### std::string receiveAmount(const unsigned int) const
+
+- Reads in a specific amount of character from the input stream and returns them as a std::string.
+- **unsigned int** - The amount of characters to read from the sender.
+- **Returns** - A std::string of the specified size with the respective character read in. This method will exit early if there is no more data to send or the other party closes the connection.
+
+
+#### std::string receiveToDelimiter(const char) const
+
+- Reads from the sender until the passed in delimiter is reached. The delimiter is discarded and the characters preceeding it are returned as a std::string.
+- **char** - The delimiter that will be used to mark the end of the read in process.
+- **Returns** - A std::string with all of the characters preceeding the delimiter.
+
+
+#### static std::vector `<std::pair``<std::string, std::string >``>` scanDevices(unsigned int duration = 5)
+
+- Scans for bluetooth devices and returns a std::vector<std::pair<std::string, std::string>> of the device names and addresses.
+- **unsigned int** - The duration for which the scan should take to discover nearby bluetooth devices.
+- **Returns** - A std::vector<std::pair<std::string, std::string>> where .first is the devices address, and .second is the device name.
