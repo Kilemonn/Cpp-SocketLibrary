@@ -115,8 +115,53 @@
 - **Returns** - A std::string with all of the characters preceeding the delimiter.
 
 
-#### static std::vector `<std::pair``<std::string, std::string >``>` scanDevices(unsigned int duration = 5)
+#### static std::vector &lt;std::pair&lt;std::string, std::string >> scanDevices(unsigned int duration = 5)
 
-- Scans for bluetooth devices and returns a std::vector<std::pair<std::string, std::string>> of the device names and addresses.
+- Scans for bluetooth devices and returns a std::vector&lt;std::pair&lt;std::string, std::string>> of the device names and addresses.
 - **unsigned int** - The duration for which the scan should take to discover nearby bluetooth devices.
-- **Returns** - A std::vector<std::pair<std::string, std::string>> where .first is the devices address, and .second is the device name.
+- **Returns** - A std::vector&lt;std::pair&lt;std::string, std::string>> where .first is the devices address, and .second is the device name.
+
+
+### ServerSocket
+
+#### ServerSocket(const bool, const unsigned int& = 0)
+
+- ServerSocket constructor. Creates a wifi/bluetooth ServerSocket and begins listening for connections.
+- **bool** - Determines whether this ServerSocket is a wifi or bluetooth ServerSocket. *true* is Wifi, *false* is Bluetooth. (You can use Socket::Wifi and Socket::Bluetooth to get the expect values).
+- **unsigned int** - The port number for this server to communicate through. If value is not passed in a random, available port number will be assigned.
+- **Throws** SocketError - If the ServerSocket is unable to be instanciated or begin listening.
+- **Throws** BindingError - If the ServerSocket is unable to bind to the specific port specified.
+
+
+#### ServerSocket(const ServerSocket&)
+
+- ServerSocket copy constructor.
+- **ServerSocket** - The ServerSocket object to be copied.
+
+
+#### ServerSocket& operator=(const ServerSocket&)
+
+- Overloaded assignment operator for the ServerSocket class.
+- **ServerSocket** - The ServerSocket object to be copied.
+
+
+#### ~ServerSocket()
+
+- A ServerSocket destructor, ensures the connection is closed before releasing the resources.
+
+
+#### Socket accept()
+
+- Used to accept a connection on the specific port. Upon accepting a new connection it will return a Socket object used to communicate with the receiver.
+- **Returns** - Socket object of the receiver who has just connected to the ServerSocket.
+
+
+#### unsigned int getPort() const
+
+- Used to get the port number that the ServerSocket is listening on.
+- **Returns** - An unsigned int of the port number that the ServerSocket is listening on.
+
+
+#### void close()
+
+- Closes the existing connection. If no connection is open, then it will do nothing.
