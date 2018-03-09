@@ -1,6 +1,6 @@
 # Cpp-SocketLibrary
 
-## C++ Wifi and Bluetooth socket library.
+A ServerSocket and Socket library used to support both Wifi and Bluetooth communication. Currently is only supporting Linux and Windows.
 
 ### Set up:
 
@@ -36,11 +36,12 @@
 - Adding to namespace
 - UDP protocol support
 - Bluetooth support on Windows
+- MacOS support
 
 
 ## API Documentation
 
-### Socket
+### Socket - API
 
 #### Socket(const std::string&, const int&, bool)
 
@@ -122,7 +123,7 @@
 - **Returns** - A std::vector&lt;std::pair&lt;std::string, std::string>> where .first is the devices address, and .second is the device name.
 
 
-### ServerSocket
+### ServerSocket - API
 
 #### ServerSocket(const bool, const unsigned int& = 0)
 
