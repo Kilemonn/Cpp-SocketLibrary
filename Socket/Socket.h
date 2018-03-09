@@ -18,9 +18,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
-// #include <ws2bth.h>
-
 #include <windows.h>
+#include <ws2bth.h>
 
 #elif __linux__
 
@@ -82,7 +81,7 @@ class Socket
 		
 		void close();
 		bool ready() const;
-		bool send(const std::string, int severity = 0) const;
+		bool send(const std::string, int flag = 0) const;
 		char get() const;
 		std::string receiveAmount(const unsigned int) const;
 		std::string receiveToDelimiter(const char) const;

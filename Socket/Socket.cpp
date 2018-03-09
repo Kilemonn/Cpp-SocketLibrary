@@ -18,9 +18,8 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
-// #include <ws2bth.h>
-
 #include <windows.h>
+#include <ws2bth.h>
 
 #elif __linux__
 
@@ -306,9 +305,9 @@ void Socket::close()
 	#endif
 }
 
-bool Socket::send(const std::string message, int serverity) const
+bool Socket::send(const std::string message, int flag) const
 {
-	if (::send(socketDescriptor, message.c_str(), message.size(), serverity) == -1) 
+	if (::send(socketDescriptor, message.c_str(), message.size(), flag) == -1) 
 	{
 		return false;
 	}
