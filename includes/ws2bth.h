@@ -18,7 +18,7 @@ Notes:
 
 #ifndef __WS2BTH__H
 #define __WS2BTH__H
-#include <winapifamily.h>
+#include "winapifamily.h"
 
 #pragma region Desktop Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
@@ -31,7 +31,7 @@ Notes:
 
 #if (NTDDI_VERSION >= NTDDI_WINXPSP2)
 
-#include <bthdef.h>
+#include "bthdef.h"
 
 #include <pshpack1.h>
 

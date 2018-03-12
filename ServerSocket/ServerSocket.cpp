@@ -20,6 +20,7 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
+#include "../includes/guiddef.h"
 #include "../includes/ws2bth.h"
 
 #elif __linux__
@@ -191,7 +192,7 @@ ServerSocket::~ServerSocket()
 {
     #ifdef _WIN32
 
-    WSACleanup();
+    // WSACleanup();
     freeaddrinfo(serverAddress);
 
     #endif
@@ -216,10 +217,9 @@ void ServerSocket::constructSocket()
 
 void ServerSocket::constructBluetoothSocket()
 {
-    throw SocketError("Bluetooth servers are not supported in Windows.");
+    // throw SocketError("Bluetooth servers are not supported in Windows.");
 
     SOCKADDR_BTH bluetoothAddress;
-    this->socketSize = sizeof(SOCKADDR_BTH);
 
     socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
@@ -231,7 +231,7 @@ void ServerSocket::constructBluetoothSocket()
     bluetoothAddress.addressFamily = AF_BTH;
     bluetoothAddress.port = this->port;
 
-    if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, this->socketSize ) == SOCKET_ERROR) 
+    if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
     {
         throw BindingError("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
     }

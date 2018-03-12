@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <thread>
+#include <exception>
 #include <stdexcept>
 
 #include "Socket/Socket.h"
@@ -28,12 +29,24 @@ int main()
 
 		testWifi();
 
+		std::cout << "WIFI TEST COMPLETE\n";
+
 		testBluetooth();
 	}
 	catch (const SocketError& se)
 	{
 		std::cout << se.what() << std::endl;
 	}
+	catch (...)
+	{
+		std::cout << "CAUGHT IT" << std::endl;
+	}
+
+	#ifdef _WIN32
+
+    WSACleanup();
+
+    #endif
 
 	return 0;
 }
@@ -77,7 +90,7 @@ void testWifi()
 
 	client.send("DAMN SON!");
 
-	client.send("HI");
+	// client.send("HI");
 
 	t1.join();
 }
@@ -98,11 +111,11 @@ void wifiFunction(unsigned int const & p)
 	received = socket.receiveToDelimiter('!');
 	std::cout << "RECIEVED: " << received << std::endl;
 	
-	while (socket.ready())
+	/*while (socket.ready())
 	{
 		char c = socket.get();
 		std::cout << "Char c: " << c << "\n";	
-	}
+	}*/
 }
 
 void testBluetooth()

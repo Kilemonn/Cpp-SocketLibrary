@@ -19,6 +19,7 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
+#include "../includes/guiddef.h"
 #include "../includes/ws2bth.h"
 
 #elif __linux__
@@ -182,7 +183,7 @@ Socket::~Socket()
 {
 	#ifdef _WIN32
 
-	WSACleanup();
+	// WSACleanup();
 	freeaddrinfo(serverAddress);
 
 	#endif
@@ -195,7 +196,7 @@ Socket::~Socket()
 
 void Socket::constructBluetoothSocket()
 {
-	throw SocketError("Bluetooth servers are not supported in Windows.");
+	// throw SocketError("Bluetooth sockets are not supported in Windows.");
 
 	socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
@@ -205,10 +206,10 @@ void Socket::constructBluetoothSocket()
 	}
 
 	bluetoothAddress.addressFamily = AF_BTH;
-    bluetoothAddress.btAddr = this->hostname;
+    bluetoothAddress.btAddr = std::stoull(this->hostname);
     bluetoothAddress.port = this->port;
 
-    if (connect(LocalSocket, (struct sockaddr *) &SockAddrBthServer, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
+    if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
     {
     	throw SocketError("Error connecting to Bluetooth server");
     }
@@ -322,7 +323,7 @@ bool Socket::send(const std::string message, int flag) const
 
 bool Socket::ready() const
 {
-	throw SocketError("Bluetooth sockets are not yet supported on windows");
+	throw SocketError("Socket::ready() is not supported on windows");
 }
 
 #elif __linux__
