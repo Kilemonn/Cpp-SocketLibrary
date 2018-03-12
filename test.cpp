@@ -29,7 +29,7 @@ int main()
 
 		testWifi();
 
-		std::cout << "WIFI TEST COMPLETE\n";
+		std::cout << "\nWIFI TEST COMPLETE\n";
 
 		testBluetooth();
 	}
@@ -53,7 +53,7 @@ int main()
 
 void doScan()
 {
-	std::vector<std::pair<std::string, std::string> > devices = Socket::scanDevices(1);
+	std::vector<std::pair<std::string, std::string> > devices = kt::Socket::scanDevices(1);
 
 	for (unsigned int i = 0; i < devices.size(); i++)
 	{
@@ -65,12 +65,12 @@ void testWifi()
 {
 	std::cout << "\nTESTING WIFI\n";
 
-	ServerSocket server(ServerSocket::WIFI);
+	kt::ServerSocket server(kt::ServerSocket::WIFI);
 
 	unsigned int p = server.getPort();
 	std::thread t1(wifiFunction, p);
 
-	Socket client(server.accept());
+	kt::Socket client(server.accept());
 	std::cout << "Accepted\n";
 
 	if (client.send("HEY\n"))
@@ -97,7 +97,7 @@ void testWifi()
 
 void wifiFunction(unsigned int const & p)
 {
-	Socket socket("127.0.0.1", p, Socket::WIFI);
+	kt::Socket socket("127.0.0.1", p, kt::Socket::WIFI);
 	std::cout << "Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');
@@ -122,12 +122,12 @@ void testBluetooth()
 {
 	std::cout << "\nTESTING BLUETOOTH\n";
 
-	ServerSocket server(ServerSocket::BLUETOOTH, 3);
+	kt::ServerSocket server(kt::ServerSocket::BLUETOOTH, 3);
 
 	unsigned int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);
 
-	Socket client(server.accept());
+	kt::Socket client(server.accept());
 	std::cout << "(BT) Accepted\n";
 
 	if (client.send("HEY\n"))
@@ -147,7 +147,7 @@ void testBluetooth()
 
 void bluetoothFunction(unsigned int const & p)
 {
-	Socket socket(bluetoothLocalAddress, p, Socket::BLUETOOTH);
+	kt::Socket socket(bluetoothLocalAddress, p, kt::Socket::BLUETOOTH);
 	std::cout << "(BT) Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');

@@ -33,61 +33,65 @@
 
 #endif // _WIN32 / __linux__
 
-class Socket
+namespace kt
 {
-	private:
-		std::string hostname;
-		unsigned int port;
-		bool isWifi;
+	class Socket
+	{
+		private:
+			std::string hostname;
+			unsigned int port;
+			bool isWifi;
 
-		#ifdef _WIN32
+			#ifdef _WIN32
 
-		// Wifi Properties
-		struct addrinfo *serverAddress;
-        struct addrinfo hints;
-    	SOCKET socketDescriptor;
+			// Wifi Properties
+			struct addrinfo *serverAddress;
+	        struct addrinfo hints;
+	    	SOCKET socketDescriptor;
 
-    	SOCKADDR_BTH bluetoothAddress;
+	    	SOCKADDR_BTH bluetoothAddress;
 
-		#elif __linux__
+			#elif __linux__
 
-		int socketDescriptor;
-		struct sockaddr_in serverAddress; // For Wifi
-		struct sockaddr_rc bluetoothAddress; // For Bluetooth
+			int socketDescriptor;
+			struct sockaddr_in serverAddress; // For Wifi
+			struct sockaddr_rc bluetoothAddress; // For Bluetooth
 
-		#endif // _WIN32 / __linux__
+			#endif // _WIN32 / __linux__
 
-		void constructBluetoothSocket();
-		void constructWifiSocket();
+			void constructBluetoothSocket();
+			void constructWifiSocket();
 
-	public:
-		const static bool WIFI = true;
-		const static bool BLUETOOTH = false;
+		public:
+			const static bool WIFI = true;
+			const static bool BLUETOOTH = false;
 
-		Socket(const std::string&, const unsigned int&, const bool); // Create Wi-Fi/Bluetooth Socket
-		
-		#ifdef _WIN32
-		
-		Socket(const SOCKET&, const bool);
+			Socket(const std::string&, const unsigned int&, const bool); // Create Wi-Fi/Bluetooth Socket
+			
+			#ifdef _WIN32
+			
+			Socket(const SOCKET&, const bool);
 
-		#elif __linux__
+			#elif __linux__
 
-		Socket(const int&, const bool); // Construct Socket from just descriptor
+			Socket(const int&, const bool); // Construct Socket from just descriptor
 
-		#endif
+			#endif
 
-		Socket(const Socket&); // Copy Constructor
-		Socket& operator=(const Socket&);
-		~Socket();
-		
-		void close();
-		bool ready() const;
-		bool send(const std::string, int flag = 0) const;
-		char get() const;
-		std::string receiveAmount(const unsigned int) const;
-		std::string receiveToDelimiter(const char) const;
+			Socket(const Socket&); // Copy Constructor
+			Socket& operator=(const Socket&);
+			~Socket();
+			
+			void close();
+			bool ready() const;
+			bool send(const std::string, int flag = 0) const;
+			char get() const;
+			std::string receiveAmount(const unsigned int) const;
+			std::string receiveToDelimiter(const char) const;
 
-		static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int duration = 5);
-};
+			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int duration = 5);
+	};
+
+} // End namespace kt 
 
 #endif //_SOCKET_H__

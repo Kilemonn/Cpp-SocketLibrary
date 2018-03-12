@@ -28,44 +28,48 @@
 
 #endif
 
-class ServerSocket
+namespace kt
 {
-	private:
-		unsigned int port;
-		bool isWifi;
+	class ServerSocket
+	{
+		private:
+			unsigned int port;
+			bool isWifi;
 
-		#ifdef _WIN32
+			#ifdef _WIN32
 
-		// Wifi properties
-		struct addrinfo *serverAddress;
-        struct addrinfo hints;
-        SOCKADDR_BTH bluetoothAddress;
-		SOCKET socketDescriptor;
+			// Wifi properties
+			struct addrinfo *serverAddress;
+	        struct addrinfo hints;
+	        SOCKADDR_BTH bluetoothAddress;
+			SOCKET socketDescriptor;
 
-		#elif __linux__
+			#elif __linux__
 
-		int socketDescriptor;
-		struct sockaddr_in serverAddress;
-    	socklen_t socketSize;
+			int socketDescriptor;
+			struct sockaddr_in serverAddress;
+	    	socklen_t socketSize;
 
-    	#endif
+	    	#endif
 
-    	void constructSocket();
-    	void constructBluetoothSocket();
-		void constructWifiSocket();
+	    	void constructSocket();
+	    	void constructBluetoothSocket();
+			void constructWifiSocket();
 
-	public:
-		const static bool WIFI = true;
-		const static bool BLUETOOTH = false;
+		public:
+			const static bool WIFI = true;
+			const static bool BLUETOOTH = false;
 
-		ServerSocket(const bool, const unsigned int& = 0);
-		ServerSocket(const ServerSocket&);
-		ServerSocket& operator=(const ServerSocket&);
-		~ServerSocket();
+			ServerSocket(const bool, const unsigned int& = 0);
+			ServerSocket(const ServerSocket&);
+			ServerSocket& operator=(const ServerSocket&);
+			~ServerSocket();
 
-		Socket accept();
-		unsigned int getPort() const;
-		void close();
-};
+			Socket accept();
+			unsigned int getPort() const;
+			void close();
+	};
+
+} // End namespace kt
 
 #endif // _SERVER_SOCKET_H__
