@@ -66,6 +66,7 @@ namespace kt
 			const static bool WIFI = true;
 			const static bool BLUETOOTH = false;
 
+			Socket();
 			Socket(const std::string&, const unsigned int&, const bool); // Create Wi-Fi/Bluetooth Socket
 			
 			#ifdef _WIN32

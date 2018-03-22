@@ -36,6 +36,11 @@
 
 namespace kt
 {
+	Socket::Socket()
+	{
+		//Nothing to do
+	}
+
 	#ifdef _WIN32
 
 	Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
