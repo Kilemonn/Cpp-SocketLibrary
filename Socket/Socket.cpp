@@ -189,8 +189,7 @@ namespace kt
 	Socket::~Socket()
 	{
 		#ifdef _WIN32
-
-		// WSACleanup();
+		
 		freeaddrinfo(serverAddress);
 
 		#endif
@@ -428,18 +427,9 @@ namespace kt
 		return std::move(data.substr(0, (data.size() - 1)));
 	}
 
-	#ifdef _WIN32
-
 	std::string Socket::receiveAll() const
 	{
-		throw SocketError("Not supported for Windows platform yet.");
-	}
-
-	#elif __linux__
-
-	std::string Socket::receiveAll() const
-	{
-		std::string result;
+		std::string result = "";
 		result.reserve(1024);
 
 		while (this->ready())
@@ -448,8 +438,6 @@ namespace kt
 		}
 		return std::move(result);
 	}
-
-	#endif
 
 	#ifdef _WIN32
 
