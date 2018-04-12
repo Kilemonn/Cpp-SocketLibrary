@@ -88,6 +88,9 @@ void testWifi()
 
 		client.send("HI");
 
+		res = client.receiveAll();
+		std::cout << "RES: " << res << std::endl;
+
 		t1.join();
 	}
 	catch (const SocketError& se)
@@ -129,6 +132,8 @@ void wifiClient(unsigned int const & p)
 		char c = socket.get();
 		std::cout << "Char c: " << c << "\n";	
 	}
+
+	socket.send("TESTING wifi stuff!");
 }
 
 void testBluetooth()

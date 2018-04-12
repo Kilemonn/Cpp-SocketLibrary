@@ -325,16 +325,6 @@ namespace kt
 		}
 	}
 
-
-	#ifdef _WIN32
-
-	bool Socket::ready() const
-	{
-		throw SocketError("Socket::ready() is not supported on windows");
-	}
-
-	#elif __linux__
-
 	bool Socket::ready() const
 	{
 		fd_set sready;
@@ -354,8 +344,6 @@ namespace kt
 			return false;
 		}
 	}
-
-	#endif
 
 	char Socket::get() const
 	{
