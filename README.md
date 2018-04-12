@@ -115,6 +115,11 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 - **char** - The delimiter that will be used to mark the end of the read in process.
 - **Returns** - A std::string with all of the characters preceeding the delimiter.
 
+#### std::string receiveAll() const
+
+- Reads data while the stream is *ready()*.
+- **Returns** - A std::string containing the characters read while the stream was *ready()*.
+
 
 #### static std::vector &lt;std::pair&lt;std::string, std::string >> scanDevices(unsigned int duration = 5)
 
