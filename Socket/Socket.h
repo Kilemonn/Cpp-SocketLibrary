@@ -84,7 +84,7 @@ namespace kt
 			~Socket();
 			
 			void close();
-			bool ready() const;
+			bool ready(unsigned long = 0) const;
 			bool send(const std::string, int flag = 0) const;
 			char get() const;
 			std::string receiveAmount(const unsigned int) const;

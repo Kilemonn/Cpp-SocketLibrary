@@ -82,9 +82,10 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 - Closes the existing connection. If no connection is open, then it will do nothing.
 
 
-#### bool ready() const
+#### bool ready(unsigned long = 0) const
 
 - Determines whether the stream has data to read.
+- **unsigned long** - The timeout duration in *micro seconds*. Default is zero.
 - **Returns** - *true* if there is data to read and *false* otherwise.
 
 

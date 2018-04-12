@@ -324,17 +324,18 @@ namespace kt
 		}
 	}
 
-	bool Socket::ready() const
+	bool Socket::ready(unsigned long timeout) const
 	{
 		fd_set sready;
-		struct timeval nowait;
+		struct timeval timeOutVal;
+		timeOutVal.tv_usec = timeout;
 
 		FD_ZERO(&sready);
 		FD_SET((unsigned int)this->socketDescriptor, &sready);
-		memset((char*) &nowait, 0, sizeof(nowait));
+		memset((char*) &timeOutVal, 0, sizeof(timeOutVal));
 
-		select(this->socketDescriptor + 1, &sready, nullptr, nullptr, &nowait);
-		if (FD_ISSET(this->socketDescriptor, &sready))
+		int res = select(this->socketDescriptor + 1, &sready, nullptr, nullptr, &timeOutVal);
+		if (FD_ISSET(this->socketDescriptor, &sready) || res > 0)
 		{
 			return true;
 		}
@@ -429,10 +430,11 @@ namespace kt
 
 	std::string Socket::receiveAll() const
 	{
+		const unsigned long oneHundredMS = 100000; // 1 second in micro seconds
 		std::string result = "";
 		result.reserve(1024);
 
-		while (this->ready())
+		while (this->ready(oneHundredMS))
 		{
 			result += this->get();
 		}
