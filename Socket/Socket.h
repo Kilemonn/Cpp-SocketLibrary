@@ -89,6 +89,7 @@ namespace kt
 			char get() const;
 			std::string receiveAmount(const unsigned int) const;
 			std::string receiveToDelimiter(const char) const;
+			std::string receiveAll() const;
 
 			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int duration = 5);
 	};

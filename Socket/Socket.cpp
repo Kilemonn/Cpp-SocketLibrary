@@ -364,6 +364,11 @@ namespace kt
 
 	std::string Socket::receiveAmount(const unsigned int amountToReceive) const
 	{
+		if (amountToReceive == 0)
+		{
+			return "";
+		}
+
 		char data[(amountToReceive + 1)];
 		unsigned int counter = 0;
 		int flag = 0;
@@ -391,12 +396,17 @@ namespace kt
 			result += std::string(data);
 			counter += flag;
 		}
-		return std::string(result);
+		return std::move(std::string(result));
 	}
 
 	// Do not pass in '\0' as a delimiter
 	std::string Socket::receiveToDelimiter(const char delimiter) const
 	{
+		if (delimiter == '\0')
+		{
+			throw SocketError("The null terminator '\0' is an invalid delimiter.");
+		}
+
 		std::string data = "";
 		char temp[2];
 		int flag;
@@ -427,8 +437,31 @@ namespace kt
 			data += temp[0];
 		} while (temp[0] != delimiter);
 
-		return data.substr(0, (data.size() - 1));
+		return std::move(data.substr(0, (data.size() - 1)));
 	}
+
+	#ifdef _WIN32
+
+	std::string Socket::receiveAll() const
+	{
+		throw SocketError("Not supported for Windows platform yet.");
+	}
+
+	#elif __linux__
+
+	std::string Socket::receiveAll() const
+	{
+		std::string result;
+		result.reserve(1024);
+
+		while (this->ready())
+		{
+			result += this->get();
+		}
+		return std::move(result);
+	}
+
+	#endif
 
 	#ifdef _WIN32
 
