@@ -120,6 +120,7 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 
 - Reads data while the stream is *ready()*.
 - **Returns** - A std::string containing the characters read while the stream was *ready()*.
+- **NOTE:** This method can take a long time to execute. If you know the desired size and/or a delimiter, the other methods may be more fitting. This method may take some time for the receiver to retreive the whole message due to the lack of stream flushing through sockets.
 
 
 #### static std::vector &lt;std::pair&lt;std::string, std::string >> scanDevices(unsigned int duration = 5)

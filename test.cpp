@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <fstream>
 #include <thread>
 #include <exception>
 #include <stdexcept>
@@ -86,7 +87,19 @@ void testWifi()
 
 		client.send("DAMN SON!");
 
-		client.send("Testing Wifi Stuff");
+		// client.send("Testing Wifi Stuff");
+		std::ifstream in("Test.txt");
+		std::string temp;
+		if (in.is_open() && in.good())
+		{
+			while (!in.eof())
+			{
+				std::getline(in, temp);
+				client.send(temp);
+			}
+		}
+		in.close();
+		std::cout << "SENT ALL" << std::endl;
 
 		t1.join();
 	}
