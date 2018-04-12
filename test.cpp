@@ -33,7 +33,7 @@ int main()
 
 	#ifdef _WIN32
 
-    WSACleanup();
+    // WSACleanup();
 
     #endif
 
@@ -86,19 +86,18 @@ void testWifi()
 
 		client.send("DAMN SON!");
 
-		client.send("HI");
-
-		res = client.receiveAll();
-		std::cout << "RES: " << res << std::endl;
+		client.send("Testing Wifi Stuff");
 
 		t1.join();
 	}
 	catch (const SocketError& se)
 	{
 		std::cout << se.what() << std::endl;
+		error = true;
 	}
 	catch (...)
 	{
+		error = true;
 		std::cout << "CAUGHT IT" << std::endl;
 	}
 
@@ -127,13 +126,8 @@ void wifiClient(unsigned int const & p)
 	assert(received[received.size() - 1] != delimiter);
 	std::cout << "RECIEVED: " << received << std::endl;
 	
-	while (socket.ready())
-	{
-		char c = socket.get();
-		std::cout << "Char c: " << c << "\n";	
-	}
-
-	socket.send("TESTING wifi stuff!");
+	received = socket.receiveAll();
+	std::cout << "RECIEVED: " << received << std::endl;
 }
 
 void testBluetooth()
