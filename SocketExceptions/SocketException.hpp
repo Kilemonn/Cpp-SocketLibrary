@@ -5,10 +5,10 @@
 #include <iostream>
 #include <stdexcept>
 
-class SocketError : public std::runtime_error
+class SocketException : public std::runtime_error
 {
 	public:
-		SocketError(const std::string& s) : std::runtime_error(s) {}
+		SocketException(const std::string& s) : std::runtime_error(s) {}
 };
 
 #endif // _SOCKET_ERROR_HPP__

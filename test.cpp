@@ -7,8 +7,8 @@
 
 #include "Socket/Socket.h"
 #include "ServerSocket/ServerSocket.h"
-#include "SocketExceptions/SocketError.hpp"
-#include "SocketExceptions/BindingError.hpp"
+#include "SocketExceptions/SocketException.hpp"
+#include "SocketExceptions/BindingException.hpp"
 
 void wifiClient(unsigned int const &);
 void bluetoothFunction(unsigned int const &);
@@ -90,7 +90,7 @@ void testWifi()
 
 		t1.join();
 	}
-	catch (const SocketError& se)
+	catch (const SocketException& se)
 	{
 		std::cout << se.what() << std::endl;
 		error = true;

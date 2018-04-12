@@ -49,8 +49,8 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 - **std::string** - The hostname of the device to connect to.
 - **int** - The port number.
 - **bool** - Determines whether this socket is a wifi or bluetooth socket. *true* is Wifi, *false* is Bluetooth. (You can use Socket::Wifi and Socket::Bluetooth to get the expect values).
-- **Throws** SocketError - If the Socket is unable to be instanciated or connect to server.
-- **Throws** BindingError - If the Socket is unable to bind to the specific port specified.
+- **Throws** SocketException - If the Socket is unable to be instanciated or connect to server.
+- **Throws** BindingException - If the Socket is unable to bind to the specific port specified.
 
 
 #### Socket(const SOCKET&/int&, bool)
@@ -136,8 +136,8 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 - ServerSocket constructor. Creates a wifi/bluetooth ServerSocket and begins listening for connections.
 - **bool** - Determines whether this ServerSocket is a wifi or bluetooth ServerSocket. *true* is Wifi, *false* is Bluetooth. (You can use Socket::Wifi and Socket::Bluetooth to get the expect values).
 - **unsigned int** - The port number for this server to communicate through. If value is not passed in a random, available port number will be assigned.
-- **Throws** SocketError - If the ServerSocket is unable to be instanciated or begin listening.
-- **Throws** BindingError - If the ServerSocket is unable to bind to the specific port specified.
+- **Throws** SocketException - If the ServerSocket is unable to be instanciated or begin listening.
+- **Throws** BindingException - If the ServerSocket is unable to bind to the specific port specified.
 
 
 #### ServerSocket(const ServerSocket&)

@@ -6,12 +6,12 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "SocketError.hpp"
+#include "SocketException.hpp"
 
-class BindingError : public SocketError
+class BindingException : public SocketException
 {
 	public:
-		BindingError(const std::string& s) : SocketError(s) {}
+		BindingException(const std::string& s) : SocketException(s) {}
 };
 
 #endif // _BINDING_ERROR_HPP__

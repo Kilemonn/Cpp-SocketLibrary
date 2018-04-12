@@ -1,6 +1,6 @@
 
 #include "Socket.h"
-#include "../SocketExceptions/SocketError.hpp"
+#include "../SocketExceptions/SocketException.hpp"
 
 #include <iostream>
 #include <vector>
@@ -55,7 +55,7 @@ namespace kt
 		int res = WSAStartup(MAKEWORD(2,2), &wsaData);
 	    if (res != 0)
 	    {
-	    	throw SocketError("WSAStartup Failed. " + std::to_string(res));
+	    	throw SocketException("WSAStartup Failed. " + std::to_string(res));
 	    }
 
 	    if (isWifi)
@@ -77,7 +77,7 @@ namespace kt
 	}
 
 	#elif __linux__
-	// Throws SocketError when can't connect to server
+	// Throws SocketException when can't connect to server
 	Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
 	{
 		this->hostname = hostname;
@@ -189,7 +189,7 @@ namespace kt
 	Socket::~Socket()
 	{
 		#ifdef _WIN32
-		
+
 		freeaddrinfo(serverAddress);
 
 		#endif
@@ -202,13 +202,13 @@ namespace kt
 
 	void Socket::constructBluetoothSocket()
 	{
-		// throw SocketError("Bluetooth sockets are not supported in Windows.");
+		// throw SocketException("Bluetooth sockets are not supported in Windows.");
 
 		socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
 		if (socketDescriptor == INVALID_SOCKET)
 		{
-			throw SocketError("Error establishing Bluetooth socket...");
+			throw SocketException("Error establishing Bluetooth socket...");
 		}
 
 		bluetoothAddress.addressFamily = AF_BTH;
@@ -217,7 +217,7 @@ namespace kt
 
 	    if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
 	    {
-	    	throw SocketError("Error connecting to Bluetooth server");
+	    	throw SocketException("Error connecting to Bluetooth server");
 	    }
 	}
 
@@ -229,7 +229,7 @@ namespace kt
 
 		if (socketDescriptor == -1)
 	    {
-	    	throw SocketError("Error establishing Bluetooth socket...");
+	    	throw SocketException("Error establishing Bluetooth socket...");
 	    }
 
 	    bluetoothAddress.rc_family = AF_BLUETOOTH;
@@ -238,7 +238,7 @@ namespace kt
 
 	   	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
 	   	{
-	   		throw SocketError("Error connecting to Bluetooth server");
+	   		throw SocketException("Error connecting to Bluetooth server");
 		}
 	}
 
@@ -258,19 +258,19 @@ namespace kt
 
 		if (res != 0) 
 		{
-		    throw SocketError("Unable to retrieving host address.");
+		    throw SocketException("Unable to retrieving host address.");
 		}
 
 		socketDescriptor = socket(serverAddress->ai_family, serverAddress->ai_socktype, serverAddress->ai_protocol);
 		if (socketDescriptor == INVALID_SOCKET) 
 		{
-		    throw SocketError("Error establishing Wifi socket.");
+		    throw SocketException("Error establishing Wifi socket.");
 		}
 
 	    res = connect(socketDescriptor, serverAddress->ai_addr, (int)serverAddress->ai_addrlen);
 		if(res == SOCKET_ERROR)
 		{
-			throw SocketError("Error connecting to Wifi server.");
+			throw SocketException("Error connecting to Wifi server.");
 		}
 	}
 
@@ -283,7 +283,7 @@ namespace kt
 
 	    if (socketDescriptor == -1)
 	    {
-	    	throw SocketError("Error establishing Wifi socket.");
+	    	throw SocketException("Error establishing Wifi socket.");
 	    }
 
 	    bzero((char *) &serverAddress, sizeof(serverAddress));
@@ -293,7 +293,7 @@ namespace kt
 
 		if (connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 		{
-			throw SocketError("Error connecting to Wifi server.");
+			throw SocketException("Error connecting to Wifi server.");
 		}
 	}
 
@@ -391,7 +391,7 @@ namespace kt
 	{
 		if (delimiter == '\0')
 		{
-			throw SocketError("The null terminator '\0' is an invalid delimiter.");
+			throw SocketException("The null terminator '\0' is an invalid delimiter.");
 		}
 
 		std::string data = "";
@@ -443,7 +443,7 @@ namespace kt
 
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
-		throw SocketError("Not supported for Windows platform yet.");
+		throw SocketException("Not supported for Windows platform yet.");
 	}
 
 	#elif __linux__
@@ -462,7 +462,7 @@ namespace kt
 	    tempSocket = hci_open_dev( ownId );
 	    if (ownId < 0 || tempSocket < 0)
 	    {
-	        throw SocketError("Error opening Bluetooth socket for scanning...");
+	        throw SocketException("Error opening Bluetooth socket for scanning...");
 	    }
 
 	    flags = IREQ_CACHE_FLUSH;
@@ -472,7 +472,7 @@ namespace kt
 	    if( numberOfResponses < 0 )
 	    {
 	    	delete ii;
-	    	throw SocketError("Error scanning for bluetooth devices");
+	    	throw SocketException("Error scanning for bluetooth devices");
 	    }
 
 	    for (int i = 0; i < numberOfResponses; i++) 

@@ -1,8 +1,8 @@
 
 #include "ServerSocket.h"
 #include "../Socket/Socket.h"
-#include "../SocketExceptions/SocketError.hpp"
-#include "../SocketExceptions/BindingError.hpp"
+#include "../SocketExceptions/SocketException.hpp"
+#include "../SocketExceptions/BindingException.hpp"
 
 #include <iostream>
 #include <random>
@@ -47,7 +47,7 @@ namespace kt
         int res = WSAStartup(MAKEWORD(2,2), &wsaData);
         if(res != 0)
         {
-            throw SocketError("WSAStartup Failed: " + std::to_string(res));
+            throw SocketException("WSAStartup Failed: " + std::to_string(res));
         }
 
         // Randomly allocate port
@@ -75,7 +75,7 @@ namespace kt
                     this->constructSocket();
                     done = true;
                 }
-                catch(BindingError be)
+                catch(BindingException be)
                 {
                     // Nothing to do
                 }
@@ -90,7 +90,7 @@ namespace kt
 
     #elif __linux__
 
-    // Throws SocketError when instance cannot bind or listen
+    // Throws SocketException when instance cannot bind or listen
     ServerSocket::ServerSocket(const bool isWifi, const unsigned int& port)
     {
     	this->port = port;
@@ -122,7 +122,7 @@ namespace kt
                     this->constructSocket();
                     done = true;
                 }
-                catch(BindingError be)
+                catch(BindingException be)
                 {
                     // Nothing to do
                 }
@@ -219,7 +219,7 @@ namespace kt
 
     void ServerSocket::constructBluetoothSocket()
     {
-        // throw SocketError("Bluetooth servers are not supported in Windows.");
+        // throw SocketException("Bluetooth servers are not supported in Windows.");
 
         SOCKADDR_BTH bluetoothAddress;
 
@@ -227,7 +227,7 @@ namespace kt
 
         if (socketDescriptor == INVALID_SOCKET)
         {
-            throw SocketError("Error establishing BT server socket...");
+            throw SocketException("Error establishing BT server socket...");
         }
 
         bluetoothAddress.addressFamily = AF_BTH;
@@ -235,13 +235,13 @@ namespace kt
 
         if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
         {
-            throw BindingError("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
         }
 
         if (listen(socketDescriptor, 1) == SOCKET_ERROR) 
         {
             this->close();
-            throw SocketError("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port " + std::to_string(this->port));
         }
     }
 
@@ -257,7 +257,7 @@ namespace kt
 
         if (socketDescriptor == -1) 
         {
-            throw SocketError("Error establishing BT server socket...");
+            throw SocketException("Error establishing BT server socket...");
         }
 
         localAddress.rc_family = AF_BLUETOOTH;
@@ -266,13 +266,13 @@ namespace kt
         
         if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
         {
-            throw BindingError("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
         }
 
         if (listen(socketDescriptor, 1) == -1)
         {
             this->close();
-            throw SocketError("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port " + std::to_string(this->port));
         }
     }
 
@@ -293,25 +293,25 @@ namespace kt
 
         if (res != 0) 
         {
-            throw SocketError("Unable to retrieving Wifi serversocket host address. (Self)");
+            throw SocketException("Unable to retrieving Wifi serversocket host address. (Self)");
         }
 
         socketDescriptor = socket(serverAddress->ai_family, serverAddress->ai_socktype, serverAddress->ai_protocol);
         if (socketDescriptor == INVALID_SOCKET) 
         {
-             throw SocketError("Error establishing wifi server socket...");
+             throw SocketException("Error establishing wifi server socket...");
         }
 
         res = bind( socketDescriptor, serverAddress->ai_addr, (int)serverAddress->ai_addrlen);
         if (res == SOCKET_ERROR) 
         {
-            throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
         }
 
         if( listen( socketDescriptor, SOMAXCONN ) == SOCKET_ERROR ) 
         {
             this->close();
-            throw SocketError("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port " + std::to_string(this->port));
         }
     }
 
@@ -324,7 +324,7 @@ namespace kt
 
         if (socketDescriptor == -1) 
         {
-            throw SocketError("Error establishing wifi server socket...");
+            throw SocketException("Error establishing wifi server socket...");
         }
 
         serverAddress.sin_family = AF_INET;
@@ -333,13 +333,13 @@ namespace kt
 
         if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) == -1) 
         {
-            throw BindingError("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
         }
 
         if(listen(socketDescriptor, 1) == -1)
         {
             this->close();
-            throw SocketError("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port " + std::to_string(this->port));
         }
     }
 
