@@ -353,7 +353,12 @@ namespace kt
 
         #elif __linux__
 
-        int temp = ::accept(socketDescriptor, (struct sockaddr *) &serverAddress, &socketSize);
+        struct socketaddr_rc remoteDevice = {0};
+        int temp = ::accept(socketDescriptor, (struct sockaddr *) &remoteDevice, &socketSize);
+        char[1024] remoteAddress = {0};
+        ba2str(&remoteDevice.rc_bdaddr, t);
+
+        std::cout << "Accepted connection from " << t << std::endl;
 
         #endif 
 

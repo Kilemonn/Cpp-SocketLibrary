@@ -28,9 +28,9 @@ int main()
 
 	// doScan();
 
-	testWifi();
+	// testWifi();
 
-	// testBluetooth();
+	testBluetooth();
 
 	#ifdef _WIN32
 
@@ -87,19 +87,7 @@ void testWifi()
 
 		client.send("DAMN SON!");
 
-		// client.send("Testing Wifi Stuff");
-		std::ifstream in("Test.txt");
-		std::string temp;
-		if (in.is_open() && in.good())
-		{
-			while (!in.eof())
-			{
-				std::getline(in, temp);
-				client.send(temp);
-			}
-		}
-		in.close();
-		std::cout << "SENT ALL" << std::endl;
+		client.send("Testing Wifi Stuff");
 
 		t1.join();
 	}
