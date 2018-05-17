@@ -7,6 +7,8 @@
 #include <iostream>
 #include <random>
 #include <ctime>
+#include <cerrno>
+#include <cstring>
 
 #ifdef _WIN32
 
@@ -205,7 +207,7 @@ namespace kt
 
         if (socketDescriptor == INVALID_SOCKET)
         {
-            throw SocketException("Error establishing BT server socket...");
+            throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
         }
 
         bluetoothAddress.addressFamily = AF_BTH;
@@ -214,14 +216,13 @@ namespace kt
 
         if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
         {
-            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) 
-                + " is already being used. WSA Error: " + std::to_string(WSAGetLastError()));
+            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
         }
 
         if (listen(socketDescriptor, 1) == SOCKET_ERROR) 
         {
             this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
     }
 
@@ -237,7 +238,7 @@ namespace kt
 
         if (socketDescriptor == -1)
         {
-            throw SocketException("Error establishing BT server socket...");
+            throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
         }
 
         localAddress.rc_family = AF_BLUETOOTH;
@@ -246,13 +247,13 @@ namespace kt
         
         if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
         {
-            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
         if (listen(socketDescriptor, 1) == -1)
         {
             this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
     }
 
@@ -279,19 +280,19 @@ namespace kt
         socketDescriptor = socket(serverAddress->ai_family, serverAddress->ai_socktype, serverAddress->ai_protocol);
         if (socketDescriptor == INVALID_SOCKET) 
         {
-             throw SocketException("Error establishing wifi server socket...");
+             throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
         }
 
         res = bind( socketDescriptor, serverAddress->ai_addr, (int)serverAddress->ai_addrlen);
         if (res == SOCKET_ERROR) 
         {
-            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
         if( listen( socketDescriptor, SOMAXCONN ) == SOCKET_ERROR ) 
         {
             this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
     }
 
@@ -304,7 +305,7 @@ namespace kt
 
         if (socketDescriptor == -1) 
         {
-            throw SocketException("Error establishing wifi server socket...");
+            throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
         }
 
         serverAddress.sin_family = AF_INET;
@@ -313,13 +314,13 @@ namespace kt
 
         if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) == -1) 
         {
-            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
         if(listen(socketDescriptor, 1) == -1)
         {
             this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port));
+            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
     }
 

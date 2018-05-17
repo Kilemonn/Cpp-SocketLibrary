@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
-#include <string>
+#include <cstring>
 
 #ifdef _WIN32
 
@@ -208,7 +208,7 @@ namespace kt
 
 		if (socketDescriptor == INVALID_SOCKET)
 		{
-			throw SocketException("Error establishing Bluetooth socket...");
+			throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 		}
 
 		bluetoothAddress.addressFamily = AF_BTH;
@@ -217,7 +217,7 @@ namespace kt
 
 	    if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
 	    {
-	    	throw SocketException("Error connecting to Bluetooth server");
+	    	throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 	    }
 	}
 
@@ -229,7 +229,7 @@ namespace kt
 
 		if (socketDescriptor == -1)
 	    {
-	    	throw SocketException("Error establishing Bluetooth socket...");
+	    	throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 	    }
 
 	    bluetoothAddress.rc_family = AF_BLUETOOTH;
@@ -238,7 +238,7 @@ namespace kt
 
 	   	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
 	   	{
-	   		throw SocketException("Error connecting to Bluetooth server");
+	   		throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 		}
 	}
 
@@ -258,19 +258,19 @@ namespace kt
 
 		if (res != 0) 
 		{
-		    throw SocketException("Unable to retrieving host address.");
+		    throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
 		}
 
 		socketDescriptor = socket(serverAddress->ai_family, serverAddress->ai_socktype, serverAddress->ai_protocol);
 		if (socketDescriptor == INVALID_SOCKET) 
 		{
-		    throw SocketException("Error establishing Wifi socket.");
+		    throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 		}
 
 	    res = connect(socketDescriptor, serverAddress->ai_addr, (int)serverAddress->ai_addrlen);
 		if(res == SOCKET_ERROR)
 		{
-			throw SocketException("Error connecting to Wifi server.");
+			throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 		}
 	}
 
@@ -283,7 +283,7 @@ namespace kt
 
 	    if (socketDescriptor == -1)
 	    {
-	    	throw SocketException("Error establishing Wifi socket.");
+	    	throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 	    }
 
 	    bzero((char *) &serverAddress, sizeof(serverAddress));
@@ -293,7 +293,7 @@ namespace kt
 
 		if (connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 		{
-			throw SocketException("Error connecting to Wifi server.");
+			throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 		}
 	}
 
