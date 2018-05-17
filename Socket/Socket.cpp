@@ -377,7 +377,7 @@ namespace kt
 
 			flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
 			
-			if (flag == -1)
+			if (flag < 1)
 			{
 				return std::string(result);
 			}

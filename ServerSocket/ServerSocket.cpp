@@ -235,7 +235,8 @@ namespace kt
 
         if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
         {
-            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used...");
+            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) 
+                + " is already being used. WSA Error: " + std::to_string(WSAGetLastError()));
         }
 
         if (listen(socketDescriptor, 1) == SOCKET_ERROR) 
@@ -255,7 +256,7 @@ namespace kt
 
         socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
-        if (socketDescriptor == -1) 
+        if (socketDescriptor == -1)
         {
             throw SocketException("Error establishing BT server socket...");
         }
