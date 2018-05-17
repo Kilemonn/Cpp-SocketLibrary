@@ -41,7 +41,6 @@ namespace kt
         socketDescriptor = INVALID_SOCKET;
         this->port = port;
         this->isWifi = isWifi;
-        bool done = false;
 
         WSADATA wsaData;
         int res = WSAStartup(MAKEWORD(2,2), &wsaData);
