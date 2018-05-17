@@ -95,38 +95,11 @@ namespace kt
     {
     	this->port = port;
         this->isWifi = isWifi;
-        bool done = false;
 
         // Randomly allocate port
         if (this->port == 0)
         {
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            // Random port number inside the 'dynamic' port range (49152 - 65535)
-            std::uniform_int_distribution<> wifiRand(49152, 65535);
-            // Random bluetooth ports from 1-10
-            std::uniform_int_distribution<> btRand(1, 30);
-
-            while (!done)
-            {
-                try
-                {
-                    if (isWifi)
-                    {          
-                        this->port = wifiRand(gen);     
-                    }
-                    else
-                    {
-                        this->port = btRand(gen);
-                    }
-                    this->constructSocket();
-                    done = true;
-                }
-                catch(BindingException be)
-                {
-                    // Nothing to do
-                }
-            }
+            randomlyAllocatePort();
         }
         else
         {
@@ -135,6 +108,38 @@ namespace kt
     }
 
     #endif
+
+    void ServerSocket::randomlyAllocatePort()
+    {
+        bool done = false;
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        // Random port number inside the 'dynamic' port range (49152 - 65535)
+        std::uniform_int_distribution<> wifiRand(49152, 65535);
+        // Random bluetooth ports from 1-10
+        std::uniform_int_distribution<> btRand(1, 30);
+
+        while (!done)
+        {
+            try
+            {
+                if (isWifi)
+                {          
+                    this->port = wifiRand(gen);     
+                }
+                else
+                {
+                    this->port = btRand(gen);
+                }
+                this->constructSocket();
+                done = true;
+            }
+            catch(BindingException be)
+            {
+                // Nothing to do
+            }
+        }
+    }
 
 
     #ifdef _WIN32

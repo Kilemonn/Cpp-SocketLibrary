@@ -55,6 +55,7 @@ namespace kt
 	    	void constructSocket();
 	    	void constructBluetoothSocket();
 			void constructWifiSocket();
+			void randomlyAllocatePort();
 
 		public:
 			const static bool WIFI = true;
