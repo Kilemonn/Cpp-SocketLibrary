@@ -58,7 +58,7 @@ namespace kt
             // Random port number inside the 'dynamic' port range (49152 - 65535)
             std::uniform_int_distribution<> wifiRand(49152, 65535);
             // Random bluetooth ports from 1-10
-            std::uniform_int_distribution<> btRand(1, 10);
+            std::uniform_int_distribution<> btRand(1, 30);
 
             while (!done)
             {
@@ -105,7 +105,7 @@ namespace kt
             // Random port number inside the 'dynamic' port range (49152 - 65535)
             std::uniform_int_distribution<> wifiRand(49152, 65535);
             // Random bluetooth ports from 1-10
-            std::uniform_int_distribution<> btRand(1, 10);
+            std::uniform_int_distribution<> btRand(1, 30);
 
             while (!done)
             {
@@ -231,6 +231,7 @@ namespace kt
         }
 
         bluetoothAddress.addressFamily = AF_BTH;
+        bluetoothAddress.btAddr = 0;
         bluetoothAddress.port = this->port;
 
         if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
