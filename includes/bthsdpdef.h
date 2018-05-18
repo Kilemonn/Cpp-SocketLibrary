@@ -5,7 +5,6 @@
 #define __BTHSDPDEF_H__
 #include "winapifamily.h"
 
-#pragma region Desktop Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
 
@@ -123,6 +122,5 @@ typedef struct _SdpQueryUuid {
 
 
 #endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) */
-#pragma endregion
 
 #endif // __BTHSDPDEF_H__
