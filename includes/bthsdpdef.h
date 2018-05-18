@@ -87,7 +87,7 @@ typedef
 #ifdef USE_MIDL_SYNTAX 
       [switch_type(unsigned short)]
 #endif
-                                    union SdpQueryUuidUnion {
+union SdpQueryUuidUnion {
 #ifdef USE_MIDL_SYNTAX 
     [case(SDP_ST_UUID128)]
 #endif
@@ -95,12 +95,12 @@ typedef
 
 #ifdef USE_MIDL_SYNTAX 
     [case(SDP_ST_UUID32)] 
-#endif _NTDDK_
+#endif // _NTDDK_
        ULONG uuid32;
 
 #ifdef USE_MIDL_SYNTAX 
     [case(SDP_ST_UUID16)]
-#endif _NTDDK_
+#endif // _NTDDK_
         USHORT uuid16;
 } SdpQueryUuidUnion;
 
