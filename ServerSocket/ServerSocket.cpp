@@ -51,7 +51,7 @@ namespace kt
             throw SocketException("WSAStartup Failed: " + std::to_string(res));
         }
 
-        // Randomly allocate port
+        // Randomly allocate port and construct socket
         if (this->port == 0)
         {
             randomlyAllocatePort();
@@ -71,7 +71,7 @@ namespace kt
     	this->port = port;
         this->isWifi = isWifi;
 
-        // Randomly allocate port
+        // Randomly allocate port and construct socket
         if (this->port == 0)
         {
             randomlyAllocatePort();
@@ -91,7 +91,7 @@ namespace kt
         std::mt19937 gen(rd());
         // Random port number inside the 'dynamic' port range (49152 - 65535)
         std::uniform_int_distribution<> wifiRand(49152, 65535);
-        // Random bluetooth ports from 1-10
+        // Random bluetooth ports from 1-30
         std::uniform_int_distribution<> btRand(1, 30);
 
         while (!done)
@@ -174,7 +174,6 @@ namespace kt
     {
         #ifdef _WIN32
 
-        // WSACleanup();
         freeaddrinfo(serverAddress);
 
         #endif
@@ -199,8 +198,6 @@ namespace kt
 
     void ServerSocket::constructBluetoothSocket()
     {
-        // throw SocketException("Bluetooth servers are not supported in Windows.");
-
         SOCKADDR_BTH bluetoothAddress;
 
         socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
@@ -224,6 +221,29 @@ namespace kt
             this->close();
             throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
+        // Make discoverable
+
+        /*LPCSADDR_INFO lpCSAddrInfo = nullptr;
+        lpCSAddrInfo[0].LocalAddr.iSockaddrLength = sizeof(SOCKADDR_BTH);
+        lpCSAddrInfo[0].LocalAddr.lpSockaddr = (LPSOCKADDR) &bluetoothAddress;
+        lpCSAddrInfo[0].RemoteAddr.iSockaddrLength = sizeof(SOCKADDR_BTH);
+        lpCSAddrInfo[0].RemoteAddr.lpSockaddr = (LPSOCKADDR) &bluetoothAddress;
+        lpCSAddrInfo[0].iSocketType = SOCK_STREAM;
+        lpCSAddrInfo[0].iProtocol = BTHPROTO_RFCOMM;*/
+
+        WSAQUERYSET wsaQuerySet;
+        ZeroMemory(&wsaQuerySet, sizeof(WSAQUERYSET));
+        wsaQuerySet.dwSize = sizeof(WSAQUERYSET);
+        wsaQuerySet.dwNameSpace = NS_BTH;
+
+        std::cout << "HERE..." << std::endl;
+
+        if (WSASetService(&wsaQuerySet, RNRSERVICE_REGISTER, 0) ==  SOCKET_ERROR) 
+        {
+        	std::cout << "RIP..." << std::endl;
+            throw SocketException("Unable to make bluetooth server discoverable: " + std::to_string(WSAGetLastError()));
+        }
+        std::cout << "DONE!" << std::endl;
     }
 
     #elif __linux__
@@ -255,6 +275,8 @@ namespace kt
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
+
+        // Make discoverable
     }
 
     #endif
@@ -270,7 +292,7 @@ namespace kt
         hints.ai_protocol = IPPROTO_TCP;
         hints.ai_flags = AI_PASSIVE;
 
-        res = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &serverAddress);
+        res = getaddrinfo(nullptr, std::to_string(port).c_str(), &hints, &serverAddress);
 
         if (res != 0) 
         {
@@ -330,16 +352,20 @@ namespace kt
     {
         #ifdef _WIN32
 
-        SOCKET temp = ::accept(socketDescriptor, NULL, NULL);
+        SOCKET temp = ::accept(socketDescriptor, nullptr, nullptr);
 
         #elif __linux__
 
         struct sockaddr_rc remoteDevice = {0};
         int temp = ::accept(socketDescriptor, (struct sockaddr *) &remoteDevice, &socketSize);
-        char remoteAddress[1024] = {0};
-        ba2str(&remoteDevice.rc_bdaddr, remoteAddress);
 
-        std::cout << "Accepted connection from " << remoteAddress << std::endl;
+        if (!isWifi)
+        {
+        	char remoteAddress[1024] = {0};
+	        ba2str(&remoteDevice.rc_bdaddr, remoteAddress);
+
+	        std::cout << "Accepted connection from " << remoteAddress << std::endl;
+        }
 
         #endif 
 
