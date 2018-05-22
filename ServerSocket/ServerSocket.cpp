@@ -231,19 +231,20 @@ namespace kt
         lpCSAddrInfo[0].iSocketType = SOCK_STREAM;
         lpCSAddrInfo[0].iProtocol = BTHPROTO_RFCOMM;*/
 
-        WSAQUERYSET wsaQuerySet;
+        /*WSAQUERYSET wsaQuerySet;
         ZeroMemory(&wsaQuerySet, sizeof(WSAQUERYSET));
         wsaQuerySet.dwSize = sizeof(WSAQUERYSET);
         wsaQuerySet.dwNameSpace = NS_BTH;
+        wsaQuerySet.lpServiceClassId = nullptr;
 
         std::cout << "HERE..." << std::endl;
 
-        if (WSASetService(&wsaQuerySet, RNRSERVICE_REGISTER, 0) ==  SOCKET_ERROR) 
+        if (WSASetService(&wsaQuerySet, RNRSERVICE_REGISTER, 0) == SOCKET_ERROR) 
         {
         	std::cout << "RIP..." << std::endl;
             throw SocketException("Unable to make bluetooth server discoverable: " + std::to_string(WSAGetLastError()));
         }
-        std::cout << "DONE!" << std::endl;
+        std::cout << "DONE!" << std::endl;*/
     }
 
     #elif __linux__

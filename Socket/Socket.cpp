@@ -21,6 +21,7 @@
 #include <windows.h>
 #include "../includes/guiddef.h"
 #include "../includes/ws2bth.h"
+#include "../includes/bluetoothapis.h"
 
 #elif __linux__
 
@@ -445,7 +446,37 @@ namespace kt
 
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
-		throw SocketException("Not supported for Windows platform yet.");
+		throw SocketException("Not yet implemented on Windows.");
+		
+		WSAQUERYSET wsaQuery;
+		HANDLE hLoopUp;
+		LPWSAQUERYSET pQuerySet = nullptr;
+		SOCKADDR_BTH tempAddress;
+		DWORD dwSize = 5000 * sizeof(unsigned char);
+
+		ZeroMemory(&wsaQuery, sizeof(WSAQUERYSET));
+		wsaQuery.dwSize = sizeof(WSAQUERYSET);
+		wsaQuery.dwNameSpace = NS_BTH;
+		wsaQuery.lpcsaBuffer = nullptr;
+
+		int res = WSALookupServiceBegin(&wsaQuery, LUP_CONTAINERS, &hLoopUp);
+
+		if (res == SOCKET_ERROR)
+		{
+			throw SocketException("Unable to search for devices. Could not begin search.");
+		}
+		
+		ZeroMemory(&pQuerySet, sizeof(WSAQUERYSET));
+		pQuerySet->dwSize = sizeof(WSAQUERYSET);
+		pQuerySet->dwNameSpace = NS_BTH;
+		pQuerySet->lpBlob = nullptr;
+
+		while (WSALookupServiceNext(hLoopUp, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, pQuerySet) == 0)
+		{
+			tempAddress = ((SOCKADDR_BTH*) pQuerySet->lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
+
+			// std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
+		}
 	}
 
 	#elif __linux__
