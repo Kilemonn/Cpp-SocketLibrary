@@ -448,7 +448,7 @@ namespace kt
 	{
 		throw SocketException("Not yet implemented on Windows.");
 		
-		WSAQUERYSET wsaQuery;
+		/*WSAQUERYSET wsaQuery;
 		HANDLE hLoopUp;
 		LPWSAQUERYSET pQuerySet = nullptr;
 		SOCKADDR_BTH tempAddress;
@@ -476,7 +476,7 @@ namespace kt
 			tempAddress = ((SOCKADDR_BTH*) pQuerySet->lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
 
 			// std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
-		}
+		}*/
 	}
 
 	#elif __linux__
