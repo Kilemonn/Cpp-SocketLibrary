@@ -8,7 +8,7 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 
 - Run make
 
-#### Windows
+#### Windows - WARNING: Windows support is very limitted and still a work in progress.
 
 - Manual compilation
 - Required libraries:
