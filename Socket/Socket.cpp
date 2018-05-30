@@ -6,6 +6,8 @@
 #include <vector>
 #include <utility>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
 #ifdef _WIN32
 
@@ -32,6 +34,8 @@
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
+#include <ifaddrs.h>
+#include <netpacket/packet.h>
 
 #endif
 
@@ -529,4 +533,53 @@ namespace kt
 	}
 
 	#endif
+
+	#ifdef _WIN32
+
+	std::string Socket::getLocalMACAddress()
+	{
+		throw SocketException("Not implemented on Windows yet.");
+	}
+
+	#elif __linux__
+
+	std::string Socket::getLocalMACAddress()
+	{
+		struct ifaddrs *ifaddr = nullptr;
+	    struct ifaddrs *ifa = nullptr;
+
+	    if (getifaddrs(&ifaddr) != -1)
+	    {
+			for ( ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next)
+			{
+				if ( (ifa->ifa_addr) && (ifa->ifa_addr->sa_family == AF_PACKET) )
+				{
+					struct sockaddr_ll *s = (struct sockaddr_ll*)ifa->ifa_addr;
+					// printf("%-8s ", ifa->ifa_name);
+					if (std::string(ifa->ifa_name).find("eth") != std::string::npos)
+					{
+						std::stringstream ss;
+						for (int i = 0; i < s->sll_halen; i++)
+						{
+							ss << std::hex << std::setfill('0');
+							ss << std::setw(2) << static_cast<unsigned>(s->sll_addr[i]);
+
+							if ((i + 1) != s->sll_halen)
+							{
+								ss << ":";
+							}
+							// printf("%02x%c", (s->sll_addr[i]), (i+1!=s->sll_halen)?':':'\n');
+						}
+						freeifaddrs(ifaddr);
+						return ss.str();
+					}
+				}
+			}
+			freeifaddrs(ifaddr);
+	    }
+	    return "";
+	}
+
+	#endif
+
 } // End namespace kt
