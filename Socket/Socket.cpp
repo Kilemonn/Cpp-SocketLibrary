@@ -555,10 +555,11 @@ namespace kt
 				if ( (ifa->ifa_addr) && (ifa->ifa_addr->sa_family == AF_PACKET) )
 				{
 					struct sockaddr_ll *s = (struct sockaddr_ll*)ifa->ifa_addr;
-					// printf("%-8s ", ifa->ifa_name);
+
 					if (std::string(ifa->ifa_name).find("eth") != std::string::npos)
 					{
 						std::stringstream ss;
+						
 						for (int i = 0; i < s->sll_halen; i++)
 						{
 							ss << std::hex << std::setfill('0');
@@ -568,7 +569,6 @@ namespace kt
 							{
 								ss << ":";
 							}
-							// printf("%02x%c", (s->sll_addr[i]), (i+1!=s->sll_halen)?':':'\n');
 						}
 						freeifaddrs(ifaddr);
 						return ss.str();
