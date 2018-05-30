@@ -92,6 +92,7 @@ namespace kt
 			std::string receiveAll() const;
 
 			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int duration = 5);
+			static std::string getLocalMACAddress();
 	};
 
 } // End namespace kt 
