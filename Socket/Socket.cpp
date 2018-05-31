@@ -556,7 +556,7 @@ namespace kt
 				{
 					struct sockaddr_ll *s = (struct sockaddr_ll*)ifa->ifa_addr;
 
-					if (std::string(ifa->ifa_name).find("eth") != std::string::npos)
+					if (std::string(ifa->ifa_name).find("hci") != std::string::npos)
 					{
 						std::stringstream ss;
 						

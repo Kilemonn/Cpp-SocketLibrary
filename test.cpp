@@ -30,6 +30,17 @@ int main()
 
 	// testWifi();
 
+	std::string addr = kt::Socket::getLocalMACAddress();
+
+	if (addr != "")
+	{
+		std::cout << addr << std::endl;
+	}
+	else
+	{
+		std::cout << "No local MAC address found" << std::endl;
+	}
+
 	testBluetooth();
 
 	#ifdef _WIN32
