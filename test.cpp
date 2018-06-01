@@ -44,7 +44,7 @@ int main()
 
 		testBluetooth();
 	}
-	catch(kt::SocketException ex)
+	catch(const kt::SocketException& ex)
 	{
 		std::cout << ex.what() << std::endl;
 	}
