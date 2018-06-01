@@ -23,7 +23,6 @@
 #include <windows.h>
 #include "../includes/guiddef.h"
 #include "../includes/ws2bth.h"
-// #include "../includes/bluetoothapis.h"
 
 #elif __linux__
 
