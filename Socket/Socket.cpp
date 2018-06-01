@@ -23,7 +23,7 @@
 #include <windows.h>
 #include "../includes/guiddef.h"
 #include "../includes/ws2bth.h"
-#include "../includes/bluetoothapis.h"
+// #include "../includes/bluetoothapis.h"
 
 #elif __linux__
 
@@ -450,6 +450,13 @@ namespace kt
 
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
+ 		WSADATA wsaData;
+        int res = WSAStartup(MAKEWORD(2,2), &wsaData);
+        if(res != 0)
+        {
+            throw SocketException("WSAStartup Failed: " + std::to_string(res));
+        }
+
 		throw SocketException("Not yet implemented on Windows.");
 		
 		/*WSAQUERYSET wsaQuery;
@@ -538,6 +545,16 @@ namespace kt
 
 	std::string Socket::getLocalMACAddress()
 	{
+		WSADATA wsaData;
+        int res = WSAStartup(MAKEWORD(2,2), &wsaData);
+        if(res != 0)
+        {
+            throw SocketException("WSAStartup Failed: " + std::to_string(res));
+        }
+
+		unsigned long long localMACAddress = 0;
+		BTH_ADDR * addr = (BTH_ADDR*) localMACAddress;
+
 		throw SocketException("Not implemented on Windows yet.");
 	}
 
@@ -550,7 +567,7 @@ namespace kt
 		char localMACAddress[18];
 	
 		// Get id of local device
-		if ((id = hci_get_route(NULL)) < 0)
+		if ((id = hci_get_route(nullptr)) < 0)
 		{
 			return "";
 		}
