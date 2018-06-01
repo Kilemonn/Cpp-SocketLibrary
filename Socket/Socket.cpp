@@ -549,19 +549,19 @@ namespace kt
 		bdaddr_t btaddr;
 		char localMACAddress[18];
 	
-		// get the device ID
+		// Get id of local device
 		if ((id = hci_get_route(NULL)) < 0)
 		{
 			return "";
 		}
 	
-		// convert the device ID into a 6 byte bluetooth address
+		// Get local bluetooth address
 		if (hci_devba(id, &btaddr) < 0)
 		{
 			return "";
 		}
 	
-		// convert the address into a zero terminated string
+		// Convert address to string
 		if (ba2str(&btaddr, localMACAddress) < 0)
 		{
 			return "";
@@ -569,6 +569,7 @@ namespace kt
 		
 		return std::string(localMACAddress);
 
+		/*
 		throw SocketException("Not implemented yet.");
 
 		struct ifaddrs *ifaddr = nullptr;
@@ -604,6 +605,7 @@ namespace kt
 			freeifaddrs(ifaddr);
 	    }
 	    return "";
+		*/
 	}
 
 	#endif
