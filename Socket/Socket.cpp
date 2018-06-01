@@ -545,6 +545,32 @@ namespace kt
 
 	std::string Socket::getLocalMACAddress()
 	{
+		int id;
+		bdaddr_t btaddr;
+		char localMACAddress[18];
+	
+		// get the device ID
+		if ((id = hci_get_route(NULL)) < 0)
+		{
+			return "";
+		}
+	
+		// convert the device ID into a 6 byte bluetooth address
+		if (hci_devba(id, &btaddr) < 0)
+		{
+			return "";
+		}
+	
+		// convert the address into a zero terminated string
+		if (ba2str(&btaddr, localMACAddress) < 0)
+		{
+			return "";
+		}
+		
+		return std::string(localMACAddress);
+
+		throw SocketException("Not implemented yet.");
+
 		struct ifaddrs *ifaddr = nullptr;
 	    struct ifaddrs *ifa = nullptr;
 

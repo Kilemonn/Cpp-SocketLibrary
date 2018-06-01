@@ -11,8 +11,8 @@
 #include "SocketExceptions/SocketException.hpp"
 #include "SocketExceptions/BindingException.hpp"
 
-void wifiClient(unsigned int const &);
-void bluetoothFunction(unsigned int const &);
+void wifiClient(const unsigned int&);
+void bluetoothFunction(const unsigned int&);
 
 void testWifi();
 void testBluetooth();
@@ -122,7 +122,7 @@ void testWifi()
 	assert(error == false);
 }
 
-void wifiClient(unsigned int const & p)
+void wifiClient(const unsigned int& p)
 {
 	kt::Socket socket("127.0.0.1", p, kt::Socket::WIFI);
 	std::cout << "Connected\n";
@@ -175,7 +175,7 @@ void testBluetooth()
 	t1.join();
 }
 
-void bluetoothFunction(unsigned int const & p)
+void bluetoothFunction(const unsigned int& p)
 {
 	kt::Socket socket(bluetoothLocalAddress, p, kt::Socket::BLUETOOTH);
 	std::cout << "(BT) Connected\n";
