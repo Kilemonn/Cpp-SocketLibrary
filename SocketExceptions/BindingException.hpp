@@ -8,12 +8,13 @@
 
 #include "SocketException.hpp"
 
-class BindingException : public SocketException
+namespace kt
 {
-	public:
-		BindingException(const std::string& s) : SocketException(s) {}
-};
+	class BindingException : public SocketException
+	{
+		public:
+			BindingException(const std::string& s) : SocketException(s) {}
+	};
+}
 
 #endif // _BINDING_ERROR_HPP__
-
-

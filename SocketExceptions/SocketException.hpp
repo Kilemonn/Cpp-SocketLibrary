@@ -5,10 +5,13 @@
 #include <iostream>
 #include <stdexcept>
 
-class SocketException : public std::runtime_error
+namespace kt
 {
-	public:
-		SocketException(const std::string& s) : std::runtime_error(s) {}
-};
+	class SocketException : public std::runtime_error
+	{
+		public:
+			SocketException(const std::string& s) : std::runtime_error(s) {}
+	};
+}
 
 #endif // _SOCKET_ERROR_HPP__

@@ -23,25 +23,31 @@ const std::string bluetoothLocalAddress = "B8:27:EB:99:F4:E6";
 
 int main()
 {
-
-	// std::system("sudo hciconfig hci0 piscan");
-
-	// doScan();
-
-	// testWifi();
-
-	std::string addr = kt::Socket::getLocalMACAddress();
-
-	if (addr != "")
+	try
 	{
-		std::cout << addr << std::endl;
-	}
-	else
-	{
-		std::cout << "No local MAC address found" << std::endl;
-	}
+		// std::system("sudo hciconfig hci0 piscan");
 
-	testBluetooth();
+		// doScan();
+
+		// testWifi();
+
+		std::string addr = kt::Socket::getLocalMACAddress();
+
+		if (addr != "")
+		{
+			std::cout << addr << std::endl;
+		}
+		else
+		{
+			std::cout << "No local MAC address found" << std::endl;
+		}
+
+		testBluetooth();
+	}
+	catch(kt::SocketException ex)
+	{
+		std::cout << ex.what() << std::endl;
+	}
 
 	#ifdef _WIN32
 
@@ -102,7 +108,7 @@ void testWifi()
 
 		t1.join();
 	}
-	catch (const SocketException& se)
+	catch (const kt::SocketException& se)
 	{
 		std::cout << se.what() << std::endl;
 		error = true;
