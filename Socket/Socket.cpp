@@ -21,6 +21,7 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
+
 #include "../includes/guiddef.h"
 #include "../includes/ws2bth.h"
 
@@ -544,17 +545,32 @@ namespace kt
 
 	std::string Socket::getLocalMACAddress()
 	{
-		WSADATA wsaData;
-        int res = WSAStartup(MAKEWORD(2,2), &wsaData);
-        if(res != 0)
-        {
-            throw SocketException("WSAStartup Failed: " + std::to_string(res));
-        }
+		// Up to 20 Interfaces
+		IP_ADAPTER_INFO AdapterInfo[20];
+		DWORD dwBufLen = sizeof(AdapterInfo);
 
-		unsigned long long localMACAddress = 0;
-		BTH_ADDR * addr = (BTH_ADDR*) localMACAddress;
+		DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
+		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
 
-		throw SocketException("Not implemented on Windows yet.");
+		while(std::string(pAdapterInfo->Description).find("Bluetooth") == std::string::npos)
+		{
+			pAdapterInfo = pAdapterInfo->Next;
+		}
+
+		std::stringstream ss;
+
+		for (int i = 0; i < 6; i++)
+		{
+			ss << std::hex << std::setfill('0');
+			ss << std::setw(2) << static_cast<unsigned>(pAdapterInfo->Address[i]);
+
+			if (i != 5)
+			{
+				ss << ":";
+			}
+		}
+
+		return ss.str();
 	}
 
 	#elif __linux__
