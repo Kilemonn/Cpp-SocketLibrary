@@ -29,7 +29,7 @@ int main()
 
 		// doScan();
 
-		// testWifi();
+		testWifi();
 
 		std::string addr = kt::Socket::getLocalMACAddress();
 
@@ -102,9 +102,14 @@ void testWifi()
 		assert(res.size() == amount);
 		std::cout << "RES: " << res << std::endl;
 
+		char c = client.get();
+		std::cout << "GET: " << c << std::endl;
+
 		client.send("DAMN SON!");
 
-		client.send("Testing Wifi Stuff");
+		client.send("Testing Wifi Stuff\n");
+
+		std::cout << "WAITING..." << std::endl;
 
 		t1.join();
 	}
@@ -130,22 +135,23 @@ void wifiClient(const unsigned int& p)
 	char delimiter = '\n';
 	std::string received = socket.receiveToDelimiter(delimiter);
 	assert(received[received.size() - 1] != delimiter);
-	std::cout << "RECIEVED: " << received << std::endl;
+	std::cout << "RECIEVED1: " << received << std::endl;
 
 	socket.send("12345");
 
 	delimiter = ' ';
 	received = socket.receiveToDelimiter(delimiter);
 	assert(received[received.size() - 1] != delimiter);
-	std::cout << "RECIEVED: " << received << std::endl;
+	std::cout << "RECIEVED2: " << received << std::endl;
 
 	delimiter = '!';
 	received = socket.receiveToDelimiter(delimiter);
 	assert(received[received.size() - 1] != delimiter);
-	std::cout << "RECIEVED: " << received << std::endl;
+	std::cout << "RECIEVED3: " << received << std::endl;
 	
-	received = socket.receiveAll();
-	std::cout << "RECIEVED: " << received << std::endl;
+	delimiter = '\n';
+	received = socket.receiveToDelimiter(delimiter);
+	std::cout << "RECIEVED4: " << received << std::endl;
 }
 
 void testBluetooth()

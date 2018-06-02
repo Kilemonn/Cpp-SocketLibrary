@@ -319,14 +319,18 @@ namespace kt
 
 	bool Socket::send(const std::string message, int flag) const
 	{
-		if (::send(socketDescriptor, message.c_str(), message.size(), flag) == -1) 
+		if (message.size() > 0)
 		{
-			return false;
+			if (::send(socketDescriptor, message.c_str(), message.size(), flag) == -1) 
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
 		}
-		else
-		{
-			return true;
-		}
+		return false;
 	}
 
 	bool Socket::ready(unsigned long timeout) const
@@ -361,8 +365,9 @@ namespace kt
 		{
 			return "";
 		}
+		const unsigned int bufferSize = amountToReceive + 1;
 
-		char data[(amountToReceive + 1)];
+		char data[bufferSize];
 		unsigned int counter = 0;
 		int flag = 0;
 		std::string result;
@@ -372,11 +377,11 @@ namespace kt
 		{
 			#ifdef _WIN32
 
-			ZeroMemory (&data, (amountToReceive + 1));
+			ZeroMemory (&data, bufferSize);
 
 			#elif __linux__
 
-			bzero(&data, (amountToReceive + 1));
+			bzero(&data, bufferSize);
 
 			#endif
 
@@ -384,12 +389,12 @@ namespace kt
 			
 			if (flag < 1)
 			{
-				return std::string(result);
+				return std::move(result);
 			}
 			result += std::string(data);
 			counter += flag;
 		}
-		return std::move(std::string(result));
+		return std::move(result);
 	}
 
 	// Do not pass in '\0' as a delimiter
@@ -404,11 +409,6 @@ namespace kt
 		char temp[2];
 		int flag;
 
-		if (delimiter == '\0')
-		{
-			return data;
-		}
-
 		do
 		{
 			#ifdef _WIN32
@@ -420,14 +420,15 @@ namespace kt
 			bzero(&temp, sizeof(temp));
 
 			#endif
-				
+
 			flag = recv(socketDescriptor, temp, 1, 0);
 
-			if (flag == -1)
+			if (flag < 1)
 			{
-				return data;
+				return std::move(data);
 			}
 			data += temp[0];
+
 		} while (temp[0] != delimiter);
 
 		return std::move(data.substr(0, (data.size() - 1)));
