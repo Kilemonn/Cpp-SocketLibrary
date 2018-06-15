@@ -46,8 +46,7 @@ namespace kt
 		//Nothing to do
 	}
 
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
 	{
 		this->hostname = hostname;
@@ -81,7 +80,7 @@ namespace kt
 	    }
 	}
 
-	#elif __linux__
+#elif __linux__
 	// Throws SocketException when can't connect to server
 	Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
 	{
@@ -108,29 +107,24 @@ namespace kt
 			this->constructBluetoothSocket();
 		}
 	}
+#endif
 
-	#endif
-
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	Socket::Socket(const SOCKET& socketDescriptor, const bool isWifi)
 	{
 		this->socketDescriptor = socketDescriptor;
 		this->isWifi = isWifi;
 	}
 
-	#elif __linux__
-
+#elif __linux__
 	Socket::Socket(const int& socketDescriptor, const bool isWifi)
 	{
 		this->socketDescriptor = socketDescriptor;
 		this->isWifi = isWifi;
 	}
+#endif
 
-	#endif
-
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	Socket::Socket(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
@@ -141,8 +135,7 @@ namespace kt
 		this->serverAddress = socket.serverAddress;
 	}
 
-	#elif __linux__
-
+#elif __linux__
 	Socket::Socket(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
@@ -153,11 +146,9 @@ namespace kt
 		this->bluetoothAddress = socket.bluetoothAddress;
 		this->serverAddress = socket.serverAddress;
 	}
+#endif
 
-	#endif
-
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	Socket& Socket::operator=(const Socket& socket)
 	{
 		this->close();
@@ -172,8 +163,7 @@ namespace kt
 		return *this;
 	}
 
-	#elif __linux__
-
+#elif __linux__
 	Socket& Socket::operator=(const Socket& socket)
 	{
 		this->close();
@@ -188,23 +178,21 @@ namespace kt
 
 		return *this;
 	}
-
-	#endif
+#endif
 
 	Socket::~Socket()
 	{
-		#ifdef _WIN32
+#ifdef _WIN32
 
 		freeaddrinfo(serverAddress);
 
-		#endif
+#endif
 
 		this->close();
 	}
 
 
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	void Socket::constructBluetoothSocket()
 	{
 		// throw SocketException("Bluetooth sockets are not supported in Windows.");
@@ -226,8 +214,7 @@ namespace kt
 	    }
 	}
 
-	#elif __linux__
-
+#elif __linux__
 	void Socket::constructBluetoothSocket()
 	{
 		socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -246,11 +233,9 @@ namespace kt
 	   		throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 		}
 	}
+#endif
 
-	#endif
-
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	void Socket::constructWifiSocket()
 	{
 		int res;
@@ -279,8 +264,7 @@ namespace kt
 		}
 	}
 
-	#elif __linux__
-
+#elif __linux__
 	void Socket::constructWifiSocket()
 	{
 		struct hostent* server = gethostbyname(this->hostname.c_str());
@@ -301,20 +285,19 @@ namespace kt
 			throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 		}
 	}
-
-	#endif
+#endif
 
 	void Socket::close()
 	{
-		#ifdef _WIN32
+#ifdef _WIN32
 
 		closesocket(socketDescriptor);
 
-		#elif __linux__
+#elif __linux__
 
 		::close(socketDescriptor);
 
-		#endif
+#endif
 	}
 
 	bool Socket::send(const std::string message, int flag) const
@@ -375,15 +358,15 @@ namespace kt
 
 		while (counter < amountToReceive)
 		{
-			#ifdef _WIN32
+#ifdef _WIN32
 
 			ZeroMemory (&data, bufferSize);
 
-			#elif __linux__
+#elif __linux__
 
 			bzero(&data, bufferSize);
 
-			#endif
+#endif
 
 			flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
 			
@@ -411,15 +394,15 @@ namespace kt
 
 		do
 		{
-			#ifdef _WIN32
+#ifdef _WIN32
 
 			ZeroMemory (&temp, sizeof(temp));
 
-			#elif __linux__
+#elif __linux__
 
 			bzero(&temp, sizeof(temp));
 
-			#endif
+#endif
 
 			flag = recv(socketDescriptor, temp, 1, 0);
 
@@ -447,8 +430,7 @@ namespace kt
 		return std::move(result);
 	}
 
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
  		WSADATA wsaData;
@@ -491,8 +473,7 @@ namespace kt
 		}*/
 	}
 
-	#elif __linux__
-
+#elif __linux__
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
 		std::vector<std::pair<std::string, std::string> > devices;
@@ -539,11 +520,9 @@ namespace kt
 
 		return std::move(devices);
 	}
+#endif
 
-	#endif
-
-	#ifdef _WIN32
-
+#ifdef _WIN32
 	std::string Socket::getLocalMACAddress()
 	{
 		// Up to 20 Interfaces
@@ -574,8 +553,7 @@ namespace kt
 		return ss.str();
 	}
 
-	#elif __linux__
-
+#elif __linux__
 	std::string Socket::getLocalMACAddress()
 	{
 		int id;
@@ -601,46 +579,7 @@ namespace kt
 		}
 		
 		return std::string(localMACAddress);
-
-		/*
-		throw SocketException("Not implemented yet.");
-
-		struct ifaddrs *ifaddr = nullptr;
-	    struct ifaddrs *ifa = nullptr;
-
-	    if (getifaddrs(&ifaddr) != -1)
-	    {
-			for ( ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next)
-			{
-				if ( (ifa->ifa_addr) && (ifa->ifa_addr->sa_family == AF_PACKET) )
-				{
-					struct sockaddr_ll *s = (struct sockaddr_ll*)ifa->ifa_addr;
-
-					if (std::string(ifa->ifa_name).find("hci") != std::string::npos)
-					{
-						std::stringstream ss;
-						
-						for (int i = 0; i < s->sll_halen; i++)
-						{
-							ss << std::hex << std::setfill('0');
-							ss << std::setw(2) << static_cast<unsigned>(s->sll_addr[i]);
-
-							if ((i + 1) != s->sll_halen)
-							{
-								ss << ":";
-							}
-						}
-						freeifaddrs(ifaddr);
-						return ss.str();
-					}
-				}
-			}
-			freeifaddrs(ifaddr);
-	    }
-	    return "";
-		*/
 	}
-
-	#endif
+#endif
 
 } // End namespace kt

@@ -42,7 +42,7 @@ namespace kt
 			unsigned int port;
 			bool isWifi;
 
-			#ifdef _WIN32
+#ifdef _WIN32
 
 			// Wifi Properties
 			struct addrinfo *serverAddress;
@@ -51,13 +51,13 @@ namespace kt
 
 	    	SOCKADDR_BTH bluetoothAddress;
 
-			#elif __linux__
+#elif __linux__
 
 			int socketDescriptor;
 			struct sockaddr_in serverAddress; // For Wifi
 			struct sockaddr_rc bluetoothAddress; // For Bluetooth
 
-			#endif // _WIN32 / __linux__
+#endif // _WIN32 / __linux__
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
@@ -69,15 +69,15 @@ namespace kt
 			Socket();
 			Socket(const std::string&, const unsigned int&, const bool); // Create Wi-Fi/Bluetooth Socket
 			
-			#ifdef _WIN32
+#ifdef _WIN32
 			
 			Socket(const SOCKET&, const bool);
 
-			#elif __linux__
+#elif __linux__
 
 			Socket(const int&, const bool); // Construct Socket from just descriptor
 
-			#endif
+#endif
 
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);
