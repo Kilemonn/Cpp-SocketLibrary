@@ -30,6 +30,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <bluetooth/hci.h>
+#include <bluetooth/hci_lib.h>
 #include <unistd.h>
 
 #endif
@@ -190,6 +193,7 @@ namespace kt
         else
         {
             this->constructBluetoothSocket();
+            this->setDiscoverable();
         }
     }
 
@@ -344,6 +348,53 @@ namespace kt
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
+        }
+    }
+
+    #endif
+
+    #ifdef _WIN32
+
+    void ServerSocket::setDiscoverable()
+    {
+        throw SocketException("Not yet implemented on Windows.");
+        std::cout << "SETTING DISCOVERABLE" << std::endl;
+        CSADDR_INFO address[1];
+
+        ZeroMemory(&address, sizeof(address));
+        address[0].LocalAddr.iSockaddrLength = sizeof(socketDescriptor);
+        address[0].LocalAddr.lpSockaddr = (struct sockaddr*) &socketDescriptor;
+        address[0].iSocketType = SOCK_STREAM;
+        address[0].iProtocol = BTHPROTO_RFCOMM;
+
+        WSAQUERYSET wsaQuery;
+        ZeroMemory(&wsaQuery, sizeof(WSAQUERYSET));
+        wsaQuery.dwSize = sizeof(WSAQUERYSET);
+        wsaQuery.dwNameSpace = NS_BTH;
+        wsaQuery.dwNumberOfCsAddrs = 1;
+        wsaQuery.lpcsaBuffer = address;
+
+        if (WSASetService(&wsaQuery, RNRSERVICE_REGISTER, 0) != 0)
+        {
+            throw SocketException("Failed to make device discoverable. " + std::to_string(WSAGetLastError()));
+        }
+        std::cout << "SETTING DISCOVERABLE" << std::endl;
+    }
+
+    #elif __linux__
+
+    void ServerSocket::setDiscoverable()
+    {
+        throw SocketException("Still in progress.");
+
+        hci_dev_req req;
+        req.dev_id = 0;
+        // req.dev_id = hci_get_route(nullptr);
+        req.dev_opt = SCAN_PAGE | SCAN_INQUIRY;
+
+        if (ioctl(socketDescriptor, HCISETSCAN, (unsigned long)&req) < 0)
+        {
+            throw SocketException("Failed to make device discoverable.");            
         }
     }
 

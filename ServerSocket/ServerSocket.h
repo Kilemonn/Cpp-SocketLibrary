@@ -36,7 +36,7 @@ namespace kt
 			unsigned int port;
 			bool isWifi;
 
-			#ifdef _WIN32
+#ifdef _WIN32
 
 			// Wifi properties
 			struct addrinfo *serverAddress;
@@ -44,16 +44,17 @@ namespace kt
 	        SOCKADDR_BTH bluetoothAddress;
 			SOCKET socketDescriptor;
 
-			#elif __linux__
+#elif __linux__
 
 			int socketDescriptor;
 			struct sockaddr_in serverAddress;
 	    	socklen_t socketSize;
 
-	    	#endif
+#endif
 
-	    	void constructSocket();
-	    	void constructBluetoothSocket();
+			void setDiscoverable();
+			void constructSocket();
+			void constructBluetoothSocket();
 			void constructWifiSocket();
 			void randomlyAllocatePort();
 
