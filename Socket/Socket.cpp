@@ -402,7 +402,7 @@ namespace kt
 	{
 		if (delimiter == '\0')
 		{
-			throw SocketException("The null terminator '\0' is an invalid delimiter.");
+			throw SocketException("The null terminator '\\0' is an invalid delimiter.");
 		}
 
 		std::string data = "";
@@ -436,7 +436,7 @@ namespace kt
 
 	std::string Socket::receiveAll() const
 	{
-		const unsigned long oneHundredMS = 100000; // 1 second in micro seconds
+		const unsigned long oneHundredMS = 100000; // 100 milli seconds in micro seconds
 		std::string result = "";
 		result.reserve(1024);
 
