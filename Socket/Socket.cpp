@@ -151,8 +151,6 @@ namespace kt
 #ifdef _WIN32
 	Socket& Socket::operator=(const Socket& socket)
 	{
-		this->close();
-
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
 		this->port = socket.port;
@@ -166,8 +164,6 @@ namespace kt
 #elif __linux__
 	Socket& Socket::operator=(const Socket& socket)
 	{
-		this->close();
-
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
 		this->port = socket.port;
@@ -182,13 +178,8 @@ namespace kt
 
 	Socket::~Socket()
 	{
-#ifdef _WIN32
-
-		freeaddrinfo(serverAddress);
-
-#endif
-
-		this->close();
+		// TODO: Do I want to call this here?
+		// this->close();
 	}
 
 
@@ -291,6 +282,7 @@ namespace kt
 	{
 #ifdef _WIN32
 
+		freeaddrinfo(serverAddress);
 		closesocket(socketDescriptor);
 
 #elif __linux__
