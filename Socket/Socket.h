@@ -71,11 +71,11 @@ namespace kt
 			
 #ifdef _WIN32
 			
-			Socket(const SOCKET&, const bool);
+			Socket(const SOCKET&, const bool, const std::string&, const unsigned int&);
 
 #elif __linux__
 
-			Socket(const int&, const bool); // Construct Socket from just descriptor
+			Socket(const int&, const bool, const std::string&, const unsigned int&); // Construct Socket from just descriptor
 
 #endif
 
@@ -87,6 +87,8 @@ namespace kt
 			bool ready(unsigned long = 0) const;
 			bool send(const std::string, int flag = 0) const;
 			char get() const;
+			int getPort() const;
+			std::string getAddress() const;
 			std::string receiveAmount(const unsigned int) const;
 			std::string receiveToDelimiter(const char) const;
 			std::string receiveAll() const;

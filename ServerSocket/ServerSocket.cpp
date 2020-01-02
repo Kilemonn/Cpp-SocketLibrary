@@ -421,7 +421,20 @@ namespace kt
 
         #endif 
 
-        return Socket(temp, isWifi);
+        struct sockaddr_in address;
+		socklen_t addr_size = sizeof(struct sockaddr_in);
+		int res = getpeername(temp, (struct sockaddr *)&address, &addr_size);
+
+        std::string hostname = "";
+		if (res == 0)
+		{
+            
+			char ip[20];
+    		strcpy(ip, inet_ntoa(address.sin_addr));
+			hostname = std::string(ip);
+		}
+
+        return Socket(temp, isWifi, hostname, htons(address.sin_port));
     }
 
     unsigned int ServerSocket::getPort() const

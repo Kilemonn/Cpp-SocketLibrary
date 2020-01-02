@@ -36,6 +36,8 @@
 #include <bluetooth/hci_lib.h>
 #include <ifaddrs.h>
 #include <netpacket/packet.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #endif
 
@@ -110,15 +112,19 @@ namespace kt
 #endif
 
 #ifdef _WIN32
-	Socket::Socket(const SOCKET& socketDescriptor, const bool isWifi)
+	Socket::Socket(const SOCKET& socketDescriptor, const bool isWifi, const std::string& hostname, const unsigned int& port)
 	{
+		this->hostname = hostname;
+		this->port = port;
 		this->socketDescriptor = socketDescriptor;
 		this->isWifi = isWifi;
 	}
 
 #elif __linux__
-	Socket::Socket(const int& socketDescriptor, const bool isWifi)
+	Socket::Socket(const int& socketDescriptor, const bool isWifi, const std::string& hostname, const unsigned int& port)
 	{
+		this->hostname = hostname;
+		this->port = port;
 		this->socketDescriptor = socketDescriptor;
 		this->isWifi = isWifi;
 	}
@@ -332,6 +338,16 @@ namespace kt
 	char Socket::get() const
 	{
 		return this->receiveAmount(1)[0];
+	}
+
+	int Socket::getPort() const
+	{
+		return port;
+	}
+
+	std::string Socket::getAddress() const
+	{
+		return hostname;
 	}
 
 	std::string Socket::receiveAmount(const unsigned int amountToReceive) const

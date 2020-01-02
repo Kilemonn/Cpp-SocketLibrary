@@ -81,7 +81,7 @@ void testWifi()
 		std::thread t1(wifiClient, p);
 
 		kt::Socket client(server.accept());
-		std::cout << "Accepted\n";
+		std::cout << "Accepted - " + client.getAddress() + ":" + std::to_string(client.getPort()) + "\n";
 
 		if (client.send("HEY\n"))
 		{
@@ -158,7 +158,7 @@ void testBluetooth()
 {
 	std::cout << "\nTESTING BLUETOOTH\n";
 
-	kt::ServerSocket server(kt::ServerSocket::BLUETOOTH, 3);
+	kt::ServerSocket server(kt::ServerSocket::BLUETOOTH, 5);
 
 	unsigned int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);
