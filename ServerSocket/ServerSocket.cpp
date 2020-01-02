@@ -426,15 +426,16 @@ namespace kt
 		int res = getpeername(temp, (struct sockaddr *)&address, &addr_size);
 
         std::string hostname = "";
+        unsigned int portnum = 0;
 		if (res == 0)
-		{
-            
+		{ 
 			char ip[20];
     		strcpy(ip, inet_ntoa(address.sin_addr));
 			hostname = std::string(ip);
+            portnum = htons(address.sin_port);
 		}
 
-        return Socket(temp, isWifi, hostname, htons(address.sin_port));
+        return Socket(temp, isWifi, hostname, portnum);
     }
 
     unsigned int ServerSocket::getPort() const
