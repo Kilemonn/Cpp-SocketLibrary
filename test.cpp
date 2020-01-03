@@ -13,10 +13,12 @@
 #include "Enums/SocketProtocol.cpp"
 #include "Enums/SocketType.cpp"
 
-void wifiClient(const unsigned int&);
+void TCPClient(const unsigned int&);
+void UDPClient(const unsigned int&);
 void bluetoothFunction(const unsigned int&);
 
 void testTCP();
+void testUDP();
 void testBluetooth();
 
 void doScan();
@@ -32,6 +34,8 @@ int main()
 		// doScan();
 
 		testTCP();
+
+		testUDP();
 
 		std::string addr = kt::Socket::getLocalMACAddress();
 
@@ -73,14 +77,13 @@ void doScan()
 void testTCP()
 {
 	std::cout << "\nTESTING WIFI\n";
-	bool error = false;
 
 	try
 	{
 		kt::ServerSocket server(kt::SocketType::Wifi);
 
 		unsigned int p = server.getPort();
-		std::thread t1(wifiClient, p);
+		std::thread t1(TCPClient, p);
 
 		kt::Socket client(server.accept());
 		std::cout << "Accepted - " + client.getAddress() + ":" + std::to_string(client.getPort()) + "\n";
@@ -118,20 +121,18 @@ void testTCP()
 	catch (const kt::SocketException& se)
 	{
 		std::cout << se.what() << std::endl;
-		error = true;
+		assert(false);
 	}
 	catch (...)
 	{
-		error = true;
 		std::cout << "CAUGHT IT" << std::endl;
+		assert(false);
 	}
-
-	assert(error == false);
 }
 
-void wifiClient(const unsigned int& p)
+void TCPClient(const unsigned int& p)
 {
-	kt::Socket socket("127.0.0.1", p, kt::SocketType::Wifi);
+	kt::Socket socket("127.0.0.1", p, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 	std::cout << "Connected\n";
 
 	char delimiter = '\n';
@@ -154,6 +155,44 @@ void wifiClient(const unsigned int& p)
 	delimiter = '\n';
 	received = socket.receiveToDelimiter(delimiter);
 	std::cout << "RECIEVED4: " << received << std::endl;
+}
+
+void testUDP()
+{
+	std::cout << "Testing UDP: " << std::endl;
+
+	try
+	{
+		unsigned int port = 65222;
+		kt::Socket socket("127.0.0.1", port, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+		std::cout << "First UDP Client created.\n";
+
+		std::thread t1(UDPClient, port);
+
+		std::cout << socket.receiveToDelimiter('\n') << std::endl;
+
+		t1.join();
+	}
+	catch (const kt::SocketException& se)
+	{
+		std::cout << se.what() << std::endl;
+		assert(false);
+	}
+	catch (...)
+	{
+		std::cout << "CAUGHT IT" << std::endl;
+		assert(false);
+	}
+}
+
+void UDPClient(const unsigned int& p)
+{
+	kt::Socket socket("", 65332, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+	std::cout << "Connected\n";
+
+	socket.sendTo("127.0.0.1", "test\n");
+
+	socket.close();
 }
 
 void testBluetooth()
@@ -193,3 +232,5 @@ void bluetoothFunction(const unsigned int& p)
 
 	socket.send("12345");
 }
+
+

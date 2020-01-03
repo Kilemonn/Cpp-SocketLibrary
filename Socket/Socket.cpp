@@ -1,6 +1,7 @@
 
 #include "Socket.h"
 #include "../SocketExceptions/SocketException.hpp"
+#include "../SocketExceptions/BindingException.hpp"
 #include "../Enums/SocketProtocol.cpp"
 #include "../Enums/SocketType.cpp"
 
@@ -45,17 +46,16 @@
 
 namespace kt
 {
-	Socket::Socket()
-	{
-		//Nothing to do
-	}
 
-#ifdef _WIN32
-	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type)
+	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->type = type;
+		this->protocol = protocol;
+
+#ifdef _WIN32
+
 		this->serverAddress = nullptr;
 		this->socketDescriptor = INVALID_SOCKET;
 
@@ -66,161 +66,121 @@ namespace kt
 	    	throw SocketException("WSAStartup Failed. " + std::to_string(res));
 	    }
 
+#elif __linux__
+
+		this->serverAddress = { 0 };
+		this->bluetoothAddress = { 0 };
+
+#endif
+
+		if (this->type == kt::SocketType::Wifi && this->protocol == kt::SocketProtocol::None)
+        {
+            throw SocketException("Unable to set protocol to 'None' for a Wifi Socket.");
+        }
+
 	    if (type == kt::SocketType::Wifi)
 	    {
-	    	if (this->hostname == "")
-			{
-				this->hostname = "127.0.0.1";
-			}
 			this->constructWifiSocket();
 	    }
 	    else
 	    {
-	    	if (this->hostname == "")
-			{
-				// this->hostname = "" - loop back for bluetooth?
-			}
 			this->constructBluetoothSocket();
 	    }
 	}
 
-#elif __linux__
-	// Throws SocketException when can't connect to server
-	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type)
-	{
-		this->hostname = hostname;
-		this->port = port;
-		this->type = type;
-		this->serverAddress = { 0 };
-		this->bluetoothAddress = { 0 };
+#ifdef _WIN32
 
-		if (type == kt::SocketType::Wifi)
-		{
-			if (this->hostname == "")
-			{
-				this->hostname = "127.0.0.1";
-			}
-			this->constructWifiSocket();
-		}
-		else
-		{
-			if (this->hostname == "")
-			{
-				// this->hostname = "" - loop back for bluetooth?
-			}
-			this->constructBluetoothSocket();
-		}
-	}
+	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
+
+#elif __linux__
+
+Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
+
 #endif
 
-#ifdef _WIN32
-	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const std::string& hostname, const unsigned int& port)
 	{
 		this->hostname = hostname;
 		this->port = port;
+		this->protocol = protocol;
 		this->socketDescriptor = socketDescriptor;
 		this->type = type;
 	}
 
-#elif __linux__
-	Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const std::string& hostname, const unsigned int& port)
-	{
-		this->hostname = hostname;
-		this->port = port;
-		this->socketDescriptor = socketDescriptor;
-		this->type = type;
-	}
-#endif
-
-#ifdef _WIN32
 	Socket::Socket(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
+		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
 
 		this->serverAddress = socket.serverAddress;
-	}
 
-#elif __linux__
-	Socket::Socket(const Socket& socket)
-	{
-		this->socketDescriptor = socket.socketDescriptor;
-		this->hostname = socket.hostname;
-		this->port = socket.port;
-		this->type = socket.type;
+#ifdef __linux__
 
 		this->bluetoothAddress = socket.bluetoothAddress;
-		this->serverAddress = socket.serverAddress;
-	}
-#endif
 
-#ifdef _WIN32
+#endif
+	}
+
 	Socket& Socket::operator=(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
+		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
 
 		this->serverAddress = socket.serverAddress;
 
-		return *this;
-	}
-
-#elif __linux__
-	Socket& Socket::operator=(const Socket& socket)
-	{
-		this->socketDescriptor = socket.socketDescriptor;
-		this->hostname = socket.hostname;
-		this->port = socket.port;
-		this->type = socket.type;
+#ifdef __linux__
 
 		this->bluetoothAddress = socket.bluetoothAddress;
-		this->serverAddress = socket.serverAddress;
+
+#endif
 
 		return *this;
 	}
-#endif
 
 #ifdef _WIN32
+
 	void Socket::constructBluetoothSocket()
 	{
 		// throw SocketException("Bluetooth sockets are not supported in Windows.");
 
-		socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+		this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
-		if (socketDescriptor == INVALID_SOCKET)
+		if (this->socketDescriptor == INVALID_SOCKET)
 		{
 			throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 		}
 
-		bluetoothAddress.addressFamily = AF_BTH;
-	    bluetoothAddress.btAddr = std::stoull(this->hostname);
-	    bluetoothAddress.port = this->port;
+		this->bluetoothAddress.addressFamily = AF_BTH;
+	    this->bluetoothAddress.btAddr = std::stoull(this->hostname);
+	    this->bluetoothAddress.port = this->port;
 
-	    if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
+	    if (connect(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
 	    {
 	    	throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 	    }
 	}
 
 #elif __linux__
+
 	void Socket::constructBluetoothSocket()
 	{
-		socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+		this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
-		if (socketDescriptor == -1)
+		if (this->socketDescriptor == -1)
 	    {
 	    	throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 	    }
 
-	    bluetoothAddress.rc_family = AF_BLUETOOTH;
-	    bluetoothAddress.rc_channel = (uint8_t) port;
-	    str2ba(this->hostname.c_str(), &bluetoothAddress.rc_bdaddr);
+	    this->bluetoothAddress.rc_family = AF_BLUETOOTH;
+	    this->bluetoothAddress.rc_channel = (uint8_t) port;
+	    str2ba(this->hostname.c_str(), &this->bluetoothAddress.rc_bdaddr);
 
-	   	if (connect(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(bluetoothAddress)) == -1)
+	   	if (connect(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(this->bluetoothAddress)) == -1)
 	   	{
 	   		throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 		}
@@ -228,82 +188,152 @@ namespace kt
 #endif
 
 #ifdef _WIN32
+
 	void Socket::constructWifiSocket()
 	{
-		int res;
-		ZeroMemory( &hints, sizeof(hints) );
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
+		memset(&this->hints, 0, sizeof(this->hints));
+		this->hints.ai_family = AF_INET;
+        int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
+		this->hints.ai_socktype = socketType;
+		int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
+		this->hints.ai_protocol = socketProtocol;
 
-		res = getaddrinfo(hostname.c_str(), std::to_string(port).c_str(), &hints, &serverAddress);
-
-		if (res != 0) 
+		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-		    throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
+			if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0) 
+			{
+				throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
+			}
+
+			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
+			if (this->socketDescriptor == INVALID_SOCKET) 
+			{
+				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
+			}
+
+			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR)
+			{
+				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
+			}
 		}
-
-		socketDescriptor = socket(serverAddress->ai_family, serverAddress->ai_socktype, serverAddress->ai_protocol);
-		if (socketDescriptor == INVALID_SOCKET) 
+		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
-		    throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
-		}
+			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
+			if (this->socketDescriptor == INVALID_SOCKET) 
+			{
+				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
+			}
 
-	    res = connect(socketDescriptor, serverAddress->ai_addr, (int)serverAddress->ai_addrlen);
-		if(res == SOCKET_ERROR)
-		{
-			throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
+			if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR)
+			{
+				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+			}
 		}
 	}
 
 #elif __linux__
+
 	void Socket::constructWifiSocket()
 	{
-		struct hostent* server = gethostbyname(this->hostname.c_str());
-	    socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+		int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
+	    this->socketDescriptor = socket(AF_INET, socketProtocol, 0);
 
-	    if (socketDescriptor == -1)
+	    if (this->socketDescriptor == -1)
 	    {
 	    	throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 	    }
 
-	    bzero((char *) &serverAddress, sizeof(serverAddress));
-	    serverAddress.sin_family = AF_INET;
-	    bcopy((char *) server->h_addr, (char *) &serverAddress.sin_addr.s_addr, server->h_length);
-	    serverAddress.sin_port = htons(this->port);
-
-		if (connect(socketDescriptor, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
+		struct hostent* server = gethostbyname(this->hostname.c_str());
+		if (server != nullptr)
 		{
-			throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
+			memset(&this->serverAddress, 0, sizeof(this->serverAddress));
+			this->serverAddress.sin_family = AF_INET;
+			bcopy((char *) server->h_addr, (char *) &this->serverAddress.sin_addr.s_addr, server->h_length);
+			this->serverAddress.sin_port = htons(this->port);
+		}
+		else
+		{
+			if (this->protocol == kt::SocketProtocol::TCP)
+			{
+				throw SocketException("Error connecting to socket with IP: " + this->hostname + ".");
+			}
+		}
+
+		if (this->protocol == kt::SocketProtocol::TCP)
+		{
+			if (connect(this->socketDescriptor, (struct sockaddr *)&this->serverAddress, sizeof(this->serverAddress)) == -1)
+			{
+				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
+			}
+		}
+		else if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			if (bind(this->socketDescriptor, (struct sockaddr*) &this->serverAddress, sizeof(this->serverAddress)) == -1) 
+			{
+				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+			}
 		}
 	}
+
 #endif
 
 	void Socket::close()
 	{
 #ifdef _WIN32
 
-		freeaddrinfo(serverAddress);
-		closesocket(socketDescriptor);
+		freeaddrinfo(this->serverAddress);
+		closesocket(this->socketDescriptor);
 
 #elif __linux__
 
-		::close(socketDescriptor);
+		::close(this->socketDescriptor);
 
 #endif
 	}
 
-	bool Socket::send(const std::string message, int flag) const
+	bool Socket::send(const std::string& message, int flag) const
 	{
 		if (message.size() > 0)
 		{
-			if (::send(socketDescriptor, message.c_str(), message.size(), flag) == -1) 
+			if (this->protocol == kt::SocketProtocol::TCP)
 			{
-				return false;
+				if (::send(this->socketDescriptor, message.c_str(), message.size(), flag) == -1) 
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
 			}
-			else
+		}
+		return false;
+	}
+
+	bool Socket::sendTo(const std::string& address, const std::string& message, int flag)
+	{
+		if (message.size() > 0)
+		{
+			if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				return true;
+				if (address.size() > 0 || this->clientAddress.sin_family == AF_UNSPEC)
+				{
+					memset(&this->clientAddress, 0, sizeof(this->clientAddress));
+
+					struct hostent* client = gethostbyname(address.c_str());
+					this->clientAddress.sin_family = AF_INET;
+					memcpy((char *) client->h_addr, (char *) &this->clientAddress.sin_addr.s_addr, client->h_length);
+					this->clientAddress.sin_port = htons(this->port);	
+				}
+
+				if (::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&this->clientAddress, sizeof(this->clientAddress)) == -1)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
 			}
 		}
 		return false;
@@ -337,12 +367,28 @@ namespace kt
 
 	int Socket::getPort() const
 	{
-		return port;
+		return this->port;
+	}
+
+	std::string Socket::getLastRecievedAddress() const
+	{
+		struct sockaddr_in address;
+		socklen_t addr_size = sizeof(struct sockaddr_in);
+		int res = getpeername(this->socketDescriptor, (struct sockaddr *)&address, &addr_size);
+
+		std::string receivedAddress = "";
+		if (res == 0)
+		{ 
+			char ip[20];
+    		strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
+			receivedAddress = std::string(ip);
+		}
+		return receivedAddress;
 	}
 
 	std::string Socket::getAddress() const
 	{
-		return hostname;
+		return this->hostname;
 	}
 
 	std::string Socket::receiveAmount(const unsigned int amountToReceive) const
@@ -361,17 +407,17 @@ namespace kt
 
 		while (counter < amountToReceive)
 		{
-#ifdef _WIN32
+			memset(&data, 0, bufferSize);
 
-			ZeroMemory (&data, bufferSize);
-
-#elif __linux__
-
-			bzero(&data, bufferSize);
-
-#endif
-
-			flag = recv(socketDescriptor, data, (amountToReceive - counter), 0);
+			if (this->protocol == kt::SocketProtocol::TCP)
+			{
+				flag = recv(this->socketDescriptor, data, (amountToReceive - counter), 0);
+			}
+			else if (this->protocol == kt::SocketProtocol::UDP)
+			{
+				socklen_t addressLength = sizeof(this->clientAddress);
+				flag = recvfrom(this->socketDescriptor, data, (amountToReceive - counter), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			}
 			
 			if (flag < 1)
 			{
@@ -397,17 +443,17 @@ namespace kt
 
 		do
 		{
-#ifdef _WIN32
+			memset(&temp, 0, sizeof(temp));
 
-			ZeroMemory (&temp, sizeof(temp));
-
-#elif __linux__
-
-			bzero(&temp, sizeof(temp));
-
-#endif
-
-			flag = recv(socketDescriptor, temp, 1, 0);
+			if (this->protocol == kt::SocketProtocol::TCP)
+			{
+				flag = recv(this->socketDescriptor, temp, 1, 0);
+			}
+			else if (this->protocol == kt::SocketProtocol::UDP)
+			{
+				socklen_t addressLength = sizeof(this->clientAddress);
+				flag = recvfrom(this->socketDescriptor, temp, 1, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			}
 
 			if (flag < 1)
 			{
@@ -420,9 +466,9 @@ namespace kt
 		return std::move(data.substr(0, (data.size() - 1)));
 	}
 
-	std::string Socket::receiveAll() const
+	std::string Socket::receiveAll(const unsigned long oneHundredMS) const
 	{
-		const unsigned long oneHundredMS = 100000; // 100 milli seconds in micro seconds
+		// Default is 100 milli seconds in micro seconds
 		std::string result = "";
 		result.reserve(1024);
 
@@ -434,6 +480,7 @@ namespace kt
 	}
 
 #ifdef _WIN32
+
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
  		WSADATA wsaData;
@@ -451,7 +498,7 @@ namespace kt
 		SOCKADDR_BTH tempAddress;
 		DWORD dwSize = 5000 * sizeof(unsigned char);
 
-		ZeroMemory(&wsaQuery, sizeof(WSAQUERYSET));
+		memset(&wsaQuery, 0, sizeof(WSAQUERYSET));
 		wsaQuery.dwSize = sizeof(WSAQUERYSET);
 		wsaQuery.dwNameSpace = NS_BTH;
 		wsaQuery.lpcsaBuffer = nullptr;
@@ -463,7 +510,7 @@ namespace kt
 			throw SocketException("Unable to search for devices. Could not begin search.");
 		}
 		
-		ZeroMemory(&pQuerySet, sizeof(WSAQUERYSET));
+		memset(&pQuerySet, 0, sizeof(WSAQUERYSET));
 		pQuerySet->dwSize = sizeof(WSAQUERYSET);
 		pQuerySet->dwNameSpace = NS_BTH;
 		pQuerySet->lpBlob = nullptr;
@@ -477,6 +524,7 @@ namespace kt
 	}
 
 #elif __linux__
+
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
 		std::vector<std::pair<std::string, std::string> > devices;
@@ -507,7 +555,7 @@ namespace kt
 	    for (int i = 0; i < numberOfResponses; i++) 
 	    {
 	        ba2str( &(ii + i)->bdaddr, deviceAddress);
-	        bzero(&deviceName, sizeof(deviceName));
+			memset(&deviceName, 0, sizeof(deviceName));
 	        if (hci_read_remote_name(tempSocket, &(ii+i)->bdaddr, sizeof(deviceName), deviceName, 0) < 0)
 	        {
 	        	strcpy(deviceName, "[unknown]");
@@ -523,9 +571,11 @@ namespace kt
 
 		return std::move(devices);
 	}
+
 #endif
 
 #ifdef _WIN32
+
 	std::string Socket::getLocalMACAddress()
 	{
 		// Up to 20 Interfaces
@@ -557,6 +607,7 @@ namespace kt
 	}
 
 #elif __linux__
+
 	std::string Socket::getLocalMACAddress()
 	{
 		int id;
@@ -583,6 +634,7 @@ namespace kt
 		
 		return std::string(localMACAddress);
 	}
+
 #endif
 
 } // End namespace kt

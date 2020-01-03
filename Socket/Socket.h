@@ -45,6 +45,7 @@ namespace kt
 			unsigned int port;
 			kt::SocketProtocol protocol;
 			kt::SocketType type;
+			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
 
 #ifdef _WIN32
 
@@ -67,16 +68,15 @@ namespace kt
 			void constructWifiSocket();
 
 		public:
-			Socket();
-			Socket(const std::string&, const unsigned int&, const kt::SocketType); // Create Wi-Fi/Bluetooth Socket
-			
+			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
+
 #ifdef _WIN32
-			
-			Socket(const SOCKET&, const kt::SocketType, const std::string&, const unsigned int&);
+
+			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
 
 #elif __linux__
 
-			Socket(const int&, const kt::SocketType, const std::string&, const unsigned int&); // Construct Socket from just descriptor
+			Socket(const int&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
 
 #endif
 
@@ -85,13 +85,15 @@ namespace kt
 			
 			void close();
 			bool ready(unsigned long = 0) const;
-			bool send(const std::string, int flag = 0) const;
+			bool send(const std::string&, int flag = 0) const;
+			bool sendTo(const std::string&, const std::string&, int flag = 0);
 			char get() const;
 			int getPort() const;
+			std::string getLastRecievedAddress() const;
 			std::string getAddress() const;
 			std::string receiveAmount(const unsigned int) const;
 			std::string receiveToDelimiter(const char) const;
-			std::string receiveAll() const;
+			std::string receiveAll(const unsigned long oneHundredMS = 100000) const;
 
 			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int duration = 5);
 			static std::string getLocalMACAddress();

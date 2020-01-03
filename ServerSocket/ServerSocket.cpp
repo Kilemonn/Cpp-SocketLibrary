@@ -3,7 +3,6 @@
 #include "../Socket/Socket.h"
 #include "../SocketExceptions/SocketException.hpp"
 #include "../SocketExceptions/BindingException.hpp"
-#include "../Enums/SocketProtocol.cpp"
 #include "../Enums/SocketType.cpp"
 
 #include <iostream>
@@ -41,13 +40,14 @@
 
 namespace kt
 {
-    #ifdef _WIN32
-
     ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port)
     {
-        socketDescriptor = INVALID_SOCKET;
         this->port = port;
         this->type = type;
+
+ #ifdef _WIN32
+
+        this->socketDescriptor = INVALID_SOCKET;
 
         WSADATA wsaData;
         int res = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -56,38 +56,18 @@ namespace kt
             throw SocketException("WSAStartup Failed: " + std::to_string(res));
         }
 
-        // Randomly allocate port and construct socket
-        if (this->port == 0)
-        {
-            randomlyAllocatePort();
-        }
-        else
-        {
-            this->constructSocket();
-        }
-
-    }
-
-    #elif __linux__
-
-    // Throws SocketException when instance cannot bind or listen
-    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port)
-    {
-    	this->port = port;
-        this->type = type;
+#endif
 
         // Randomly allocate port and construct socket
         if (this->port == 0)
         {
-            randomlyAllocatePort();
+            this->randomlyAllocatePort();
         }
         else
         {
             this->constructSocket();
         }
     }
-
-    #endif
 
     void ServerSocket::randomlyAllocatePort()
     {
@@ -103,7 +83,7 @@ namespace kt
         {
             try
             {
-                if (type == kt::SocketType::Wifi)
+                if (this->type == kt::SocketType::Wifi)
                 { 
                     this->port = wifiRand(gen);     
                 }
@@ -128,11 +108,11 @@ namespace kt
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
 
-        #ifdef __linux__
+#ifdef __linux__
 
         this->socketSize = socket.socketSize;
 
-        #endif
+#endif
     }
 
     ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
@@ -142,11 +122,11 @@ namespace kt
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
 
-        #ifdef __linux__
+#ifdef __linux__
 
         this->socketSize = socket.socketSize;
 
-        #endif
+#endif
 
         return *this;
     }
@@ -164,30 +144,29 @@ namespace kt
         }
     }
 
-
-    #ifdef _WIN32
+#ifdef _WIN32
 
     void ServerSocket::constructBluetoothSocket()
     {
         SOCKADDR_BTH bluetoothAddress;
 
-        socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+        this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
-        if (socketDescriptor == INVALID_SOCKET)
+        if (this->socketDescriptor == INVALID_SOCKET)
         {
             throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
         }
 
-        bluetoothAddress.addressFamily = AF_BTH;
-        bluetoothAddress.btAddr = 0;
-        bluetoothAddress.port = this->port;
+        this->bluetoothAddress.addressFamily = AF_BTH;
+        this->bluetoothAddress.btAddr = 0;
+        this->bluetoothAddress.port = this->port;
 
-        if (bind(socketDescriptor, (struct sockaddr *) &bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
+        if (bind(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
         {
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
         }
 
-        if (listen(socketDescriptor, 1) == SOCKET_ERROR) 
+        if (listen(this->socketDescriptor, 1) == SOCKET_ERROR) 
         {
             this->close();
             throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -203,7 +182,7 @@ namespace kt
         lpCSAddrInfo[0].iProtocol = BTHPROTO_RFCOMM;*/
 
         /*WSAQUERYSET wsaQuerySet;
-        ZeroMemory(&wsaQuerySet, sizeof(WSAQUERYSET));
+        memset(&wsaQuerySet, 0, sizeof(WSAQUERYSET));
         wsaQuerySet.dwSize = sizeof(WSAQUERYSET);
         wsaQuerySet.dwNameSpace = NS_BTH;
         wsaQuerySet.lpServiceClassId = nullptr;
@@ -218,7 +197,7 @@ namespace kt
         std::cout << "DONE!" << std::endl;*/
     }
 
-    #elif __linux__
+#elif __linux__
 
     void ServerSocket::constructBluetoothSocket()
     {
@@ -226,9 +205,9 @@ namespace kt
         bdaddr_t tmp = ((bdaddr_t) {{0, 0, 0, 0, 0, 0}});
         this->socketSize = sizeof(localAddress);
 
-        socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+        this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
-        if (socketDescriptor == -1)
+        if (this->socketDescriptor == -1)
         {
             throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
         }
@@ -237,12 +216,12 @@ namespace kt
         localAddress.rc_bdaddr = tmp;
         localAddress.rc_channel = static_cast<uint8_t>(port);
         
-        if (bind(socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
+        if (bind(this->socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
         {
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if (listen(socketDescriptor, 1) == -1)
+        if (listen(this->socketDescriptor, 1) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -251,76 +230,72 @@ namespace kt
         // Make discoverable
     }
 
-    #endif
+#endif
 
-    #ifdef _WIN32
+#ifdef _WIN32
 
     void ServerSocket::constructWifiSocket()
     {
-        int res;
-        ZeroMemory(&hints, sizeof (hints));
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = IPPROTO_TCP;
-        hints.ai_flags = AI_PASSIVE;
+        memset(&this->hints, 0, sizeof(this->hints));
+        this->hints.ai_family = AF_INET;
+		this->hints.ai_socktype = SOCK_STREAM;
+		this->hints.ai_protocol = IPPROTO_TCP;
+        this->hints.ai_flags = AI_PASSIVE;
 
-        res = getaddrinfo(nullptr, std::to_string(port).c_str(), &hints, &serverAddress);
-
-        if (res != 0) 
+        if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0) 
         {
             throw SocketException("Unable to retrieving Wifi serversocket host address. (Self)");
         }
 
-        socketDescriptor = socket(serverAddress->ai_family, serverAddress->ai_socktype, serverAddress->ai_protocol);
-        if (socketDescriptor == INVALID_SOCKET) 
+        this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
+        if (this->socketDescriptor == INVALID_SOCKET) 
         {
              throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
         }
 
-        res = bind( socketDescriptor, serverAddress->ai_addr, (int)serverAddress->ai_addrlen);
-        if (res == SOCKET_ERROR) 
+        if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR) 
         {
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if( listen( socketDescriptor, SOMAXCONN ) == SOCKET_ERROR ) 
+        if(listen(this->socketDescriptor, SOMAXCONN) == SOCKET_ERROR)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
     }
 
-    #elif __linux__
+#elif __linux__
 
     void ServerSocket::constructWifiSocket()
     {
         this->socketSize = sizeof(serverAddress);
-        socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
+        this->socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
 
-        if (socketDescriptor == -1) 
+        if (this->socketDescriptor == -1) 
         {
             throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
         }
 
-        serverAddress.sin_family = AF_INET;
-        serverAddress.sin_addr.s_addr = htons(INADDR_ANY);
-        serverAddress.sin_port = htons(this->port);
+        this->serverAddress.sin_family = AF_INET;
+        this->serverAddress.sin_addr.s_addr = htons(INADDR_ANY);
+        this->serverAddress.sin_port = htons(this->port);
 
-        if ( bind(socketDescriptor, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) == -1) 
+        if (bind(this->socketDescriptor, (struct sockaddr*) &this->serverAddress, sizeof(this->serverAddress)) == -1) 
         {
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if(listen(socketDescriptor, 1) == -1)
+        if(listen(this->socketDescriptor, 1) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
     }
 
-    #endif
+#endif
 
-    #ifdef _WIN32
+#ifdef _WIN32
 
     void ServerSocket::setDiscoverable()
     {
@@ -328,14 +303,14 @@ namespace kt
         std::cout << "SETTING DISCOVERABLE" << std::endl;
         CSADDR_INFO address[1];
 
-        ZeroMemory(&address, sizeof(address));
+        memset(&address, 0, sizeof(address));
         address[0].LocalAddr.iSockaddrLength = sizeof(socketDescriptor);
         address[0].LocalAddr.lpSockaddr = (struct sockaddr*) &socketDescriptor;
         address[0].iSocketType = SOCK_STREAM;
         address[0].iProtocol = BTHPROTO_RFCOMM;
 
         WSAQUERYSET wsaQuery;
-        ZeroMemory(&wsaQuery, sizeof(WSAQUERYSET));
+        memset(&wsaQuery, 0, sizeof(WSAQUERYSET));
         wsaQuery.dwSize = sizeof(WSAQUERYSET);
         wsaQuery.dwNameSpace = NS_BTH;
         wsaQuery.dwNumberOfCsAddrs = 1;
@@ -348,7 +323,7 @@ namespace kt
         std::cout << "SETTING DISCOVERABLE" << std::endl;
     }
 
-    #elif __linux__
+#elif __linux__
 
     void ServerSocket::setDiscoverable()
     {
@@ -359,24 +334,24 @@ namespace kt
         // req.dev_id = hci_get_route(nullptr);
         req.dev_opt = SCAN_PAGE | SCAN_INQUIRY;
 
-        if (ioctl(socketDescriptor, HCISETSCAN, (unsigned long)&req) < 0)
+        if (ioctl(this->socketDescriptor, HCISETSCAN, (unsigned long)&req) < 0)
         {
             throw SocketException("Failed to make device discoverable.");            
         }
     }
 
-    #endif
+#endif
 
     Socket ServerSocket::accept()
     {
-        #ifdef _WIN32
+#ifdef _WIN32
 
-        SOCKET temp = ::accept(socketDescriptor, nullptr, nullptr);
+        SOCKET temp = ::accept(this->socketDescriptor, nullptr, nullptr);
 
-        #elif __linux__
+#elif __linux__
 
         struct sockaddr_rc remoteDevice = {0};
-        int temp = ::accept(socketDescriptor, (struct sockaddr *) &remoteDevice, &socketSize);
+        int temp = ::accept(this->socketDescriptor, (struct sockaddr *) &remoteDevice, &this->socketSize);
 
         if (this->type == kt::SocketType::Bluetooth)
         {
@@ -386,7 +361,7 @@ namespace kt
 	        std::cout << "Accepted connection from " << remoteAddress << std::endl;
         }
 
-        #endif 
+#endif 
 
         struct sockaddr_in address;
 		socklen_t addr_size = sizeof(struct sockaddr_in);
@@ -402,7 +377,7 @@ namespace kt
             portnum = htons(address.sin_port);
 		}
 
-        return Socket(temp, this->type, hostname, portnum);
+        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portnum);
     }
 
     unsigned int ServerSocket::getPort() const
@@ -414,12 +389,12 @@ namespace kt
     {
         #ifdef _WIN32
 
-        freeaddrinfo(serverAddress);
-        closesocket(socketDescriptor);
+        freeaddrinfo(this->serverAddress);
+        closesocket(this->socketDescriptor);
 
         #elif __linux__
 
-        ::close(socketDescriptor);
+        ::close(this->socketDescriptor);
 
         #endif
     }

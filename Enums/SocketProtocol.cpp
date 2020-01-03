@@ -4,10 +4,11 @@
 
 namespace kt
 {
-    enum SocketProtocol
+    enum class SocketProtocol
     {
         TCP,
-        UDP
+        UDP,
+        None
     };
 }
 
