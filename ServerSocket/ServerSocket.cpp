@@ -85,7 +85,7 @@ namespace kt
             {
                 if (this->type == kt::SocketType::Wifi)
                 { 
-                    this->port = wifiRand(gen);     
+                    this->port = wifiRand(gen);
                 }
                 else
                 {

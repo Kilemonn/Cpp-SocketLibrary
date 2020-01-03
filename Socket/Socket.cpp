@@ -47,12 +47,13 @@
 namespace kt
 {
 
-	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
+	Socket::Socket(const std::string& hostname, const kt::SocketType type, const unsigned int& port, const kt::SocketProtocol protocol, const unsigned int& receivePort)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->type = type;
 		this->protocol = protocol;
+		this->receivePort = receivePort;
 
 #ifdef _WIN32
 
@@ -200,33 +201,46 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-			if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0) 
+			if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, this->serverAddress) != 0) 
 			{
 				throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
 			}
 
-			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
+			this->socketDescriptor = socket(this->serverAddress.ai_family, this->serverAddress.ai_socktype, this->serverAddress.ai_protocol);
 			if (this->socketDescriptor == INVALID_SOCKET) 
 			{
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
 
-			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR)
+			if (connect(this->socketDescriptor, this->serverAddress.ai_addr, (int)this->serverAddress.ai_addrlen) == SOCKET_ERROR)
 			{
 				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 			}
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
+			this->socketDescriptor = socket(this->serverAddress.ai_family, this->serverAddress.ai_socktype, this->serverAddress.ai_protocol);
 			if (this->socketDescriptor == INVALID_SOCKET) 
 			{
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
 
-			if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR)
+			struct addrinfo localAddress;
+			struct addrinfo localHints;
+			memset(&localHints, 0, sizeof(localHints));
+			localHints.ai_family = AF_INET;
+			localHints.ai_socktype = SOCK_STREAM;
+			localHints.ai_protocol = IPPROTO_TCP;
+			localHints.ai_flags = AI_PASSIVE;
+
+			if (getaddrinfo(nullptr, std::to_string(this->receivePort).c_str(), &this->hints, this.localAddress) != 0) 
 			{
-				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+				throw SocketException("Unable to retrieving host address to self (localhost/127.0.0.1): " + std::string(std::strerror(errno)));
+			}
+
+			if (bind(this->socketDescriptor, this->localAddress->ai_addr, (int)this->localAddress->ai_addrlen) == SOCKET_ERROR)
+			{
+				throw BindingException("Error binding connection, the port " + std::to_string(this->receivePort) + " is already being used: " + std::string(std::strerror(errno)));
 			}
 		}
 	}
@@ -268,9 +282,14 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			if (bind(this->socketDescriptor, (struct sockaddr*) &this->serverAddress, sizeof(this->serverAddress)) == -1) 
+			struct sockaddr_in localAddress;
+			localAddress.sin_family = AF_INET;
+			localAddress.sin_port = htons(this->receivePort);
+			localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+			if (bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) == -1) 
 			{
-				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+				std::cout << "Error binding connection, the port " + std::to_string(this->receivePort) + " is already being used: " + std::string(std::strerror(errno)) << std::endl;
+				// throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
 			}
 		}
 	}

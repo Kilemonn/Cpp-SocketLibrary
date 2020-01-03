@@ -43,6 +43,7 @@ namespace kt
 		private:
 			std::string hostname;
 			unsigned int port;
+			unsigned int receivePort;
 			kt::SocketProtocol protocol;
 			kt::SocketType type;
 			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
@@ -50,7 +51,7 @@ namespace kt
 #ifdef _WIN32
 
 			// Wifi Properties
-			struct addrinfo *serverAddress;
+			struct addrinfo serverAddress;
 	        struct addrinfo hints;
 	    	SOCKET socketDescriptor;
 
@@ -68,7 +69,7 @@ namespace kt
 			void constructWifiSocket();
 
 		public:
-			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
+			Socket(const std::string&, const kt::SocketType, const unsigned int&,  const kt::SocketProtocol = kt::SocketProtocol::None, const unsigned int& receivePort = 0); // Create Wi-Fi/Bluetooth Socket
 
 #ifdef _WIN32
 
