@@ -7,6 +7,9 @@
 #include <vector>
 #include <utility>
 
+#include "../Enums/SocketProtocol.cpp"
+#include "../Enums/SocketType.cpp"
+
 #ifdef _WIN32
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -40,7 +43,8 @@ namespace kt
 		private:
 			std::string hostname;
 			unsigned int port;
-			bool isWifi;
+			kt::SocketProtocol protocol;
+			kt::SocketType type;
 
 #ifdef _WIN32
 
@@ -63,25 +67,21 @@ namespace kt
 			void constructWifiSocket();
 
 		public:
-			const static bool WIFI = true;
-			const static bool BLUETOOTH = false;
-
 			Socket();
-			Socket(const std::string&, const unsigned int&, const bool); // Create Wi-Fi/Bluetooth Socket
+			Socket(const std::string&, const unsigned int&, const kt::SocketType); // Create Wi-Fi/Bluetooth Socket
 			
 #ifdef _WIN32
 			
-			Socket(const SOCKET&, const bool, const std::string&, const unsigned int&);
+			Socket(const SOCKET&, const kt::SocketType, const std::string&, const unsigned int&);
 
 #elif __linux__
 
-			Socket(const int&, const bool, const std::string&, const unsigned int&); // Construct Socket from just descriptor
+			Socket(const int&, const kt::SocketType, const std::string&, const unsigned int&); // Construct Socket from just descriptor
 
 #endif
 
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);
-			~Socket();
 			
 			void close();
 			bool ready(unsigned long = 0) const;

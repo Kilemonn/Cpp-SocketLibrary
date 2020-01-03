@@ -10,11 +10,13 @@
 #include "ServerSocket/ServerSocket.h"
 #include "SocketExceptions/SocketException.hpp"
 #include "SocketExceptions/BindingException.hpp"
+#include "Enums/SocketProtocol.cpp"
+#include "Enums/SocketType.cpp"
 
 void wifiClient(const unsigned int&);
 void bluetoothFunction(const unsigned int&);
 
-void testWifi();
+void testTCP();
 void testBluetooth();
 
 void doScan();
@@ -29,7 +31,7 @@ int main()
 
 		// doScan();
 
-		testWifi();
+		testTCP();
 
 		std::string addr = kt::Socket::getLocalMACAddress();
 
@@ -68,14 +70,14 @@ void doScan()
 	}
 }
 
-void testWifi()
+void testTCP()
 {
 	std::cout << "\nTESTING WIFI\n";
 	bool error = false;
 
 	try
 	{
-		kt::ServerSocket server(kt::ServerSocket::WIFI);
+		kt::ServerSocket server(kt::SocketType::Wifi);
 
 		unsigned int p = server.getPort();
 		std::thread t1(wifiClient, p);
@@ -129,7 +131,7 @@ void testWifi()
 
 void wifiClient(const unsigned int& p)
 {
-	kt::Socket socket("127.0.0.1", p, kt::Socket::WIFI);
+	kt::Socket socket("127.0.0.1", p, kt::SocketType::Wifi);
 	std::cout << "Connected\n";
 
 	char delimiter = '\n';
@@ -158,7 +160,7 @@ void testBluetooth()
 {
 	std::cout << "\nTESTING BLUETOOTH\n";
 
-	kt::ServerSocket server(kt::ServerSocket::BLUETOOTH, 5);
+	kt::ServerSocket server(kt::SocketType::Bluetooth, 5);
 
 	unsigned int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);
@@ -183,7 +185,7 @@ void testBluetooth()
 
 void bluetoothFunction(const unsigned int& p)
 {
-	kt::Socket socket(bluetoothLocalAddress, p, kt::Socket::BLUETOOTH);
+	kt::Socket socket(bluetoothLocalAddress, p, kt::SocketType::Bluetooth);
 	std::cout << "(BT) Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');

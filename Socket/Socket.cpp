@@ -1,6 +1,8 @@
 
 #include "Socket.h"
 #include "../SocketExceptions/SocketException.hpp"
+#include "../Enums/SocketProtocol.cpp"
+#include "../Enums/SocketType.cpp"
 
 #include <iostream>
 #include <vector>
@@ -49,11 +51,11 @@ namespace kt
 	}
 
 #ifdef _WIN32
-	Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
+	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type)
 	{
 		this->hostname = hostname;
 		this->port = port;
-		this->isWifi = isWifi;
+		this->type = type;
 		this->serverAddress = nullptr;
 		this->socketDescriptor = INVALID_SOCKET;
 
@@ -64,7 +66,7 @@ namespace kt
 	    	throw SocketException("WSAStartup Failed. " + std::to_string(res));
 	    }
 
-	    if (isWifi)
+	    if (type == kt::SocketType::Wifi)
 	    {
 	    	if (this->hostname == "")
 			{
@@ -84,15 +86,15 @@ namespace kt
 
 #elif __linux__
 	// Throws SocketException when can't connect to server
-	Socket::Socket(const std::string& hostname, const unsigned int& port, const bool isWifi)
+	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type)
 	{
 		this->hostname = hostname;
 		this->port = port;
-		this->isWifi = isWifi;
+		this->type = type;
 		this->serverAddress = { 0 };
 		this->bluetoothAddress = { 0 };
 
-		if (isWifi)
+		if (type == kt::SocketType::Wifi)
 		{
 			if (this->hostname == "")
 			{
@@ -112,21 +114,21 @@ namespace kt
 #endif
 
 #ifdef _WIN32
-	Socket::Socket(const SOCKET& socketDescriptor, const bool isWifi, const std::string& hostname, const unsigned int& port)
+	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const std::string& hostname, const unsigned int& port)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->socketDescriptor = socketDescriptor;
-		this->isWifi = isWifi;
+		this->type = type;
 	}
 
 #elif __linux__
-	Socket::Socket(const int& socketDescriptor, const bool isWifi, const std::string& hostname, const unsigned int& port)
+	Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const std::string& hostname, const unsigned int& port)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->socketDescriptor = socketDescriptor;
-		this->isWifi = isWifi;
+		this->type = type;
 	}
 #endif
 
@@ -136,7 +138,7 @@ namespace kt
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
 		this->port = socket.port;
-		this->isWifi = socket.isWifi;
+		this->type = socket.type;
 
 		this->serverAddress = socket.serverAddress;
 	}
@@ -147,7 +149,7 @@ namespace kt
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
 		this->port = socket.port;
-		this->isWifi = socket.isWifi;
+		this->type = socket.type;
 
 		this->bluetoothAddress = socket.bluetoothAddress;
 		this->serverAddress = socket.serverAddress;
@@ -160,7 +162,7 @@ namespace kt
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
 		this->port = socket.port;
-		this->isWifi = socket.isWifi;
+		this->type = socket.type;
 
 		this->serverAddress = socket.serverAddress;
 
@@ -173,7 +175,7 @@ namespace kt
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
 		this->port = socket.port;
-		this->isWifi = socket.isWifi;
+		this->type = socket.type;
 
 		this->bluetoothAddress = socket.bluetoothAddress;
 		this->serverAddress = socket.serverAddress;
@@ -181,13 +183,6 @@ namespace kt
 		return *this;
 	}
 #endif
-
-	Socket::~Socket()
-	{
-		// TODO: Do I want to call this here?
-		// this->close();
-	}
-
 
 #ifdef _WIN32
 	void Socket::constructBluetoothSocket()

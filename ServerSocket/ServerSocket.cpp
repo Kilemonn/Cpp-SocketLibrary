@@ -3,6 +3,8 @@
 #include "../Socket/Socket.h"
 #include "../SocketExceptions/SocketException.hpp"
 #include "../SocketExceptions/BindingException.hpp"
+#include "../Enums/SocketProtocol.cpp"
+#include "../Enums/SocketType.cpp"
 
 #include <iostream>
 #include <random>
@@ -41,11 +43,11 @@ namespace kt
 {
     #ifdef _WIN32
 
-    ServerSocket::ServerSocket(const bool isWifi, const unsigned int& port)
+    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port)
     {
         socketDescriptor = INVALID_SOCKET;
         this->port = port;
-        this->isWifi = isWifi;
+        this->type = type;
 
         WSADATA wsaData;
         int res = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -69,10 +71,10 @@ namespace kt
     #elif __linux__
 
     // Throws SocketException when instance cannot bind or listen
-    ServerSocket::ServerSocket(const bool isWifi, const unsigned int& port)
+    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port)
     {
     	this->port = port;
-        this->isWifi = isWifi;
+        this->type = type;
 
         // Randomly allocate port and construct socket
         if (this->port == 0)
@@ -101,8 +103,8 @@ namespace kt
         {
             try
             {
-                if (isWifi)
-                {          
+                if (type == kt::SocketType::Wifi)
+                { 
                     this->port = wifiRand(gen);     
                 }
                 else
@@ -119,74 +121,39 @@ namespace kt
         }
     }
 
-
-    #ifdef _WIN32
-
     ServerSocket::ServerSocket(const ServerSocket& socket)
     {
         this->port = socket.port;
-        this->isWifi = socket.isWifi;
+        this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
-    }
 
-    #elif __linux__
+        #ifdef __linux__
 
-    ServerSocket::ServerSocket(const ServerSocket& socket)
-    {
-        this->port = socket.port;
-        this->isWifi = socket.isWifi;
-        this->socketDescriptor = socket.socketDescriptor;
-        this->serverAddress = socket.serverAddress;
         this->socketSize = socket.socketSize;
+
+        #endif
     }
-
-    #endif
-
-    #ifdef _WIN32
 
     ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
     {
-        this->close();
-
         this->port = socket.port;
-        this->isWifi = socket.isWifi;
+        this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
 
-        return *this;
-    }
+        #ifdef __linux__
 
-    #elif __linux__
-
-    ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
-    {
-        this->close();
-
-        this->port = socket.port;
-        this->isWifi = socket.isWifi;
-        this->serverAddress = socket.serverAddress;
         this->socketSize = socket.socketSize;
-
-        return *this;
-    }
-
-    #endif
-
-    ServerSocket::~ServerSocket()
-    {
-        #ifdef _WIN32
-
-        freeaddrinfo(serverAddress);
 
         #endif
 
-        this->close();
+        return *this;
     }
 
     void ServerSocket::constructSocket()
     {
-        if (this->isWifi)
+        if (this->type == kt::SocketType::Wifi)
         {
             this->constructWifiSocket();
         }
@@ -411,7 +378,7 @@ namespace kt
         struct sockaddr_rc remoteDevice = {0};
         int temp = ::accept(socketDescriptor, (struct sockaddr *) &remoteDevice, &socketSize);
 
-        if (!isWifi)
+        if (this->type == kt::SocketType::Bluetooth)
         {
         	char remoteAddress[1024] = {0};
 	        ba2str(&remoteDevice.rc_bdaddr, remoteAddress);
@@ -435,7 +402,7 @@ namespace kt
             portnum = htons(address.sin_port);
 		}
 
-        return Socket(temp, isWifi, hostname, portnum);
+        return Socket(temp, this->type, hostname, portnum);
     }
 
     unsigned int ServerSocket::getPort() const
@@ -447,6 +414,7 @@ namespace kt
     {
         #ifdef _WIN32
 
+        freeaddrinfo(serverAddress);
         closesocket(socketDescriptor);
 
         #elif __linux__

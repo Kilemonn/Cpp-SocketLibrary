@@ -4,6 +4,9 @@
 
 #include "../Socket/Socket.h"
 
+#include "../Enums/SocketProtocol.cpp"
+#include "../Enums/SocketType.cpp"
+
 #ifdef _WIN32
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -34,7 +37,7 @@ namespace kt
 	{
 		private:
 			unsigned int port;
-			bool isWifi;
+			kt::SocketType type;
 
 #ifdef _WIN32
 
@@ -59,13 +62,9 @@ namespace kt
 			void randomlyAllocatePort();
 
 		public:
-			const static bool WIFI = true;
-			const static bool BLUETOOTH = false;
-
-			ServerSocket(const bool, const unsigned int& = 0);
+			ServerSocket(const kt::SocketType, const unsigned int& = 0);
 			ServerSocket(const ServerSocket&);
 			ServerSocket& operator=(const ServerSocket&);
-			~ServerSocket();
 
 			Socket accept();
 			unsigned int getPort() const;
