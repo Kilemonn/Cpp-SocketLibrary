@@ -19,13 +19,13 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 - Create a new Wifi Socket:
 
 ```cpp
-	Socket socket("127.0.0.1", 52123, Socket::WIFI);
+	kt::Socket socket("127.0.0.1", 56351, kt::SocketType::Wifi);
 ```
 
 - Create a new Wifi ServerSocket:
 
 ```cpp
-	ServerSocket server(ServerSocket::WIFI);
+	kt::ServerSocket server(kt::SocketType::Wifi);
 ```
 
 ### Upcoming Features:
