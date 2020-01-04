@@ -51,7 +51,7 @@ namespace kt
 #ifdef _WIN32
 
 			// Wifi Properties
-			struct addrinfo serverAddress;
+			struct addrinfo* serverAddress;
 	        struct addrinfo hints;
 	    	SOCKET socketDescriptor;
 
