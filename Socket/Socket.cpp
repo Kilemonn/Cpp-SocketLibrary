@@ -54,10 +54,10 @@ namespace kt
 		this->type = type;
 		this->protocol = protocol;
 		this->receivePort = receivePort;
+		this->serverAddress = { 0 };
 
 #ifdef _WIN32
 
-		this->serverAddress = nullptr;
 		this->socketDescriptor = INVALID_SOCKET;
 
 		WSADATA wsaData;
@@ -69,7 +69,6 @@ namespace kt
 
 #elif __linux__
 
-		this->serverAddress = { 0 };
 		this->bluetoothAddress = { 0 };
 
 #endif
@@ -201,31 +200,31 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-			if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, this->serverAddress) != 0) 
+			if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0)
 			{
 				throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
 			}
 
-			this->socketDescriptor = socket(this->serverAddress.ai_family, this->serverAddress.ai_socktype, this->serverAddress.ai_protocol);
+			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
 			if (this->socketDescriptor == INVALID_SOCKET) 
 			{
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
 
-			if (connect(this->socketDescriptor, this->serverAddress.ai_addr, (int)this->serverAddress.ai_addrlen) == SOCKET_ERROR)
+			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR)
 			{
 				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 			}
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			this->socketDescriptor = socket(this->serverAddress.ai_family, this->serverAddress.ai_socktype, this->serverAddress.ai_protocol);
+			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
 			if (this->socketDescriptor == INVALID_SOCKET) 
 			{
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
 
-			struct addrinfo localAddress;
+			struct addrinfo* localAddress;
 			struct addrinfo localHints;
 			memset(&localHints, 0, sizeof(localHints));
 			localHints.ai_family = AF_INET;
@@ -233,12 +232,12 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			localHints.ai_protocol = IPPROTO_TCP;
 			localHints.ai_flags = AI_PASSIVE;
 
-			if (getaddrinfo(nullptr, std::to_string(this->receivePort).c_str(), &this->hints, this.localAddress) != 0) 
+			if (getaddrinfo(nullptr, std::to_string(this->receivePort).c_str(), &this->hints, &localAddress) != 0) 
 			{
 				throw SocketException("Unable to retrieving host address to self (localhost/127.0.0.1): " + std::string(std::strerror(errno)));
 			}
 
-			if (bind(this->socketDescriptor, this->localAddress->ai_addr, (int)this->localAddress->ai_addrlen) == SOCKET_ERROR)
+			if (bind(this->socketDescriptor, localAddress->ai_addr, (int)localAddress->ai_addrlen) == SOCKET_ERROR)
 			{
 				throw BindingException("Error binding connection, the port " + std::to_string(this->receivePort) + " is already being used: " + std::string(std::strerror(errno)));
 			}
