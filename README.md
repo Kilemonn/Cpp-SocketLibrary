@@ -35,6 +35,19 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 - MacOS support
 
 
+### Known Issues
+- There is a known issue regarding SIGPIPE crashing the programming when send() is called after the remote process has already closed the socket.
+- A way to resolve this is to remove the SIGPIPE handler, since we can detect this when the send() function returns false.
+- Disable the SIGPIPE handler (on linux) using the following code:
+```cpp
+#include <signal.h>
+
+...
+signal(SIGPIPE, SIG_IGN);
+...
+
+```
+
 ## API Documentation
 
 ### Socket - API
