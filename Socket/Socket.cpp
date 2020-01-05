@@ -357,25 +357,35 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return false;
 	}
 
-	bool Socket::ready(unsigned long timeout) const
+	int Socket::pollSocket(const unsigned long timeout) const
 	{
-		fd_set sready;
+		fd_set sReady;
 		struct timeval timeOutVal;
+
 		memset((char*) &timeOutVal, 0, sizeof(timeOutVal));
 		timeOutVal.tv_usec = timeout;
 
-		FD_ZERO(&sready);
-		FD_SET((unsigned int)this->socketDescriptor, &sready);
+		FD_ZERO(&sReady);
+		FD_SET(this->socketDescriptor, &sReady);
 
-		int res = select(this->socketDescriptor, &sready, nullptr, nullptr, &timeOutVal);
-		if (FD_ISSET(this->socketDescriptor, &sready) || res > 0)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		// Need this->socketDescriptor + 1 here
+		return select(this->socketDescriptor + 1, &sReady, nullptr, nullptr, &timeOutVal);
+	}
+
+	bool Socket::ready(const unsigned long timeout) const
+	{
+		int result = this->pollSocket(timeout);
+
+		// 0 indicates that there is no data
+		return result > 0;
+	}
+
+	bool Socket::connected(const unsigned long timeout) const
+	{
+		int result = this->pollSocket(timeout);
+
+		// -1 indicates that the connection is not available
+		return result != -1;
 	}
 
 	char Socket::get() const
@@ -484,16 +494,22 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return std::move(data.substr(0, (data.size() - 1)));
 	}
 
-	std::string Socket::receiveAll(const unsigned long oneHundredMS) const
+	std::string Socket::receiveAll(const unsigned long oneMS) const
 	{
 		// Default is 100 milli seconds in micro seconds
 		std::string result = "";
+		char character = ' ';
 		result.reserve(1024);
 
-		while (this->ready(oneHundredMS))
+		while (this->ready(oneMS) && character != '\0')
 		{
-			result += this->get();
+			character = this->get();
+			if (character != '\0')
+			{
+				result += character;
+			}
 		}
+		result.shrink_to_fit();
 		return std::move(result);
 	}
 

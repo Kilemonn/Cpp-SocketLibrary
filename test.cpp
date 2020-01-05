@@ -112,7 +112,7 @@ void testTCP()
 
 		client.send("DAMN SON!");
 
-		client.send("Testing Wifi Stuff\n");
+		client.send("Testing Wifi receiveAll\n");
 
 		std::cout << "WAITING..." << std::endl;
 
@@ -154,14 +154,14 @@ void TCPClient(const unsigned int& p)
 	assert(received[received.size() - 1] != delimiter);
 	std::cout << "RECIEVED3: " << received << std::endl;
 	
-	delimiter = '\n';
-	received = socket.receiveToDelimiter(delimiter);
+	received = socket.receiveAll();
+	assert(received == "Testing Wifi receiveAll\n");
 	std::cout << "RECIEVED4: " << received << std::endl;
 
-	while(socket.ready())
-	{
-		// Don't leave until the other socket has been closed
-	}
+	// while(socket.connected())
+	// {
+	// 	// Don't leave until the other socket has been closed
+	// }
 }
 
 void testUDP()
@@ -171,10 +171,12 @@ void testUDP()
 	try
 	{
 		unsigned int port = 65222;
-		kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, port, kt::SocketProtocol::UDP, 1234);
+		kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, port, kt::SocketProtocol::UDP, 12345);
 		std::cout << "First UDP Client created.\n";
 
 		std::thread t1(UDPClient, port);
+
+		std::cout << "UDP Read: " + socket.receiveToDelimiter('\n') << std::endl;
 
 		if (socket.ready(1000000))
 		{
@@ -201,7 +203,7 @@ void testUDP()
 
 void UDPClient(const unsigned int& p)
 {
-	kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, 1234, kt::SocketProtocol::UDP, p);
+	kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, 12345, kt::SocketProtocol::UDP, 65222);
 	std::cout << "Connected\n";
 
 	socket.sendTo("127.0.0.1", "test\n");

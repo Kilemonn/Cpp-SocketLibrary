@@ -67,9 +67,10 @@ namespace kt
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
+			int pollSocket(const unsigned long) const;
 
 		public:
-			Socket(const std::string&, const kt::SocketType, const unsigned int&,  const kt::SocketProtocol = kt::SocketProtocol::None, const unsigned int& receivePort = 0); // Create Wi-Fi/Bluetooth Socket
+			Socket(const std::string&, const kt::SocketType, const unsigned int&,  const kt::SocketProtocol = kt::SocketProtocol::None, const unsigned int& = 0); // Create Wi-Fi/Bluetooth Socket
 
 #ifdef _WIN32
 
@@ -85,18 +86,19 @@ namespace kt
 			Socket& operator=(const Socket&);
 			
 			void close();
-			bool ready(unsigned long = 0) const;
-			bool send(const std::string&, int flag = 0) const;
-			bool sendTo(const std::string&, const std::string&, int flag = 0);
+			bool ready(const unsigned long = 1) const;
+			bool connected(const unsigned long = 1) const;
+			bool send(const std::string&, int = 0) const;
+			bool sendTo(const std::string&, const std::string&, int = 0);
 			char get() const;
 			int getPort() const;
 			std::string getLastRecievedAddress() const;
 			std::string getAddress() const;
 			std::string receiveAmount(const unsigned int) const;
 			std::string receiveToDelimiter(const char) const;
-			std::string receiveAll(const unsigned long oneHundredMS = 100000) const;
+			std::string receiveAll(const unsigned long = 10000) const;
 
-			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int duration = 5);
+			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int = 5);
 			static std::string getLocalMACAddress();
 	};
 
