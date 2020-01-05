@@ -43,7 +43,6 @@ namespace kt
 		private:
 			std::string hostname;
 			unsigned int port;
-			unsigned int receivePort;
 			kt::SocketProtocol protocol;
 			kt::SocketType type;
 			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
@@ -70,7 +69,7 @@ namespace kt
 			int pollSocket(const unsigned long) const;
 
 		public:
-			Socket(const std::string&, const kt::SocketType, const unsigned int&,  const kt::SocketProtocol = kt::SocketProtocol::None, const unsigned int& = 0); // Create Wi-Fi/Bluetooth Socket
+			Socket(const std::string&, const kt::SocketType, const unsigned int&,  const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
 
 #ifdef _WIN32
 
@@ -85,6 +84,8 @@ namespace kt
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);
 			
+			bool bind();
+			bool unbind();
 			void close();
 			bool ready(const unsigned long = 1) const;
 			bool connected(const unsigned long = 1) const;

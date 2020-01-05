@@ -3,8 +3,9 @@
 #include <fstream>
 #include <thread>
 #include <exception>
+#include <cassert>
 #include <stdexcept>
-#include <assert.h>
+#include <chrono>
 
 #include "Socket/Socket.h"
 #include "ServerSocket/ServerSocket.h"
@@ -171,21 +172,27 @@ void testUDP()
 	try
 	{
 		unsigned int port = 65222;
-		kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, port, kt::SocketProtocol::UDP, 12345);
+		kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, port, kt::SocketProtocol::UDP);
 		std::cout << "First UDP Client created.\n";
 
-		std::thread t1(UDPClient, port);
+		socket.bind();
 
-		std::cout << "UDP Read: " + socket.receiveToDelimiter('\n') << std::endl;
+		std::cout << "UDP Read: " + socket.get() << std::endl;
 
 		if (socket.ready(1000000))
 		{
-			std::cout << "Socket Ready: " + socket.receiveToDelimiter('\n') << std::endl;
+			std::cout << "Socket Ready: " + socket.get() << std::endl;
 		}
 		else
 		{
 			std::cout << "Socket not ready..." << std::endl;
 		}
+
+		socket.unbind();
+		
+		std::thread t1(UDPClient, port);
+
+		std::this_thread::sleep_for(std::chrono::seconds(3));
 
 		t1.join();
 	}
@@ -203,10 +210,10 @@ void testUDP()
 
 void UDPClient(const unsigned int& p)
 {
-	kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, 12345, kt::SocketProtocol::UDP, 65222);
+	kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, p, kt::SocketProtocol::UDP);
 	std::cout << "Connected\n";
 
-	socket.sendTo("127.0.0.1", "test\n");
+	socket.sendTo("", "test\n");
 
 	socket.close();
 }

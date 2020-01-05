@@ -47,13 +47,12 @@
 namespace kt
 {
 
-	Socket::Socket(const std::string& hostname, const kt::SocketType type, const unsigned int& port, const kt::SocketProtocol protocol, const unsigned int& receivePort)
+	Socket::Socket(const std::string& hostname, const kt::SocketType type, const unsigned int& port, const kt::SocketProtocol protocol)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->type = type;
 		this->protocol = protocol;
-		this->receivePort = receivePort;
 		this->serverAddress = { 0 };
 
 #ifdef _WIN32
@@ -224,23 +223,23 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
 
-			struct addrinfo* localAddress;
-			struct addrinfo localHints;
-			memset(&localHints, 0, sizeof(localHints));
-			localHints.ai_family = AF_INET;
-			localHints.ai_socktype = SOCK_STREAM;
-			localHints.ai_protocol = IPPROTO_TCP;
-			localHints.ai_flags = AI_PASSIVE;
+			// struct addrinfo* localAddress;
+			// struct addrinfo localHints;
+			// memset(&localHints, 0, sizeof(localHints));
+			// localHints.ai_family = AF_INET;
+			// localHints.ai_socktype = SOCK_STREAM;
+			// localHints.ai_protocol = IPPROTO_TCP;
+			// localHints.ai_flags = AI_PASSIVE;
 
-			if (getaddrinfo(nullptr, std::to_string(this->receivePort).c_str(), &this->hints, &localAddress) != 0) 
-			{
-				throw SocketException("Unable to retrieving host address to self (localhost/127.0.0.1): " + std::string(std::strerror(errno)));
-			}
+			// if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &this->hints, &localAddress) != 0) 
+			// {
+			// 	throw SocketException("Unable to retrieving host address to self (localhost/127.0.0.1): " + std::string(std::strerror(errno)));
+			// }
 
-			if (bind(this->socketDescriptor, localAddress->ai_addr, (int)localAddress->ai_addrlen) == SOCKET_ERROR)
-			{
-				throw BindingException("Error binding connection, the port " + std::to_string(this->receivePort) + " is already being used: " + std::string(std::strerror(errno)));
-			}
+			// if (bind(this->socketDescriptor, localAddress->ai_addr, (int)localAddress->ai_addrlen) == SOCKET_ERROR)
+			// {
+			// 	throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+			// }
 		}
 	}
 
@@ -279,18 +278,6 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 			}
 		}
-		else if (this->protocol == kt::SocketProtocol::UDP)
-		{
-			struct sockaddr_in localAddress;
-			localAddress.sin_family = AF_INET;
-			localAddress.sin_port = htons(this->receivePort);
-			localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-			if (bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) == -1) 
-			{
-				std::cout << "Error binding connection, the port " + std::to_string(this->receivePort) + " is already being used: " + std::string(std::strerror(errno)) << std::endl;
-				// throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
-			}
-		}
 	}
 
 #endif
@@ -309,20 +296,51 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 #endif
 	}
 
+	/**
+	 * Attempt to bind the UDP socket for listening. Only one 
+	 * 
+	 */ 
+	bool Socket::bind()
+	{
+		if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			// Clear client address
+			memset(&this->clientAddress, 0, sizeof(this->clientAddress));
+
+			struct sockaddr_in localAddress;
+			localAddress.sin_family = AF_INET;
+			localAddress.sin_port = htons(this->port);
+			localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+			return ::bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) != -1; 
+			// throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+		}
+		return false;
+	}
+
+	bool Socket::unbind()
+	{
+		if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			this->close();
+			int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
+	    	this->socketDescriptor = socket(AF_INET, socketProtocol, 0);
+
+			if (this->socketDescriptor == -1)
+			{
+				throw SocketException("Failed to recreate socket for UDP Network socket: " + std::string(std::strerror(errno)));
+			}
+			return true;
+		}
+		return false;
+	}
+
 	bool Socket::send(const std::string& message, int flag) const
 	{
 		if (message.size() > 0)
 		{
 			if (this->protocol == kt::SocketProtocol::TCP)
 			{
-				if (::send(this->socketDescriptor, message.c_str(), message.size(), flag) == -1) 
-				{
-					return false;
-				}
-				else
-				{
-					return true;
-				}
+				return ::send(this->socketDescriptor, message.c_str(), message.size(), flag) != -1;
 			}
 		}
 		return false;
@@ -334,24 +352,20 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		{
 			if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				if (address.size() > 0 || this->clientAddress.sin_family == AF_UNSPEC)
+				if (address.size() > 0)
 				{
 					memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
-					struct hostent* client = gethostbyname(address.c_str());
+					std::string addressToUse = address.size() > 0 ? address : this->hostname;
+
+					struct hostent* client = gethostbyname(addressToUse.c_str());
 					this->clientAddress.sin_family = AF_INET;
 					memcpy((char *) client->h_addr, (char *) &this->clientAddress.sin_addr.s_addr, client->h_length);
-					this->clientAddress.sin_port = htons(this->port);	
+					this->clientAddress.sin_port = htons(this->port);
 				}
 
-				if (::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&this->clientAddress, sizeof(this->clientAddress)) == -1)
-				{
-					return false;
-				}
-				else
-				{
-					return true;
-				}
+				// std::cout << "UDP sendTo() -> " << inet_ntoa(clientAddress.sin_addr) << std::endl;
+				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&this->clientAddress, sizeof(this->clientAddress)) != -1;
 			}
 		}
 		return false;
@@ -375,7 +389,6 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 	bool Socket::ready(const unsigned long timeout) const
 	{
 		int result = this->pollSocket(timeout);
-
 		// 0 indicates that there is no data
 		return result > 0;
 	}
@@ -443,6 +456,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			}
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
+				// std::cout << "UDP recvFrom() -> " << inet_ntoa(clientAddress.sin_addr) << std::endl;
 				socklen_t addressLength = sizeof(this->clientAddress);
 				flag = recvfrom(this->socketDescriptor, data, (amountToReceive - counter), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 			}
@@ -467,7 +481,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 		std::string data = "";
 		char temp[2];
-		int flag;
+		int flag = 0;
 
 		do
 		{
