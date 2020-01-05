@@ -313,13 +313,13 @@ namespace kt
 	{
 		fd_set sready;
 		struct timeval timeOutVal;
-		memset((char*) &timeOutVal, 0, sizeof(timeOutVal));
 		timeOutVal.tv_usec = timeout;
 
 		FD_ZERO(&sready);
 		FD_SET((unsigned int)this->socketDescriptor, &sready);
+		memset((char*) &timeOutVal, 0, sizeof(timeOutVal));
 
-		int res = select(this->socketDescriptor, &sready, nullptr, nullptr, &timeOutVal);
+		int res = select(this->socketDescriptor + 1, &sready, nullptr, nullptr, &timeOutVal);
 		if (FD_ISSET(this->socketDescriptor, &sready) || res > 0)
 		{
 			return true;
