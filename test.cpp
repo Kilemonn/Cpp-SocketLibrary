@@ -113,8 +113,6 @@ void testTCP()
 
 		std::cout << "WAITING..." << std::endl;
 
-		client.close();
-
 		t1.join();
 	}
 	catch (const kt::SocketException& se)
@@ -156,11 +154,6 @@ void wifiClient(const unsigned int& p)
 	delimiter = '\n';
 	received = socket.receiveToDelimiter(delimiter);
 	std::cout << "RECIEVED4: " << received << std::endl;
-
-	while(socket.ready())
-	{
-		// Don't leave until the other socket has been closed
-	}
 }
 
 void testBluetooth()
