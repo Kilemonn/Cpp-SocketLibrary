@@ -40,7 +40,7 @@
 
 namespace kt
 {
-    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port)
+    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize)
     {
         this->port = port;
         this->type = type;
@@ -61,15 +61,15 @@ namespace kt
         // Randomly allocate port and construct socket
         if (this->port == 0)
         {
-            this->randomlyAllocatePort();
+            this->randomlyAllocatePort(connectionBacklogSize);
         }
         else
         {
-            this->constructSocket();
+            this->constructSocket(connectionBacklogSize);
         }
     }
 
-    void ServerSocket::randomlyAllocatePort()
+    void ServerSocket::randomlyAllocatePort(const unsigned int& connectionBacklogSize)
     {
         bool done = false;
         std::random_device rd;
@@ -91,7 +91,7 @@ namespace kt
                 {
                     this->port = btRand(gen);
                 }
-                this->constructSocket();
+                this->constructSocket(connectionBacklogSize);
                 done = true;
             }
             catch(BindingException be)
@@ -131,22 +131,22 @@ namespace kt
         return *this;
     }
 
-    void ServerSocket::constructSocket()
+    void ServerSocket::constructSocket(const unsigned int& connectionBacklogSize)
     {
         if (this->type == kt::SocketType::Wifi)
         {
-            this->constructWifiSocket();
+            this->constructWifiSocket(connectionBacklogSize);
         }
         else
         {
-            this->constructBluetoothSocket();
+            this->constructBluetoothSocket(connectionBacklogSize);
             this->setDiscoverable();
         }
     }
 
 #ifdef _WIN32
 
-    void ServerSocket::constructBluetoothSocket()
+    void ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
     {
         SOCKADDR_BTH bluetoothAddress;
 
@@ -166,7 +166,7 @@ namespace kt
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
         }
 
-        if (listen(this->socketDescriptor, 1) == SOCKET_ERROR) 
+        if (listen(this->socketDescriptor, connectionBacklogSize) == SOCKET_ERROR) 
         {
             this->close();
             throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -199,7 +199,7 @@ namespace kt
 
 #elif __linux__
 
-    void ServerSocket::constructBluetoothSocket()
+    void ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
     {
         struct sockaddr_rc localAddress = {0};
         bdaddr_t tmp = ((bdaddr_t) {{0, 0, 0, 0, 0, 0}});
@@ -221,7 +221,7 @@ namespace kt
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if (listen(this->socketDescriptor, 1) == -1)
+        if (listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -234,7 +234,7 @@ namespace kt
 
 #ifdef _WIN32
 
-    void ServerSocket::constructWifiSocket()
+    void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
         memset(&this->hints, 0, sizeof(this->hints));
         this->hints.ai_family = AF_INET;
@@ -258,7 +258,7 @@ namespace kt
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if(listen(this->socketDescriptor, SOMAXCONN) == SOCKET_ERROR)
+        if(listen(this->socketDescriptor, connectionBacklogSize) == SOCKET_ERROR)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -267,7 +267,7 @@ namespace kt
 
 #elif __linux__
 
-    void ServerSocket::constructWifiSocket()
+    void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
         this->socketSize = sizeof(serverAddress);
         this->socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
@@ -286,7 +286,7 @@ namespace kt
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if(listen(this->socketDescriptor, 1) == -1)
+        if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));

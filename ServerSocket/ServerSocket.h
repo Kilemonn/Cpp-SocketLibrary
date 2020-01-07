@@ -56,13 +56,13 @@ namespace kt
 #endif
 
 			void setDiscoverable();
-			void constructSocket();
-			void constructBluetoothSocket();
-			void constructWifiSocket();
-			void randomlyAllocatePort();
+			void constructSocket(const unsigned int&);
+			void constructBluetoothSocket(const unsigned int&);
+			void constructWifiSocket(const unsigned int&);
+			void randomlyAllocatePort(const unsigned int&);
 
 		public:
-			ServerSocket(const kt::SocketType, const unsigned int& = 0);
+			ServerSocket(const kt::SocketType, const unsigned int& = 0, const unsigned int& = 20);
 			ServerSocket(const ServerSocket&);
 			ServerSocket& operator=(const ServerSocket&);
 
