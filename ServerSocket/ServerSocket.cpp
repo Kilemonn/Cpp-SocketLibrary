@@ -353,6 +353,11 @@ namespace kt
         struct sockaddr_rc remoteDevice = {0};
         int temp = ::accept(this->socketDescriptor, (struct sockaddr *) &remoteDevice, &this->socketSize);
 
+        if (temp == -1)
+        {
+            throw SocketException("Failed to accept connection. Socket is in an invalid state.");
+        }
+
         if (this->type == kt::SocketType::Bluetooth)
         {
         	char remoteAddress[1024] = {0};

@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <chrono>
 #include <typeinfo>
+#include <functional>
 
 #include "../Socket/Socket.h"
 #include "../ServerSocket/ServerSocket.h"
@@ -123,6 +124,50 @@ void testWifiServerSocketConstructors()
     preFunctionTest(__func__);
 
     kt::ServerSocket server(kt::SocketType::Wifi, PORT_NUMBER);
+
+    // Ensure a binding exception is thrown if another process, (in this case another server) is using the port
+    assert(throwsException<kt::BindingException>([] 
+    {
+        kt::ServerSocket server2(kt::SocketType::Wifi, PORT_NUMBER);
+    }));
+
+    // Ensure Close method works as expected
+    server.close();
+    // By closing the initial server the second server should be constructed successfully
+    kt::ServerSocket server2(kt::SocketType::Wifi, PORT_NUMBER);
+
+    // Check copy constructor by making sure a client can connect and send a message successfully
+    kt::ServerSocket server3(server2);
+
+    kt::Socket client("127.0.0.1", kt::SocketType::Wifi, PORT_NUMBER, kt::SocketProtocol::TCP);
+
+    kt::Socket serverSocket = server3.accept();
+    const std::string testString = "I'm Too Hot!";
+
+    assert(client.send(testString));
+    const std::string responseString = serverSocket.receiveAmount(testString.size());
+
+    assert(responseString == testString);
+
+    server3.close();
+    serverSocket.close();
+    client.close();
+
+    // Test closing the socket of two copied servers will result in a client being unable to connect
+    // meaning, "both" server sockets have been closed, make sure a copied server object cannot accept
+    kt::ServerSocket initalServer(kt::SocketType::Wifi, PORT_NUMBER);
+
+    assert(throwsException<kt::SocketException>([&initalServer] 
+    {
+        kt::ServerSocket actualServer = initalServer;
+        initalServer.close();
+        actualServer.accept();
+    }));
+
+    assert(throwsException<kt::SocketException>([] 
+    {
+        kt::Socket client = kt::Socket("127.0.0.1", kt::SocketType::Wifi, PORT_NUMBER, kt::SocketProtocol::TCP);
+    }));
 }
 
 int main()
