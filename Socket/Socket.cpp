@@ -47,7 +47,7 @@
 namespace kt
 {
 
-	Socket::Socket(const std::string& hostname, const kt::SocketType type, const unsigned int& port, const kt::SocketProtocol protocol)
+	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
 	{
 		this->hostname = hostname;
 		this->port = port;

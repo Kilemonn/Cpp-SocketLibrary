@@ -85,7 +85,7 @@ void doTest()
 		assert(true);
 	}
 
-	kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, 12345, kt::SocketProtocol::TCP);
+	kt::Socket socket("127.0.0.1", 12345, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
 	try
 	{
@@ -169,7 +169,7 @@ void testTCP()
 
 void TCPClient(const unsigned int& p)
 {
-	kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, p, kt::SocketProtocol::TCP);
+	kt::Socket socket("127.0.0.1", p, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 	std::cout << "Connected\n";
 
 	char delimiter = '\n';
@@ -206,7 +206,7 @@ void testUDP()
 	try
 	{
 		unsigned int port = 65222;
-		kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, port, kt::SocketProtocol::UDP);
+		kt::Socket socket("127.0.0.1", port, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 		std::cout << "First UDP Client created.\n";
 
 		socket.bind();
@@ -244,7 +244,7 @@ void testUDP()
 
 void UDPClient(const unsigned int& p)
 {
-	kt::Socket socket("127.0.0.1", kt::SocketType::Wifi, p, kt::SocketProtocol::UDP);
+	kt::Socket socket("127.0.0.1", p, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 	std::cout << "Connected\n";
 
 	socket.sendTo("", "test\n");
@@ -281,7 +281,7 @@ void testBluetooth()
 
 void bluetoothFunction(const unsigned int& p)
 {
-	kt::Socket socket(bluetoothLocalAddress, kt::SocketType::Bluetooth, p);
+	kt::Socket socket(bluetoothLocalAddress, p, kt::SocketType::Bluetooth);
 	std::cout << "(BT) Connected\n";
 
 	std::string received = socket.receiveToDelimiter('\n');
