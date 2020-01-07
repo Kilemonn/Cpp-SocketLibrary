@@ -10,10 +10,13 @@
 #include "ServerSocket/ServerSocket.h"
 #include "SocketExceptions/SocketException.hpp"
 #include "SocketExceptions/BindingException.hpp"
+#include "SocketExceptions/TimeoutException.hpp"
 #include "Enums/SocketProtocol.cpp"
 #include "Enums/SocketType.cpp"
 
-void wifiClient(const unsigned int&);
+void doTest();
+
+void wifiClient(const unsigned int &);
 void bluetoothFunction(const unsigned int&);
 
 void testTCP();
@@ -30,6 +33,8 @@ int main()
 		// std::system("sudo hciconfig hci0 piscan");
 
 		// doScan();
+
+		doTest();
 
 		testTCP();
 
@@ -60,6 +65,36 @@ int main()
 	return 0;
 }
 
+void doTest()
+{
+	kt::ServerSocket server(kt::SocketType::Wifi, 12345);
+
+	try
+	{
+		kt::Socket socket = server.accept(100000);
+		assert(false);
+	}
+	catch (const kt::TimeoutException &e)
+	{
+		assert(true);
+	}
+
+	kt::Socket socket("127.0.0.1", 12345, kt::SocketType::Wifi);
+
+	try
+	{
+		kt::Socket socket = server.accept();
+		assert(true);
+	}
+	catch (const std::exception &e)
+	{
+		assert(false);
+	}
+
+	socket.close();
+	server.close();
+}
+
 void doScan()
 {
 	std::vector<std::pair<std::string, std::string> > devices = kt::Socket::scanDevices(1);
@@ -82,7 +117,7 @@ void testTCP()
 		unsigned int p = server.getPort();
 		std::thread t1(wifiClient, p);
 
-		kt::Socket client(server.accept());
+		kt::Socket client = server.accept();
 		std::cout << "Accepted - " + client.getAddress() + ":" + std::to_string(client.getPort()) + "\n";
 
 		if (client.send("HEY\n"))
@@ -165,7 +200,7 @@ void testBluetooth()
 	unsigned int p = server.getPort();
 	std::thread t1(bluetoothFunction, p);
 
-	kt::Socket client(server.accept());
+	kt::Socket client = server.accept();
 	std::cout << "(BT) Accepted\n";
 
 	if (client.send("HEY\n"))
