@@ -17,6 +17,7 @@
 #include "../Enums/SocketType.cpp"
 
 const int PORT_NUMBER = 12345;
+const std::string LOCALHOST = "127.0.0.1";
 
 /**
  * A helper function used to ensure that an exception is thrown by the passed in function and
@@ -79,7 +80,7 @@ void testWifiSocketConstructors()
     // Test that a Wifi socket with a protocol set to None will fail
     assert(throwsException<kt::SocketException>([] 
     {
-        kt::Socket failedSocket("127.0.0.1", PORT_NUMBER, kt::SocketType::Wifi);
+        kt::Socket failedSocket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi);
     }));
 
     // Test that a socket created with no hostname fails
@@ -91,13 +92,13 @@ void testWifiSocketConstructors()
     // Test that creating a socket will fail to be created if the server is not listening
     assert(throwsException<kt::SocketException>([] 
     {
-        kt::Socket socket("127.0.0.1", PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+        kt::Socket socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
     }));
 
     // Test copy constructor by creating a copy of the initalised socket and ensuring the server receives the
     // data successfully tests assignment operator
     kt::ServerSocket server(kt::SocketType::Wifi, PORT_NUMBER);
-    kt::Socket socket("127.0.0.1", PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+    kt::Socket socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
     // Accept connection request from "socket"
     kt::Socket serverSocket = server.accept();
@@ -139,7 +140,7 @@ void testWifiServerSocketConstructors()
     // Check copy constructor by making sure a client can connect and send a message successfully
     kt::ServerSocket server3(server2);
 
-    kt::Socket client("127.0.0.1", PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+    kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
     kt::Socket serverSocket = server3.accept();
     const std::string testString = "I'm Too Hot!";
@@ -166,7 +167,7 @@ void testWifiServerSocketConstructors()
 
     assert(throwsException<kt::SocketException>([] 
     {
-        kt::Socket client = kt::Socket("127.0.0.1", PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+        kt::Socket client = kt::Socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
     }));
 }
 
