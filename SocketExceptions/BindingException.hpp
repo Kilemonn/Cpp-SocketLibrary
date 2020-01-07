@@ -1,5 +1,4 @@
 
-
 #ifndef _BINDING_ERROR_HPP__
 #define _BINDING_ERROR_HPP__
 

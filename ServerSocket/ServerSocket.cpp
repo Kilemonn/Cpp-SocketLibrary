@@ -3,6 +3,8 @@
 #include "../Socket/Socket.h"
 #include "../SocketExceptions/SocketException.hpp"
 #include "../SocketExceptions/BindingException.hpp"
+#include "../SocketExceptions/TimeoutException.hpp"
+#include "../Enums/SocketProtocol.cpp"
 #include "../Enums/SocketType.cpp"
 
 #include <iostream>
@@ -38,7 +40,7 @@
 
 #endif
 
-namespace kt
+    namespace kt
 {
     ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize)
     {
@@ -342,8 +344,30 @@ namespace kt
 
 #endif
 
-    Socket ServerSocket::accept()
+    Socket ServerSocket::accept(const unsigned int& timeout)
     {
+        if (timeout != 0)
+        {
+            fd_set sready;
+            struct timeval timeOutVal;
+            memset((char *)&timeOutVal, 0, sizeof(timeOutVal));
+            timeOutVal.tv_usec = timeout;
+
+            FD_ZERO(&sready);
+            FD_SET((unsigned int)this->socketDescriptor, &sready);
+
+            int res = select(this->socketDescriptor + 1, &sready, nullptr, nullptr, &timeOutVal);
+
+            if (res == -1)
+            {
+                throw kt::SocketException("Failed to poll as socket is no longer valid.");
+            }
+            else if (res == 0)
+            {
+                throw kt::TimeoutException("No applicable connections could be accepted during the time period specified " + std::to_string(timeout) + " microseconds.");
+            }
+        }
+
 #ifdef _WIN32
 
         SOCKET temp = ::accept(this->socketDescriptor, nullptr, nullptr);

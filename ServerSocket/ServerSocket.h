@@ -66,7 +66,7 @@ namespace kt
 			ServerSocket(const ServerSocket&);
 			ServerSocket& operator=(const ServerSocket&);
 
-			Socket accept();
+			Socket accept(const unsigned int& = 0);
 			unsigned int getPort() const;
 			void close();
 	};
