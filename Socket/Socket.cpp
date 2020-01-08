@@ -506,44 +506,32 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		}
 
 		std::string data = "";
-		const int bufferSize = 2048;
-		char buffer[bufferSize];
+		char temp[2];
 		int flag = 0;
-		bool reachedDelimiter = false;
 
 		do
 		{
-			memset(&buffer, 0, sizeof(buffer));
+			memset(&temp, 0, sizeof(temp));
 
 			if (this->protocol == kt::SocketProtocol::TCP)
 			{
-				flag = recv(this->socketDescriptor, buffer, bufferSize, 0);
+				flag = recv(this->socketDescriptor, temp, 1, 0);
 			}
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
 				socklen_t addressLength = sizeof(this->clientAddress);
-				flag = recvfrom(this->socketDescriptor, buffer, bufferSize, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+				flag = recvfrom(this->socketDescriptor, temp, 1, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 			}
 
-			if (flag <= 0)
+			if (flag < 1)
 			{
 				return std::move(data);
 			}
+			data += temp[0];
 
-			for (unsigned int i = 0; i < bufferSize && !reachedDelimiter; i++)
-			{
-				if (buffer[i] != delimiter)
-				{
-					reachedDelimiter = true;
-				}
-				else
-				{
-					data += buffer[i];
-				}
-			}
-		} while (!reachedDelimiter);
+		} while (temp[0] != delimiter);
 
-		return std::move(data);
+		return std::move(data.substr(0, (data.size() - 1)));
 	}
 
 	std::string Socket::receiveAll(const unsigned long timeout) const
