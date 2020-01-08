@@ -7,13 +7,13 @@
 #include <stdexcept>
 #include <chrono>
 
-#include "Socket/Socket.h"
-#include "ServerSocket/ServerSocket.h"
-#include "SocketExceptions/SocketException.hpp"
-#include "SocketExceptions/BindingException.hpp"
-#include "SocketExceptions/TimeoutException.hpp"
-#include "Enums/SocketProtocol.cpp"
-#include "Enums/SocketType.cpp"
+#include "../Socket/Socket.h"
+#include "../ServerSocket/ServerSocket.h"
+#include "../SocketExceptions/SocketException.hpp"
+#include "../SocketExceptions/BindingException.hpp"
+#include "../SocketExceptions/TimeoutException.hpp"
+#include "../Enums/SocketProtocol.cpp"
+#include "../Enums/SocketType.cpp"
 
 void TCPClient(const unsigned int&);
 void UDPClient(const unsigned int&);

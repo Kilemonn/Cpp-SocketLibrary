@@ -414,6 +414,11 @@
         return this->port;
     }
 
+    kt::SocketType ServerSocket::getType() const
+    {
+        return this->type;
+    }
+
     void ServerSocket::close()
     {
         #ifdef _WIN32

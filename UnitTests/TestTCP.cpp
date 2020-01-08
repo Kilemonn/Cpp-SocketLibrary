@@ -51,7 +51,10 @@ void testWifiSocketConstructors()
     // Test copy constructor by creating a copy of the initalised socket and ensuring the server receives the
     // data successfully tests assignment operator
     kt::ServerSocket server(kt::SocketType::Wifi, PORT_NUMBER);
+    assert(server.getType() == kt::SocketType::Wifi);
     kt::Socket socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+    assert(socket.getType() == kt::SocketType::Wifi);
+    assert(socket.getProtocol() == kt::SocketProtocol::TCP);
 
     assert(socket.getAddress() == LOCALHOST);
     assert(socket.getPort() == PORT_NUMBER);

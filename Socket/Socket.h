@@ -43,8 +43,9 @@ namespace kt
 		private:
 			std::string hostname;
 			unsigned int port;
-			kt::SocketProtocol protocol;
+			kt::SocketProtocol protocol = kt::SocketProtocol::None;
 			kt::SocketType type;
+			bool bound = false;
 			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
 
 #ifdef _WIN32
@@ -90,9 +91,12 @@ namespace kt
 			bool ready(const unsigned long = 1000) const;
 			bool connected(const unsigned long = 1000) const;
 			bool send(const std::string&, int = 0) const;
-			bool sendTo(const std::string&, const std::string&, int = 0);
+			bool sendTo(const std::string&, const std::string& = "", int = 0);
 			char get() const;
 			int getPort() const;
+			bool isBound() const;
+			kt::SocketProtocol getProtocol() const;
+			kt::SocketType getType() const;
 			std::string getLastRecievedAddress() const;
 			std::string getAddress() const;
 			std::string receiveAmount(const unsigned int) const;

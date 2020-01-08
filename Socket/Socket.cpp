@@ -265,10 +265,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		}
 		else
 		{
-			if (this->protocol == kt::SocketProtocol::TCP)
-			{
-				throw SocketException("Error connecting to socket with IP: " + this->hostname + ".");
-			}
+			throw SocketException("Unable to resolve IP of destination address with hostname: " + this->hostname + ".");
 		}
 
 		if (this->protocol == kt::SocketProtocol::TCP)
@@ -311,7 +308,8 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			localAddress.sin_family = AF_INET;
 			localAddress.sin_port = htons(this->port);
 			localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-			return ::bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) != -1; 
+			this->bound = ::bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) != -1; 
+			return this->bound;
 			// throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
 		}
 		return false;
@@ -329,9 +327,9 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			{
 				throw SocketException("Failed to recreate socket for UDP Network socket: " + std::string(std::strerror(errno)));
 			}
-			return true;
+			this->bound = false;
 		}
-		return false;
+		return !this->bound;
 	}
 
 	bool Socket::send(const std::string& message, int flag) const
@@ -346,7 +344,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return false;
 	}
 
-	bool Socket::sendTo(const std::string& address, const std::string& message, int flag)
+	bool Socket::sendTo(const std::string& message, const std::string& address, int flag)
 	{
 		if (message.size() > 0)
 		{
@@ -356,15 +354,11 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 				{
 					memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
-					std::string addressToUse = address.size() > 0 ? address : this->hostname;
-
-					struct hostent* client = gethostbyname(addressToUse.c_str());
+					struct hostent *client = gethostbyname(address.c_str());
 					this->clientAddress.sin_family = AF_INET;
 					memcpy((char *) client->h_addr, (char *) &this->clientAddress.sin_addr.s_addr, client->h_length);
 					this->clientAddress.sin_port = htons(this->port);
 				}
-
-				// std::cout << "UDP sendTo() -> " << inet_ntoa(clientAddress.sin_addr) << std::endl;
 				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&this->clientAddress, sizeof(this->clientAddress)) != -1;
 			}
 		}
@@ -407,10 +401,21 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 	bool Socket::connected(const unsigned long timeout) const
 	{
+		// UDP is connectionless
+		if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			return false;
+		}
+
 		int result = this->pollSocket(timeout);
 
 		// -1 indicates that the connection is not available
 		return result != -1;
+	}
+
+	bool Socket::isBound() const
+	{
+		return this->bound;
 	}
 
 	char Socket::get() const
@@ -423,20 +428,21 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return this->port;
 	}
 
+	kt::SocketType Socket::getType() const
+	{
+		return this->type;
+	}
+
+	kt::SocketProtocol Socket::getProtocol() const
+	{
+		return this->protocol;
+	}
+
 	std::string Socket::getLastRecievedAddress() const
 	{
-		struct sockaddr_in address;
-		socklen_t addr_size = sizeof(struct sockaddr_in);
-		int res = getpeername(this->socketDescriptor, (struct sockaddr *)&address, &addr_size);
-
-		std::string receivedAddress = "";
-		if (res == 0)
-		{ 
-			char ip[20];
-    		strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
-			receivedAddress = std::string(ip);
-		}
-		return receivedAddress;
+		char ip[20];
+		strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
+		return std::string(ip);
 	}
 
 	std::string Socket::getAddress() const
@@ -468,7 +474,6 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			}
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				// std::cout << "UDP recvFrom() -> " << inet_ntoa(clientAddress.sin_addr) << std::endl;
 				socklen_t addressLength = sizeof(this->clientAddress);
 				flag = recvfrom(this->socketDescriptor, data, (amountToReceive - counter), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 			}
