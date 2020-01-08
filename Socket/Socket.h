@@ -87,8 +87,8 @@ namespace kt
 			bool bind();
 			bool unbind();
 			void close();
-			bool ready(const unsigned long = 1) const;
-			bool connected(const unsigned long = 1) const;
+			bool ready(const unsigned long = 1000) const;
+			bool connected(const unsigned long = 1000) const;
 			bool send(const std::string&, int = 0) const;
 			bool sendTo(const std::string&, const std::string&, int = 0);
 			char get() const;
