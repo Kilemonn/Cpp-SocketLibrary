@@ -18,6 +18,10 @@
 const int PORT_NUMBER = 12345;
 const std::string LOCALHOST = "127.0.0.1";
 
+/**
+ * Test the kt::Socket constructors and exception handling for UDP. This covers the following scenarios:
+ * - Constructing a socket and ensuring its default values are set correctly
+ */
 void testWifiConstructors()
 {
     preFunctionTest(__func__);
@@ -32,33 +36,72 @@ void testWifiConstructors()
     socket.close();
 }
 
+/**
+ * Test the kt::Socket constructors and exception handling. This covers the following scenarios:
+ * - Test bind()
+ * - Test ready()
+ * - Test isBound()
+ * - Test sendTo()
+ * - Test receiveAmount()
+ * - Test receiveAll()
+ * - Test getLastRecievedAddress()
+ * - Test receiveToDelimiter
+ * - Test get()
+ */
 void testWifiFunctions()
 {
     preFunctionTest(__func__);
 
     kt::Socket server(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-    kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
     assert(!server.isBound());
     server.bind();
     assert(server.isBound());
 
-    const std::string testString = "Test";
-    client.sendTo(testString, LOCALHOST);
+    kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
+    const std::string testString = "test";
+    assert(client.sendTo(testString));
+
+    // Test receiveAmount()
     assert(server.ready());
     std::string response = server.receiveAmount(testString.size());
     assert(!server.ready());
     assert(testString == response);
 
+    // Test getLastRecievedAddress()
     assert(server.getLastRecievedAddress() == LOCALHOST);
 
+    // Test receiveAll
     const std::string anotherTest = "AnotherOnE";
-    server.sendTo(anotherTest);
-    assert(client.ready());
-    response = client.receiveAmount(anotherTest.size());
-    assert(!client.ready());
+    assert(client.sendTo(anotherTest));
+    assert(server.ready());
+    response = server.receiveAll();
+    assert(!server.ready());
+    std::cout << anotherTest << " : " << response << std::endl;
     assert(anotherTest == response);
+
+    // Test receiveToDelimiter()
+    const char delimiter = '~';
+    client.sendTo(testString + delimiter);
+    assert(server.ready());
+    response = server.receiveToDelimiter(delimiter);
+    assert(!server.ready());
+    assert(response == testString);
+
+    // Test get method
+    const std::string x = "x";
+    assert(client.sendTo(x));
+    assert(server.ready());
+    response = server.get();
+    assert(response == x);
+
+    const std::string a = "a";
+    assert(!server.ready());
+    assert(client.sendTo(a));
+    assert(server.ready());
+    response = server.get();
+    assert(response == a);
 
     server.unbind();
     assert(!server.isBound());

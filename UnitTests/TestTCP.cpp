@@ -20,7 +20,7 @@ const int PORT_NUMBER = 12345;
 const std::string LOCALHOST = "127.0.0.1";
 
 /**
- * Test the kt::Socket constructors and exception handling. This covers the following scenarios:
+ * Test the kt::Socket constructors and exception handling for TCP. This covers the following scenarios:
  * - Wifi Socket created without a specified kt::SocketProtocol
  * - Socket created without a hostname provided
  * - Socket created when no server is listening
@@ -82,6 +82,13 @@ void testWifiSocketConstructors()
     server.close();
 }
 
+/**
+ * Test the kt::ServerSocket constructors and exception handling for TCP. This covers the following scenarios:
+ * - ServerSocket created while another process is using the specified port number
+ * - Test closing operation
+ * - Test copy constructor and assignment operator
+ * - Test closing a copied server will also close the initial server since they are both using the same port
+ */
 void testWifiServerSocketConstructors()
 {
     preFunctionTest(__func__);
@@ -133,6 +140,16 @@ void testWifiServerSocketConstructors()
     }));
 }
 
+/**
+ * Test the kt::Socket methods for TCP. This covers the following scenarios:
+ * - Test the connected() method
+ * - Test receiveAmount()
+ * - Test receiveToDelimiter()
+ * - Test receiveAll()
+ * - Test get()
+ * - Test send()
+ * - Test ready()
+ */
 void testWifiSocketMethods()
 {
     preFunctionTest(__func__);
@@ -162,6 +179,7 @@ void testWifiSocketMethods()
     response = client.receiveToDelimiter(delimiter);
     assert(response == testString);
 
+    // Test receiveAll method
     assert(!client.ready());
     assert(serverSocket.send(testString + testString + delimiter));
     assert(client.ready());
@@ -169,6 +187,7 @@ void testWifiSocketMethods()
     assert(!client.ready());
     assert(response == testString + testString + delimiter);
 
+    // Test get method
     assert(!client.ready());
     assert(serverSocket.send(testString));
     assert(client.ready());
@@ -202,6 +221,9 @@ void testWifiSocketMethods()
     server.close();
 }
 
+/**
+ * The main used to call the TCP test functions.
+ */
 int main()
 {
     testFunction(testWifiSocketConstructors);

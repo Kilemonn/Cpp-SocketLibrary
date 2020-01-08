@@ -344,22 +344,13 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return false;
 	}
 
-	bool Socket::sendTo(const std::string& message, const std::string& address, int flag)
+	bool Socket::sendTo(const std::string& message, int flag)
 	{
 		if (message.size() > 0)
 		{
 			if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				if (address.size() > 0)
-				{
-					memset(&this->clientAddress, 0, sizeof(this->clientAddress));
-
-					struct hostent *client = gethostbyname(address.c_str());
-					this->clientAddress.sin_family = AF_INET;
-					memcpy((char *) client->h_addr, (char *) &this->clientAddress.sin_addr.s_addr, client->h_length);
-					this->clientAddress.sin_port = htons(this->port);
-				}
-				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&this->clientAddress, sizeof(this->clientAddress)) != -1;
+				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&this->serverAddress, sizeof(this->serverAddress)) != -1;
 			}
 		}
 		return false;
@@ -413,6 +404,23 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return result != -1;
 	}
 
+	void Socket::setHostName(const std::string& newHostname)
+	{
+		if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			struct hostent *client = gethostbyname(newHostname.c_str());
+			if (client == nullptr)
+			{
+				throw SocketException("Failed to resolve IP of new host with name: " + newHostname);
+			}
+			memset(&this->serverAddress, 0, sizeof(this->serverAddress));
+			this->serverAddress.sin_family = AF_INET;
+			memcpy((char *) client->h_addr, (char *) &this->serverAddress.sin_addr.s_addr, client->h_length);
+			this->serverAddress.sin_port = htons(this->port);
+			this->hostname = newHostname;
+		}
+	}
+
 	bool Socket::isBound() const
 	{
 		return this->bound;
@@ -420,6 +428,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 	char Socket::get() const
 	{
+		std::cout << "Calling get()" << std::endl;
 		return this->receiveAmount(1)[0];
 	}
 
@@ -464,7 +473,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		std::string result;
 		result.reserve(amountToReceive);
 
-		while (counter < amountToReceive)
+		while (counter < amountToReceive && this->ready())
 		{
 			memset(&data, 0, bufferSize);
 
@@ -497,47 +506,62 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		}
 
 		std::string data = "";
-		char temp[2];
+		const int bufferSize = 2048;
+		char buffer[bufferSize];
 		int flag = 0;
+		bool reachedDelimiter = false;
 
 		do
 		{
-			memset(&temp, 0, sizeof(temp));
+			memset(&buffer, 0, sizeof(buffer));
 
 			if (this->protocol == kt::SocketProtocol::TCP)
 			{
-				flag = recv(this->socketDescriptor, temp, 1, 0);
+				flag = recv(this->socketDescriptor, buffer, bufferSize, 0);
 			}
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
 				socklen_t addressLength = sizeof(this->clientAddress);
-				flag = recvfrom(this->socketDescriptor, temp, 1, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+				flag = recvfrom(this->socketDescriptor, buffer, bufferSize, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 			}
 
-			if (flag < 1)
+			if (flag <= 0)
 			{
 				return std::move(data);
 			}
-			data += temp[0];
 
-		} while (temp[0] != delimiter);
+			for (unsigned int i = 0; i < bufferSize && !reachedDelimiter; i++)
+			{
+				if (buffer[i] != delimiter)
+				{
+					reachedDelimiter = true;
+				}
+				else
+				{
+					data += buffer[i];
+				}
+			}
+		} while (!reachedDelimiter);
 
-		return std::move(data.substr(0, (data.size() - 1)));
+		return std::move(data);
 	}
 
-	std::string Socket::receiveAll(const unsigned long oneMS) const
+	std::string Socket::receiveAll(const unsigned long timeout) const
 	{
-		// Default is 100 milli seconds in micro seconds
 		std::string result = "";
-		char character = ' ';
 		result.reserve(1024);
+		bool hitEOF = false;
 
-		while (this->ready(oneMS) && character != '\0')
+		while (this->ready(timeout) && !hitEOF)
 		{
-			character = this->get();
-			if (character != '\0')
+			std::string res = receiveAmount(this->pollSocket(timeout));
+			if (res.size() > 0 && res[0] == '\0')
 			{
-				result += character;
+				hitEOF = true;
+			}
+			else
+			{
+				result += res;
 			}
 		}
 		result.shrink_to_fit();

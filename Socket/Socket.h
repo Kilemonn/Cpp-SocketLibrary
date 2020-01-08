@@ -67,7 +67,6 @@ namespace kt
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
-			int pollSocket(const unsigned long) const;
 
 		public:
 			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
@@ -88,20 +87,22 @@ namespace kt
 			bool bind();
 			bool unbind();
 			void close();
+			int pollSocket(const unsigned long = 1000) const;
 			bool ready(const unsigned long = 1000) const;
 			bool connected(const unsigned long = 1000) const;
 			bool send(const std::string&, int = 0) const;
-			bool sendTo(const std::string&, const std::string& = "", int = 0);
+			bool sendTo(const std::string&, int = 0);
 			char get() const;
 			int getPort() const;
 			bool isBound() const;
+			void setHostName(const std::string&);
 			kt::SocketProtocol getProtocol() const;
 			kt::SocketType getType() const;
 			std::string getLastRecievedAddress() const;
 			std::string getAddress() const;
 			std::string receiveAmount(const unsigned int) const;
 			std::string receiveToDelimiter(const char) const;
-			std::string receiveAll(const unsigned long = 10000) const;
+			std::string receiveAll(const unsigned long = 1000) const;
 
 			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int = 5);
 			static std::string getLocalMACAddress();
