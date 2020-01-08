@@ -5,8 +5,6 @@
 #include <exception>
 #include <cassert>
 #include <stdexcept>
-#include <chrono>
-#include <typeinfo>
 #include <functional>
 
 #include "../Socket/Socket.h"
@@ -16,55 +14,10 @@
 #include "../Enums/SocketProtocol.cpp"
 #include "../Enums/SocketType.cpp"
 
+#include "TestUtil.hpp"
+
 const int PORT_NUMBER = 12345;
 const std::string LOCALHOST = "127.0.0.1";
-
-/**
- * A helper function used to ensure that an exception is thrown by the passed in function and
- * also ensures the exception's type is what is specified in the template argument.
- * 
- * @param function the function to test
- * 
- * @return true if an exception was thrown and was of type T, otherwise false.
- */
-template <typename T>
-bool throwsException(const std::function<void()> function)
-{
-    try
-    {
-        function();
-    }
-    catch(T ex)
-    {
-        return true;
-    }
-    catch (...)
-    {
-        // Do nothing, will return false
-    }
-    return false;
-}
-
-/**
- * Print the function name to indicate which test function is currently running.
- * 
- * @param functionName the function name to be printed
- */
-void preFunctionTest(std::string functionName)
-{
-    std::cout << "Running... " << functionName << "()... " << std::flush;
-}
-
-/**
- * Will run a specific function and print "PASS" once it is finished.
- * 
- * @param function the function to call
- */
-void testFunction(std::function<void()> function)
-{
-    function();
-    std::cout << "PASS" << std::endl;
-}
 
 /**
  * Test the kt::Socket constructors and exception handling. This covers the following scenarios:
@@ -198,11 +151,39 @@ void testWifiSocketMethods()
     std::string response = serverSocket.receiveAmount(testString.size());
     assert(response == testString);
 
+    // Test receiveToDelimiter method
     const char delimiter = '!';
-    assert(!serverSocket.ready());
+    assert(!client.ready());
     assert(serverSocket.send(testString + delimiter));
+    assert(client.ready());
     response = client.receiveToDelimiter(delimiter);
     assert(response == testString);
+
+    assert(!client.ready());
+    assert(serverSocket.send(testString + testString + delimiter));
+    assert(client.ready());
+    response = client.receiveAll();
+    assert(!client.ready());
+    assert(response == testString + testString + delimiter);
+
+    assert(!client.ready());
+    assert(serverSocket.send(testString));
+    assert(client.ready());
+    response = client.get();
+    assert(response == "t");
+
+    assert(client.ready());
+    response = client.get();
+    assert(response == "e");
+
+    assert(client.ready());
+    response = client.get();
+    assert(response == "s");
+
+    assert(client.ready());
+    response = client.get();
+    assert(response == "t");
+    assert(!client.ready());
 
     // Check delimiter illegal character
     assert(throwsException<kt::SocketException>([&client] 
