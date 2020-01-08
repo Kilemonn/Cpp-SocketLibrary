@@ -383,7 +383,19 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		FD_SET(this->socketDescriptor, &sReady);
 
 		// Need this->socketDescriptor + 1 here
-		return select(this->socketDescriptor + 1, &sReady, nullptr, nullptr, &timeOutVal);
+		int res = select(this->socketDescriptor + 1, &sReady, nullptr, nullptr, &timeOutVal);
+		if (res == 0)
+		{
+			if (timeOutVal.tv_usec == 0)
+			{
+				return 0;
+			}
+			else
+			{
+				return 1;
+			}
+		}
+		return res;
 	}
 
 	bool Socket::ready(const unsigned long timeout) const
