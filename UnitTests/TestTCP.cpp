@@ -100,8 +100,14 @@ void testWifiSocketConstructors()
     kt::ServerSocket server(kt::SocketType::Wifi, PORT_NUMBER);
     kt::Socket socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
+    assert(socket.getAddress() == LOCALHOST);
+    assert(socket.getPort() == PORT_NUMBER);
+
     // Accept connection request from "socket"
     kt::Socket serverSocket = server.accept();
+    // Check address and port of serverSocket, in this case it is connected to localhost
+    assert(serverSocket.getAddress() == LOCALHOST);
+    assert(serverSocket.getPort() != PORT_NUMBER);
     // Create copy of "socket" (assignment operator test)
     kt::Socket copiedSocket(socket);
 
@@ -171,8 +177,50 @@ void testWifiServerSocketConstructors()
     }));
 }
 
+void testWifiSocketMethods()
+{
+    preFunctionTest(__func__);
+
+    kt::ServerSocket server(kt::SocketType::Wifi, PORT_NUMBER);
+    kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+
+    kt::Socket serverSocket = server.accept();
+
+    // Test connected function
+    assert(client.connected());
+    assert(serverSocket.connected());
+
+    // Test receiveAmount method
+    const std::string testString = "test";
+    assert(!serverSocket.ready());
+    assert(client.send(testString));
+    assert(serverSocket.ready());
+    std::string response = serverSocket.receiveAmount(testString.size());
+    assert(response == testString);
+
+    const char delimiter = '!';
+    assert(!serverSocket.ready());
+    assert(serverSocket.send(testString + delimiter));
+    response = client.receiveToDelimiter(delimiter);
+    assert(response == testString);
+
+    // Check delimiter illegal character
+    assert(throwsException<kt::SocketException>([&client] 
+    {
+        client.receiveToDelimiter('\0');
+    }));
+
+    client.close();
+    assert(!client.connected());
+    // Remote socket cannot tell that the connection has been closed
+    // assert(!serverSocket.connected()); // -> fails here
+    serverSocket.close();
+    server.close();
+}
+
 int main()
 {
     testFunction(testWifiSocketConstructors);
     testFunction(testWifiServerSocketConstructors);
+    testFunction(testWifiSocketMethods);
 }
