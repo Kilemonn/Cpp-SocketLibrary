@@ -48,8 +48,6 @@ void testWifiSocketConstructors()
         kt::Socket socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
     }));
 
-    std::cout << "?" << std::endl;
-
     // Test copy constructor by creating a copy of the initalised socket and ensuring the server receives the
     // data successfully tests assignment operator
     kt::ServerSocket server(kt::SocketType::Wifi, PORT_NUMBER);
@@ -57,8 +55,6 @@ void testWifiSocketConstructors()
     kt::Socket socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
     assert(socket.getType() == kt::SocketType::Wifi);
     assert(socket.getProtocol() == kt::SocketProtocol::TCP);
-
-    std::cout << "?2" << std::endl;
 
     assert(socket.getAddress() == LOCALHOST);
     assert(socket.getPort() == PORT_NUMBER);
@@ -71,8 +67,6 @@ void testWifiSocketConstructors()
     // Create copy of "socket" (assignment operator test)
     kt::Socket copiedSocket(socket);
 
-    std::cout << "?3" << std::endl;
-
     // Send test string to server socket
     const std::string testString = "Test";
     assert(copiedSocket.send(testString));
@@ -81,16 +75,11 @@ void testWifiSocketConstructors()
     // Compare test string
     assert(response == testString);
 
-    std::cout << "?4" << std::endl;
     // Close all sockets
     serverSocket.close();
-    std::cout << "HERE" << std::endl;
     copiedSocket.close();
-    std::cout << "HERE2" << std::endl;
     socket.close();
-    std::cout << "HERE3" << std::endl;
     server.close();
-    std::cout << "HERE4" << std::endl;
 }
 
 /**
@@ -117,8 +106,6 @@ void testWifiServerSocketConstructors()
     // By closing the initial server the second server should be constructed successfully
     kt::ServerSocket server2(kt::SocketType::Wifi, PORT_NUMBER);
 
-    std::cout << "HERE" << std::endl;
-
     // Check copy constructor by making sure a client can connect and send a message successfully
     kt::ServerSocket server3(server2);
 
@@ -127,20 +114,14 @@ void testWifiServerSocketConstructors()
     kt::Socket serverSocket = server3.accept();
     const std::string testString = "I'm Too Hot!";
 
-    std::cout << "HERE2" << std::endl;
     assert(client.send(testString));
     const std::string responseString = serverSocket.receiveAmount(testString.size());
+
     assert(responseString == testString);
 
-    std::cout << "HERE3" << std::endl;
-
     server3.close();
-    std::cout << "HERE4" << std::endl;
     serverSocket.close();
-    std::cout << "HERE5" << std::endl;
     client.close();
-
-    std::cout << "HERE6" << std::endl;
 
     // Test closing the socket of two copied servers will result in a client being unable to connect
     // meaning, "both" server sockets have been closed, make sure a copied server object cannot accept
@@ -152,8 +133,6 @@ void testWifiServerSocketConstructors()
         initalServer.close();
         actualServer.accept();
     }));
-
-    std::cout << "HERE5" << std::endl;
 
     assert(throwsException<kt::SocketException>([] 
     {

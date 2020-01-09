@@ -189,9 +189,9 @@ void TCPClient(const unsigned int& p)
 	assert(received[received.size() - 1] != delimiter);
 	std::cout << "RECIEVED3: " << received << std::endl;
 	
-	// received = socket.receiveAll();
-	// assert(received == "Testing Wifi receiveAll\n");
-	// std::cout << "RECIEVED4: " << received << std::endl;
+	received = socket.receiveAll();
+	assert(received == "Testing Wifi receiveAll\n");
+	std::cout << "RECIEVED4: " << received << std::endl;
 
 	// while(socket.connected())
 	// {
@@ -211,19 +211,24 @@ void testUDP()
 
 		socket.bind();
 
-		socket.sendTo("test\n");
+		std::cout << "UDP Read: " + socket.get() << std::endl;
 
-		kt::Socket socket2("127.0.0.1", port, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-		std::cout << "Connected\n";
-
-		char c = socket2.get();
-		std::cout << "UDP Read: " + c << std::endl;
-
-		assert('t' == c);
-
-		socket2.close();
+		if (socket.ready(1000000))
+		{
+			std::cout << "Socket Ready: " + socket.get() << std::endl;
+		}
+		else
+		{
+			std::cout << "Socket not ready..." << std::endl;
+		}
 
 		socket.unbind();
+		
+		std::thread t1(UDPClient, port);
+
+		std::this_thread::sleep_for(std::chrono::seconds(3));
+
+		t1.join();
 	}
 	catch (const kt::SocketException& se)
 	{
@@ -235,6 +240,16 @@ void testUDP()
 		std::cout << "CAUGHT IT" << std::endl;
 		assert(false);
 	}
+}
+
+void UDPClient(const unsigned int& p)
+{
+	kt::Socket socket("127.0.0.1", p, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+	std::cout << "Connected\n";
+
+	socket.sendTo("test\n");
+
+	socket.close();
 }
 
 void testBluetooth()
