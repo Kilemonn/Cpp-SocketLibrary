@@ -12,8 +12,10 @@
 #include <ctime>
 #include <cerrno>
 #include <cstring>
+#include <vector>
+#include <algorithm>
 
-#ifdef _WIN32
+#if _WIN32 || _WIN64
 
 #ifndef WIN32_LEAN_AND_MEAN
     #define WIN32_LEAN_AND_MEAN
@@ -40,16 +42,15 @@
 
 #endif
 
-    namespace kt
+namespace kt
 {
     ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize)
     {
         this->port = port;
         this->type = type;
+        this->socketDescriptor = 0;
 
- #ifdef _WIN32
-
-        this->socketDescriptor = INVALID_SOCKET;
+#ifdef _WIN32
 
         WSADATA wsaData;
         int res = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -135,6 +136,12 @@
 
     void ServerSocket::constructSocket(const unsigned int& connectionBacklogSize)
     {
+#ifdef _WIN32
+
+        this->serverAddress = nullptr;
+
+#endif
+
         if (this->type == kt::SocketType::Wifi)
         {
             this->constructWifiSocket(connectionBacklogSize);
@@ -154,7 +161,7 @@
 
         this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
-        if (this->socketDescriptor == INVALID_SOCKET)
+        if (this->socketDescriptor == 0)
         {
             throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
         }
@@ -163,12 +170,13 @@
         this->bluetoothAddress.btAddr = 0;
         this->bluetoothAddress.port = this->port;
 
-        if (bind(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
+        if (bind(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH) ) == -1) 
         {
+            this->close();
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
         }
 
-        if (listen(this->socketDescriptor, connectionBacklogSize) == SOCKET_ERROR) 
+        if (listen(this->socketDescriptor, connectionBacklogSize) == -1) 
         {
             this->close();
             throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -252,15 +260,15 @@
         this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
         if (this->socketDescriptor == INVALID_SOCKET) 
         {
-             throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
+            throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
         }
 
-        if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR) 
+        if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == -1) 
         {
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if(listen(this->socketDescriptor, connectionBacklogSize) == SOCKET_ERROR)
+        if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -423,7 +431,31 @@
     {
         #ifdef _WIN32
 
-        freeaddrinfo(this->serverAddress);
+        if (this->serverAddress != nullptr && this->type == kt::SocketType::Wifi)
+		{
+            struct addrinfo* iterator = nullptr;
+            std::cout << "Sz" << std::endl;
+		    std::vector<struct addrinfo*> addresses;
+            std::cout << "Sc" << std::endl;
+            
+            for (iterator = this->serverAddress; iterator != nullptr; iterator = iterator->ai_next)
+            {
+                if (iterator != nullptr)
+                {
+                    addresses.push_back(iterator);
+                }
+            }
+            std::cout << "Sc2" << std::endl;
+
+			std::reverse(addresses.begin(), addresses.end());
+			for (struct addrinfo* address : addresses)
+			{
+				freeaddrinfo(address);
+			}
+            std::cout << "Sc3" << std::endl;
+
+            // freeaddrinfo(this->serverAddress);
+        }
         closesocket(this->socketDescriptor);
 
         #elif __linux__

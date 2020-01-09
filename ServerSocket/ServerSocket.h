@@ -7,7 +7,7 @@
 #include "../Enums/SocketProtocol.cpp"
 #include "../Enums/SocketType.cpp"
 
-#ifdef _WIN32
+#if _WIN32 || _WIN64
 
 #ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
@@ -38,18 +38,17 @@ namespace kt
 		private:
 			unsigned int port;
 			kt::SocketType type;
+			int socketDescriptor;
 
-#ifdef _WIN32
+#if _WIN32 || _WIN64
 
 			// Wifi properties
-			struct addrinfo *serverAddress;
+			struct addrinfo* serverAddress;
 	        struct addrinfo hints;
 	        SOCKADDR_BTH bluetoothAddress;
-			SOCKET socketDescriptor;
 
 #elif __linux__
 
-			int socketDescriptor;
 			struct sockaddr_in serverAddress;
 	    	socklen_t socketSize;
 

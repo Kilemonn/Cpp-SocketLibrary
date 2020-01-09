@@ -11,6 +11,7 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
 #ifdef _WIN32
 
@@ -53,11 +54,11 @@ namespace kt
 		this->port = port;
 		this->type = type;
 		this->protocol = protocol;
-		this->serverAddress = { 0 };
+		this->socketDescriptor = 0;
 
 #ifdef _WIN32
 
-		this->socketDescriptor = INVALID_SOCKET;
+		this->serverAddress = nullptr;
 
 		WSADATA wsaData;
 		int res = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -68,6 +69,7 @@ namespace kt
 
 #elif __linux__
 
+		this->serverAddress = { 0 };
 		this->bluetoothAddress = { 0 };
 
 #endif
@@ -87,16 +89,7 @@ namespace kt
 	    }
 	}
 
-#ifdef _WIN32
-
-	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
-
-#elif __linux__
-
-Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
-
-#endif
-
+	Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
 	{
 		this->hostname = hostname;
 		this->port = port;
@@ -197,21 +190,25 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
 		this->hints.ai_protocol = socketProtocol;
 
+		this->serverAddress = nullptr;
+
+		if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0)
+		{
+			throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
+		}
+
 		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-			if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0)
-			{
-				throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
-			}
-
 			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
 			if (this->socketDescriptor == INVALID_SOCKET) 
 			{
+				this->close();
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
 
 			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR)
 			{
+				this->close();
 				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 			}
 		}
@@ -220,26 +217,9 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
 			if (this->socketDescriptor == INVALID_SOCKET) 
 			{
+				this->close();
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
-
-			// struct addrinfo* localAddress;
-			// struct addrinfo localHints;
-			// memset(&localHints, 0, sizeof(localHints));
-			// localHints.ai_family = AF_INET;
-			// localHints.ai_socktype = SOCK_STREAM;
-			// localHints.ai_protocol = IPPROTO_TCP;
-			// localHints.ai_flags = AI_PASSIVE;
-
-			// if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &this->hints, &localAddress) != 0) 
-			// {
-			// 	throw SocketException("Unable to retrieving host address to self (localhost/127.0.0.1): " + std::string(std::strerror(errno)));
-			// }
-
-			// if (bind(this->socketDescriptor, localAddress->ai_addr, (int)localAddress->ai_addrlen) == SOCKET_ERROR)
-			// {
-			// 	throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
-			// }
 		}
 	}
 
@@ -283,7 +263,30 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 	{
 #ifdef _WIN32
 
-		freeaddrinfo(this->serverAddress);
+		if (this->serverAddress != nullptr && this->type == kt::SocketType::Wifi)
+		{
+			struct addrinfo* iterator = nullptr;
+			std::cout << "Zz" << std::endl;
+		    std::vector<struct addrinfo*> addresses;
+			std::cout << "Zc" << std::endl;
+            
+            for (iterator = this->serverAddress; iterator != nullptr; iterator = iterator->ai_next)
+            {
+                if (iterator != nullptr)
+                {
+                    addresses.push_back(iterator);
+                }
+            }
+			std::cout << "Zc2" << std::endl;
+
+			std::reverse(addresses.begin(), addresses.end());
+			for (struct addrinfo* address : addresses)
+			{
+				freeaddrinfo(address);
+			}
+			std::cout << "Zc3" << std::endl;
+			// freeaddrinfo(this->serverAddress);
+		}
 		closesocket(this->socketDescriptor);
 
 #elif __linux__
