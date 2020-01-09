@@ -65,8 +65,11 @@ namespace kt
 
 #endif // _WIN32 / __linux__
 
+			const unsigned int MAX_BUFFER_SIZE = 10240;
 			void constructBluetoothSocket();
 			void constructWifiSocket();
+			struct sockaddr_in getSendAddress();
+			int pollSocket(const unsigned long = 1000) const;
 
 		public:
 			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
@@ -87,7 +90,6 @@ namespace kt
 			bool bind();
 			bool unbind();
 			void close();
-			int pollSocket(const unsigned long = 1000) const;
 			bool ready(const unsigned long = 1000) const;
 			bool connected(const unsigned long = 1000) const;
 			bool send(const std::string&, int = 0) const;

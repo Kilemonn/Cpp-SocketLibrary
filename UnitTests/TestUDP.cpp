@@ -74,11 +74,10 @@ void testWifiFunctions()
 
     // Test receiveAll
     const std::string anotherTest = "AnotherOnE";
-    assert(client.sendTo(anotherTest));
-    assert(server.ready());
-    response = server.receiveAll();
-    assert(!server.ready());
-    std::cout << anotherTest << " : " << response << std::endl;
+    assert(server.sendTo(anotherTest));
+    assert(client.ready());
+    response = client.receiveAmount(anotherTest.size());
+    assert(!client.ready());
     assert(anotherTest == response);
 
     // Test receiveToDelimiter()
@@ -91,9 +90,9 @@ void testWifiFunctions()
 
     // Test get method
     const std::string x = "x";
-    assert(client.sendTo(x));
-    assert(server.ready());
-    response = server.get();
+    assert(server.sendTo(x));
+    assert(client.ready());
+    response = client.get();
     assert(response == x);
 
     const std::string a = "a";

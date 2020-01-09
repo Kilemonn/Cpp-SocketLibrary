@@ -350,7 +350,8 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		{
 			if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&this->serverAddress, sizeof(this->serverAddress)) != -1;
+				struct sockaddr_in address = this->getSendAddress();
+				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&address, sizeof(address)) != -1;
 			}
 		}
 		return false;
@@ -428,7 +429,6 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 	char Socket::get() const
 	{
-		std::cout << "Calling get()" << std::endl;
 		return this->receiveAmount(1)[0];
 	}
 
@@ -459,40 +459,65 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return this->hostname;
 	}
 
+	struct sockaddr_in Socket::getSendAddress()
+	{
+		struct sockaddr_in newAddress;
+		memset(&newAddress, 0, sizeof(newAddress));
+
+		if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			if (this->isBound())
+			{
+				memcpy(&newAddress, &this->clientAddress, sizeof(this->clientAddress));
+			}
+			else
+			{
+				memcpy(&newAddress, &this->serverAddress, sizeof(this->serverAddress));
+			}
+		}
+		return newAddress;
+	}
+
 	std::string Socket::receiveAmount(const unsigned int amountToReceive) const
 	{
-		if (amountToReceive == 0)
+		if (amountToReceive == 0 || !this->ready())
 		{
 			return "";
 		}
 		const unsigned int bufferSize = amountToReceive + 1;
 
 		char data[bufferSize];
+		memset(&data, 0, bufferSize);
 		unsigned int counter = 0;
 		int flag = 0;
 		std::string result;
-		result.reserve(amountToReceive);
+		result.reserve(bufferSize - 1);
 
-		while (counter < amountToReceive && this->ready())
+		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-			memset(&data, 0, bufferSize);
-
-			if (this->protocol == kt::SocketProtocol::TCP)
+			do
 			{
 				flag = recv(this->socketDescriptor, data, (amountToReceive - counter), 0);
-			}
-			else if (this->protocol == kt::SocketProtocol::UDP)
-			{
-				socklen_t addressLength = sizeof(this->clientAddress);
-				flag = recvfrom(this->socketDescriptor, data, (amountToReceive - counter), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
-			}
-			
+				
+				if (flag < 1)
+				{
+					return std::move(result);
+				}
+				result += std::string(data);
+				counter += flag;
+			} while (counter < amountToReceive && this->ready());
+		}
+		else if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			// UDP is odd, and will consume the entire datagram after a single read even if not all bytes are read
+			socklen_t addressLength = sizeof(this->clientAddress);
+			flag = recvfrom(this->socketDescriptor, data, amountToReceive, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+
 			if (flag < 1)
 			{
 				return std::move(result);
 			}
 			result += std::string(data);
-			counter += flag;
 		}
 		return std::move(result);
 	}
@@ -506,32 +531,47 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		}
 
 		std::string data = "";
-		char temp[2];
 		int flag = 0;
 
-		do
+		if (!this->ready())
 		{
-			memset(&temp, 0, sizeof(temp));
+			return data;
+		}
 
-			if (this->protocol == kt::SocketProtocol::TCP)
+		if (this->protocol == kt::SocketProtocol::TCP)
+		{
+			char character;
+			do
 			{
-				flag = recv(this->socketDescriptor, temp, 1, 0);
-			}
-			else if (this->protocol == kt::SocketProtocol::UDP)
-			{
-				socklen_t addressLength = sizeof(this->clientAddress);
-				flag = recvfrom(this->socketDescriptor, temp, 1, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
-			}
+				character = this->get();
+				data += character;
+			} while (character != delimiter && this->ready());
+
+			return std::move(data.substr(0, (data.size() - 1)));
+		}
+		else if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			char temp[this->MAX_BUFFER_SIZE + 1];
+			memset(&temp, 0, sizeof(temp));
+			socklen_t addressLength = sizeof(this->clientAddress);
+			flag = recvfrom(this->socketDescriptor, temp, this->MAX_BUFFER_SIZE, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 
 			if (flag < 1)
 			{
 				return std::move(data);
 			}
-			data += temp[0];
 
-		} while (temp[0] != delimiter);
+			data += std::string(temp);
+			for (unsigned int i = 0; i < MAX_BUFFER_SIZE + 1; i++)
+			{
+				if (delimiter == temp[i])
+				{
+					return data.substr(0, i);
+				}
+			}
+		}
 
-		return std::move(data.substr(0, (data.size() - 1)));
+		return data;
 	}
 
 	std::string Socket::receiveAll(const unsigned long timeout) const
