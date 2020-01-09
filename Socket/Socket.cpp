@@ -405,23 +405,6 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return result != -1;
 	}
 
-	void Socket::setHostName(const std::string& newHostname)
-	{
-		if (this->protocol == kt::SocketProtocol::UDP)
-		{
-			struct hostent *client = gethostbyname(newHostname.c_str());
-			if (client == nullptr)
-			{
-				throw SocketException("Failed to resolve IP of new host with name: " + newHostname);
-			}
-			memset(&this->serverAddress, 0, sizeof(this->serverAddress));
-			this->serverAddress.sin_family = AF_INET;
-			memcpy((char *) client->h_addr, (char *) &this->serverAddress.sin_addr.s_addr, client->h_length);
-			this->serverAddress.sin_port = htons(this->port);
-			this->hostname = newHostname;
-		}
-	}
-
 	bool Socket::isBound() const
 	{
 		return this->bound;
@@ -579,6 +562,11 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		std::string result = "";
 		result.reserve(1024);
 		bool hitEOF = false;
+
+		if (!this->ready())
+		{
+			return "";
+		}
 
 		while (this->ready(timeout) && !hitEOF)
 		{

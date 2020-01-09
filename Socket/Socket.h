@@ -97,7 +97,6 @@ namespace kt
 			char get() const;
 			int getPort() const;
 			bool isBound() const;
-			void setHostName(const std::string&);
 			kt::SocketProtocol getProtocol() const;
 			kt::SocketType getType() const;
 			std::string getLastRecievedAddress() const;

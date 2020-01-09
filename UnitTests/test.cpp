@@ -247,7 +247,7 @@ void UDPClient(const unsigned int& p)
 	kt::Socket socket("127.0.0.1", p, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 	std::cout << "Connected\n";
 
-	socket.sendTo("", "test\n");
+	socket.sendTo("test\n");
 
 	socket.close();
 }
