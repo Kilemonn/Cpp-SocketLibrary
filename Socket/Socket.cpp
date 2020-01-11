@@ -529,7 +529,13 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 				data += character;
 			} while (character != delimiter && this->ready());
 
-			return std::move(data.substr(0, (data.size() - 1)));
+			size_t subStringLength = data.size() - 1;
+			if (character != delimiter)
+			{
+				subStringLength = data.size();
+			}
+
+			return std::move(data.substr(0, subStringLength));
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
