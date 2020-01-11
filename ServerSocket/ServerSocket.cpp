@@ -40,8 +40,14 @@
 
 #endif
 
-    namespace kt
+namespace kt
 {
+    ServerSocket::ServerSocket()
+    {
+        this->type = SocketType::None;
+        this->socketDescriptor = 0;
+    }
+
     ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize)
     {
         this->port = port;

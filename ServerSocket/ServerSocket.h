@@ -62,6 +62,7 @@ namespace kt
 			void randomlyAllocatePort(const unsigned int&);
 
 		public:
+			ServerSocket();
 			ServerSocket(const kt::SocketType, const unsigned int& = 0, const unsigned int& = 20);
 			ServerSocket(const ServerSocket&);
 			ServerSocket& operator=(const ServerSocket&);

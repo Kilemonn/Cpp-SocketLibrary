@@ -72,6 +72,7 @@ namespace kt
 			int pollSocket(const unsigned long = 1000) const;
 
 		public:
+			Socket();
 			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
 
 #ifdef _WIN32

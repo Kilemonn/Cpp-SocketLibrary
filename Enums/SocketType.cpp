@@ -7,7 +7,8 @@ namespace kt
     enum class SocketType
     {
         Bluetooth, 
-        Wifi
+        Wifi,
+        None
     };
 }
 
