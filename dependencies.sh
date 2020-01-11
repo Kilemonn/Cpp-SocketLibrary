@@ -7,3 +7,6 @@ apt-get install -y libglib2.0-dev
 
 # Install for hciconfig
 apt-get install -y bluez
+
+# Install valgrind for Unit test mem checks
+apt-get install -y valgrind
