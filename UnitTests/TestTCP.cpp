@@ -116,7 +116,6 @@ void testWifiServerSocketConstructors()
 
     assert(client.send(testString));
     const std::string responseString = serverSocket.receiveAmount(testString.size());
-
     assert(responseString == testString);
 
     server3.close();

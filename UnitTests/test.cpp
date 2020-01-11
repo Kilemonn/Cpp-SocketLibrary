@@ -212,6 +212,7 @@ void testUDP()
 		socket.bind();
 
 		std::cout << "UDP Read: " + socket.get() << std::endl;
+		socket.send("test\n");
 
 		if (socket.ready(1000000))
 		{

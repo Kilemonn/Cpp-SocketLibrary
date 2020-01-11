@@ -41,7 +41,7 @@ void testWifiConstructors()
  * - Test bind()
  * - Test ready()
  * - Test isBound()
- * - Test sendTo()
+ * - Test send()
  * - Test receiveAmount()
  * - Test receiveAll()
  * - Test getLastRecievedAddress()
@@ -61,7 +61,7 @@ void testWifiFunctions()
     kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
     const std::string testString = "test";
-    assert(client.sendTo(testString));
+    assert(client.send(testString));
 
     // Test receiveAmount()
     assert(server.ready());
@@ -74,7 +74,7 @@ void testWifiFunctions()
 
     // Test receiveAll
     const std::string anotherTest = "AnotherOnE";
-    assert(server.sendTo(anotherTest));
+    assert(server.send(anotherTest));
     assert(client.ready());
     response = client.receiveAmount(anotherTest.size());
     assert(!client.ready());
@@ -82,7 +82,7 @@ void testWifiFunctions()
 
     // Test receiveToDelimiter()
     const char delimiter = '~';
-    client.sendTo(testString + delimiter);
+    client.send(testString + delimiter);
     assert(server.ready());
     response = server.receiveToDelimiter(delimiter);
     assert(!server.ready());
@@ -90,14 +90,14 @@ void testWifiFunctions()
 
     // Test get method
     const std::string x = "x";
-    assert(server.sendTo(x));
+    assert(server.send(x));
     assert(client.ready());
     response = client.get();
     assert(response == x);
 
     const std::string a = "a";
     assert(!server.ready());
-    assert(client.sendTo(a));
+    assert(client.send(a));
     assert(server.ready());
     response = server.get();
     assert(response == a);

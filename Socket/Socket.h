@@ -92,8 +92,7 @@ namespace kt
 			void close();
 			bool ready(const unsigned long = 1000) const;
 			bool connected(const unsigned long = 1000) const;
-			bool send(const std::string&, int = 0) const;
-			bool sendTo(const std::string&, int = 0);
+			bool send(const std::string&, int = 0);
 			char get() const;
 			int getPort() const;
 			bool isBound() const;

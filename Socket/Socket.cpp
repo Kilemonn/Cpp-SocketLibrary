@@ -332,7 +332,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return !this->bound;
 	}
 
-	bool Socket::send(const std::string& message, int flag) const
+	bool Socket::send(const std::string& message, int flag)
 	{
 		if (message.size() > 0)
 		{
@@ -340,15 +340,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			{
 				return ::send(this->socketDescriptor, message.c_str(), message.size(), flag) != -1;
 			}
-		}
-		return false;
-	}
-
-	bool Socket::sendTo(const std::string& message, int flag)
-	{
-		if (message.size() > 0)
-		{
-			if (this->protocol == kt::SocketProtocol::UDP)
+			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
 				struct sockaddr_in address = this->getSendAddress();
 				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&address, sizeof(address)) != -1;
