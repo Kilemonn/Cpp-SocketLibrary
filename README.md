@@ -27,11 +27,11 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 	// Accept connection to server
 	kt::Socket serverSocket = server.accept();
 
-    const std::string testString = "Test";
-    serverSocket.send(testString);
-    const std::string response = client.receiveAmount(testString.size());
-    // Compare received and sent string values
-    assert(response == testString);
+	const std::string testString = "Test";
+	serverSocket.send(testString);
+	const std::string response = client.receiveAmount(testString.size());
+	// Compare received and sent string values
+	assert(response == testString);
 
 	client.close();
 	serverSocket.close();
@@ -48,10 +48,10 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 	kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
 	const std::string testString = "UDP Test";
-    const char delimiter = '~';
-    client.send(testString + delimiter);
-    const std::string response = server.receiveToDelimiter(delimiter);
-    assert(response == testString);
+	const char delimiter = '~';
+	client.send(testString + delimiter);
+	const std::string response = server.receiveToDelimiter(delimiter);
+	assert(response == testString);
 
 	serverSocket.unbind();
 	serverSocket.close();
