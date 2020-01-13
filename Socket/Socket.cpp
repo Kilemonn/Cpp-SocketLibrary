@@ -324,7 +324,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 	bool Socket::unbind()
 	{
-		if (this->protocol == kt::SocketProtocol::UDP)
+		if (this->protocol == kt::SocketProtocol::UDP && this->isBound())
 		{
 			this->close();
 			int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
@@ -414,7 +414,7 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return this->receiveAmount(1)[0];
 	}
 
-	int Socket::getPort() const
+	unsigned int Socket::getPort() const
 	{
 		return this->port;
 	}
@@ -431,9 +431,13 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 	std::string Socket::getLastRecievedAddress() const
 	{
-		char ip[20];
-		strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
-		return std::string(ip);
+		if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			char ip[20];
+			strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
+			return std::string(ip);
+		}
+		return "";
 	}
 
 	std::string Socket::getAddress() const

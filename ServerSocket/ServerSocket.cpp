@@ -77,38 +77,6 @@ namespace kt
         }
     }
 
-    void ServerSocket::randomlyAllocatePort(const unsigned int& connectionBacklogSize)
-    {
-        bool done = false;
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        // Random port number inside the 'dynamic' port range (49152 - 65535)
-        std::uniform_int_distribution<> wifiRand(49152, 65535);
-        // Random bluetooth ports from 1-30
-        std::uniform_int_distribution<> btRand(1, 30);
-
-        while (!done)
-        {
-            try
-            {
-                if (this->type == kt::SocketType::Wifi)
-                { 
-                    this->port = wifiRand(gen);
-                }
-                else
-                {
-                    this->port = btRand(gen);
-                }
-                this->constructSocket(connectionBacklogSize);
-                done = true;
-            }
-            catch(BindingException be)
-            {
-                // Nothing to do
-            }
-        }
-    }
-
     ServerSocket::ServerSocket(const ServerSocket& socket)
     {
         this->port = socket.port;
@@ -303,6 +271,38 @@ namespace kt
 
 #endif
 
+    void ServerSocket::randomlyAllocatePort(const unsigned int &connectionBacklogSize)
+    {
+        bool done = false;
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        // Random port number inside the 'dynamic' port range (49152 - 65535)
+        std::uniform_int_distribution<> wifiRand(49152, 65535);
+        // Random bluetooth ports from 1-30
+        std::uniform_int_distribution<> btRand(1, 30);
+
+        while (!done)
+        {
+            try
+            {
+                if (this->type == kt::SocketType::Wifi)
+                {
+                    this->port = wifiRand(gen);
+                }
+                else
+                {
+                    this->port = btRand(gen);
+                }
+                this->constructSocket(connectionBacklogSize);
+                done = true;
+            }
+            catch (BindingException be)
+            {
+                // Nothing to do
+            }
+        }
+    }
+
 #ifdef _WIN32
 
     void ServerSocket::setDiscoverable()
@@ -349,6 +349,16 @@ namespace kt
     }
 
 #endif
+
+    kt::SocketType ServerSocket::getType() const
+    {
+        return this->type;
+    }
+
+    unsigned int ServerSocket::getPort() const
+    {
+        return this->port;
+    }
 
     Socket ServerSocket::accept(const unsigned int& timeout)
     {
@@ -413,16 +423,6 @@ namespace kt
 		}
 
         return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portnum);
-    }
-
-    unsigned int ServerSocket::getPort() const
-    {
-        return this->port;
-    }
-
-    kt::SocketType ServerSocket::getType() const
-    {
-        return this->type;
     }
 
     void ServerSocket::close()

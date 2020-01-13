@@ -91,16 +91,19 @@ namespace kt
 			bool bind();
 			bool unbind();
 			void close();
+			
 			bool ready(const unsigned long = 1000) const;
 			bool connected(const unsigned long = 1000) const;
 			bool send(const std::string&, int = 0);
-			char get() const;
-			int getPort() const;
+
+			unsigned int getPort() const;
 			bool isBound() const;
 			kt::SocketProtocol getProtocol() const;
 			kt::SocketType getType() const;
 			std::string getLastRecievedAddress() const;
 			std::string getAddress() const;
+
+			char get() const;
 			std::string receiveAmount(const unsigned int) const;
 			std::string receiveToDelimiter(const char) const;
 			std::string receiveAll(const unsigned long = 1000) const;
