@@ -1,6 +1,6 @@
 # Cpp-SocketLibrary
 
-A ServerSocket and Socket library used to support both Wifi and Bluetooth communication. Currently is only supporting Linux and Windows.
+A ServerSocket and Socket library used to support both Wifi and Bluetooth communication.
 
 ### Set up:
 
@@ -41,7 +41,7 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 - UDP Example:
 ```cpp
 	kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-	// Which ever socket is acting as the "server" needs to bind, only a single socket can be bound 
+	// Which ever socket is acting as the "server" needs to bind, only a single process can be bound 
 	// to a specific port at a time
 	serverSocket.bind();
 
