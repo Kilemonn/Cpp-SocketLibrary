@@ -83,6 +83,11 @@ namespace kt
         {
             throw SocketException("Unable to set protocol to 'None' for a Wifi Socket.");
         }
+		else if (this->type == kt::SocketType::Bluetooth && this->protocol != kt::SocketProtocol::None)
+		{
+			// No protocol should be set when using a bluetooth socket
+			throw SocketException("Bluetooth socket Protocol should be 'None'.");
+		}
 
 	    if (type == kt::SocketType::Wifi)
 	    {
