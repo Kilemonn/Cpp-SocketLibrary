@@ -303,6 +303,8 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		::close(this->socketDescriptor);
 
 #endif
+
+		this->bound = false;
 	}
 
 	/**
@@ -325,23 +327,6 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			// throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
 		}
 		return false;
-	}
-
-	bool Socket::unbind()
-	{
-		if (this->protocol == kt::SocketProtocol::UDP && this->isBound())
-		{
-			this->close();
-			int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
-	    	this->socketDescriptor = socket(AF_INET, socketProtocol, 0);
-
-			if (this->socketDescriptor == -1)
-			{
-				throw SocketException("Failed to recreate socket for UDP Network socket: " + std::string(std::strerror(errno)));
-			}
-			this->bound = false;
-		}
-		return !this->bound;
 	}
 
 	bool Socket::send(const std::string& message, int flag)

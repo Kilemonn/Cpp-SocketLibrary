@@ -66,6 +66,7 @@ namespace kt
 #endif // _WIN32 / __linux__
 
 			const unsigned int MAX_BUFFER_SIZE = 10240;
+
 			void constructBluetoothSocket();
 			void constructWifiSocket();
 			struct sockaddr_in getSendAddress();
@@ -89,7 +90,6 @@ namespace kt
 			Socket& operator=(const Socket&);
 			
 			bool bind();
-			bool unbind();
 			void close();
 			
 			bool ready(const unsigned long = 1000) const;

@@ -100,12 +100,10 @@ void testWifiFunctions()
     assert(client.send(a));
     assert(server.ready());
     response = server.get();
-    assert(response == a);
-
-    server.unbind();
-    assert(!server.isBound());
+    assert(response == a);   
 
     server.close();
+    assert(!server.isBound());
     client.close();
 }
 
