@@ -53,7 +53,6 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 	const std::string response = server.receiveToDelimiter(delimiter);
 	assert(response == testString);
 
-	serverSocket.unbind();
 	serverSocket.close();
 	client.close();
 ```
