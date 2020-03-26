@@ -1,5 +1,6 @@
 #Test File:
-TestSockets
+TestTCP
+TestUDP
 
 # Prerequisites
 *.d
