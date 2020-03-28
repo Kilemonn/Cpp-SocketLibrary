@@ -12,54 +12,54 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 
 - Manual compilation
 - Required libraries:
-	- windows.h
-	- winsock2.h
-	- ws2tcpip.h
-	- iphlpapi.h
+  - windows.h
+  - winsock2.h
+  - ws2tcpip.h
+  - iphlpapi.h
 
-## Usage
+## Usage Examples
 
 - TCP Example:
 
 ```cpp
-	// Create a new Wifi ServerSocket
-	kt::ServerSocket server(kt::SocketType::Wifi, 56756);
+// Create a new Wifi ServerSocket
+kt::ServerSocket server(kt::SocketType::Wifi, 56756);
 
-	// Create new TCP socket
-	kt::Socket client("127.0.0.1", 56756, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+// Create new TCP socket
+kt::Socket client("127.0.0.1", 56756, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
-	// Accept connection to server
-	kt::Socket serverSocket = server.accept();
+// Accept connection to server
+kt::Socket serverSocket = server.accept();
 
-	const std::string testString = "Test";
-	serverSocket.send(testString);
-	const std::string response = client.receiveAmount(testString.size());
-	// Compare received and sent string values
-	assert(response == testString);
+const std::string testString = "Test";
+serverSocket.send(testString);
+const std::string response = client.receiveAmount(testString.size());
+// Compare received and sent string values
+assert(response == testString);
 
-	client.close();
-	serverSocket.close();
-	server.close();
+client.close();
+serverSocket.close();
+server.close();
 ```
 
 - UDP Example:
 
 ```cpp
-	kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-	// Which ever socket is acting as the "server" needs to bind, only a single process can be bound 
-	// to a specific port at a time
-	serverSocket.bind();
+kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+// Which ever socket is acting as the "server" needs to bind, only a single process can be bound 
+// to a specific port at a time
+serverSocket.bind();
 
-	kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
-	const std::string testString = "UDP Test";
-	const char delimiter = '~';
-	client.send(testString + delimiter);
-	const std::string response = server.receiveToDelimiter(delimiter);
-	assert(response == testString);
+const std::string testString = "UDP Test";
+const char delimiter = '~';
+client.send(testString + delimiter);
+const std::string response = server.receiveToDelimiter(delimiter);
+assert(response == testString);
 
-	serverSocket.close();
-	client.close();
+serverSocket.close();
+client.close();
 ```
 
 ## Known Issues
