@@ -47,13 +47,27 @@
 namespace kt
 {
 
+	/**
+	 * Default constructor. Should be provided by the compiler, but there has been some scenarios where this is required. 
+	 * 
+	 * A default constructed socket has no use.
+	 */
 	Socket::Socket()
 	{
-		this->protocol = SocketProtocol::None;
-		this->type = SocketType::None;
-		this->socketDescriptor = 0;
+		// Nothing to, defaults are set in header file
 	}
 
+	/**
+	 * A constructor which will immediately attempt to connect to the host via the port specified.
+	 * 
+	 * @param hostname - The hostname of the device to connect to.
+	 * @param port - The port number.
+	 * @param type - Determines whether this socket is a wifi or bluetooth socket. 
+	 * @param protocol - Indicates the protocol being used by this socket, for Wifi this value can be *kt::SocketProtocol::TCP* or *kt::SocketProtocol::UDP* Default value is *kt::SocketProtocol::None*.
+	 * 
+	 * @throw SocketException - If the Socket is unable to be instanciated or connect to server.
+	 * @throw BindingException - If the Socket is unable to bind to the port specified.
+	 */
 	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
 	{
 		this->hostname = hostname;
@@ -61,10 +75,9 @@ namespace kt
 		this->type = type;
 		this->protocol = protocol;
 		this->serverAddress = { 0 };
+		this->socketDescriptor = 0;
 
 #ifdef _WIN32
-
-		this->socketDescriptor = INVALID_SOCKET;
 
 		WSADATA wsaData;
 		int res = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -99,16 +112,16 @@ namespace kt
 	    }
 	}
 
-#ifdef _WIN32
-
-	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
-
-#elif __linux__
-
-Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
-
-#endif
-
+	/**
+	 * A constructor used by ServerSocket to create and copy of a currently connected socket. **This should not be used directly**.
+	 * 
+	 * @param socketDescriptor - Is the file descriptor for the connection.
+	 * @param type - Determines whether this socket is a wifi or bluetooth socket.
+	 * @param protocol - Indicates the protocol being used by this socket, for Wifi this value can be *kt::SocketProtocol::TCP* or *kt::SocketProtocol::UDP* Default value is *kt::SocketProtocol::None*.
+	 * @param hostname - the hostname of the socket to copy.
+	 * @param port - the port number of the socket to copy.
+	 */
+	Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
 	{
 		this->hostname = hostname;
 		this->port = port;
@@ -117,6 +130,11 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		this->type = type;
 	}
 
+	/**
+	 * A copy constructor for the Socket class. Will copy the object members and assume that it is already connected to the endpoint.
+	 * 
+	 * @param socket - The Socket object to be copied.
+	 */
 	Socket::Socket(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
@@ -134,6 +152,13 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 #endif
 	}
 
+	/**
+	 * An assignment operator for the Socket object. Will make a copy of the appropriate socket.
+	 * 
+	 * @param socket - The Socket object to be copied.
+	 * 
+	 * @return kt::Socket the copied socket
+	 */
 	Socket& Socket::operator=(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
@@ -291,6 +316,10 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 #endif
 
+	/**
+	 * Closes the existing connection. If no connection is open, then it will do nothing.
+	 * This method should be called before the object itself is distructed.
+	 */
 	void Socket::close()
 	{
 #ifdef _WIN32
@@ -308,8 +337,13 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 	}
 
 	/**
-	 * Attempt to bind the UDP socket for listening. Only one 
+	 * This method is required for kt::SocketProtocol::UDP sockets. 
+	 * The socket that is listening for new connections will need to call this before they begin listening (accepting connections). 
+	 * This ensures the socket is bound to the port and can receive new connections. *Only a single process can be bound to a single port at one time*.
 	 * 
+	 * @return bool - true if the socket was bound successfully, otherwise false
+	 * 
+	 * @throw BindingException - if the socket fails to bind
 	 */ 
 	bool Socket::bind()
 	{
@@ -322,13 +356,24 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 			localAddress.sin_family = AF_INET;
 			localAddress.sin_port = htons(this->port);
 			localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-			this->bound = ::bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) != -1; 
+			this->bound = ::bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) != -1;
+			if (!this->bound)
+			{
+				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+			}
 			return this->bound;
-			// throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
 		}
 		return false;
 	}
 
+	/**
+	 * Sends input std::string to the receiver via the configured socket.
+	 * 
+	 * @param message - The message to send to the receiver.
+	 * @param flag - A flag value to specify additional behaviour for this message. *Defaults to 0 if no argument is passed*.
+	 * 
+	 * @return true if the message was sent without error, else false.
+	 */
 	bool Socket::send(const std::string& message, int flag)
 	{
 		if (message.size() > 0)
@@ -373,6 +418,13 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return res;
 	}
 
+	/**
+	 * Determines whether the stream has data to read.
+	 * 
+	 * @param timeout - The timeout duration in *micro seconds*. Default is 1000 microseconds.
+	 * 
+	 * @return true if there is data to read otherwise false.
+	 */
 	bool Socket::ready(const unsigned long timeout) const
 	{
 		int result = this->pollSocket(timeout);
@@ -380,6 +432,15 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return result > 0;
 	}
 
+	/**
+	 * Determines whether the stream is open.
+	 * 
+	 * @param timeout - The timeout duration in *micro seconds*. Default is 1000 microseconds.
+	 * 
+	 * @return true if the stream is open otherwise false.
+	 * 
+	 * **NOTE:** This method is still in BETA, and cannot detect if the connection has been closed by the remote device.
+	 */
 	bool Socket::connected(const unsigned long timeout) const
 	{
 		// UDP is connectionless
@@ -394,31 +455,57 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return result != -1;
 	}
 
+	/**
+	 * This method is intended only for kt::SocketProtcol::UDP kt::Sockets.
+	 * Usage on a *kt::SocketProtocol::TCP* socket will always return *false*.
+	 * 
+	 * @return true if this socket is bound, otherwise false. 
+	 */
 	bool Socket::isBound() const
 	{
 		return this->bound;
 	}
 
+	/**
+	 * Reads and returns a single character from the reciever.
+	 * 
+	 * @return The character read.
+	 */
 	char Socket::get() const
 	{
 		return this->receiveAmount(1)[0];
 	}
 
+	/**
+	 * @return the port number used by this socket.
+	 */
 	unsigned int Socket::getPort() const
 	{
 		return this->port;
 	}
 
+	/**
+	 * @return the kt::SocketType for this kt::Socket.
+	 */
 	kt::SocketType Socket::getType() const
 	{
 		return this->type;
 	}
 
+	/**
+	 * @return the kt::SocketProtocol configured for this kt::Socket.
+	 */
 	kt::SocketProtocol Socket::getProtocol() const
 	{
 		return this->protocol;
 	}
 
+	/**
+	 * This method is intended only for kt::SocketProtcol::UDP kt::Sockets.
+	 * Use on a kt::SocketProtcol::TCP will result in an empty string.
+	 * 
+	 * @return when using *kt::SocketProtocol::UDP* the address of the last device who sent the data that was most recently read. Always returns an empty string for kt::SocketProtocol::TCP kt::Sockets.
+	 */
 	std::string Socket::getLastRecievedAddress() const
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
@@ -430,6 +517,9 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return "";
 	}
 
+	/**
+	 * @return the hostname configured for this socket.
+	 */
 	std::string Socket::getAddress() const
 	{
 		return this->hostname;
@@ -454,6 +544,14 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return newAddress;
 	}
 
+	/**
+	 * Reads in a specific amount of character from the input stream and returns them as a std::string.
+	 * This method will return early if there is no more data to send or the other party closes the connection.
+	 * 
+	 * @param amountToReceive - The amount of characters to read from the sender.
+	 * 
+	 * @return A std::string of the specified size with the respective character read in. 
+	 */
 	std::string Socket::receiveAmount(const unsigned int amountToReceive) const
 	{
 		if (amountToReceive == 0 || !this->ready())
@@ -498,7 +596,15 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return std::move(result);
 	}
 
-	// Do not pass in '\0' as a delimiter
+	/**
+	 * Reads from the sender until the passed in delimiter is reached. The delimiter is discarded and the characters preceeding it are returned as a std::string.
+	 * 
+	 * @param delimiter The delimiter that will be used to mark the end of the read in process.
+	 * 
+	 * @return A std::string with all of the characters preceeding the delimiter.
+	 * 
+	 * @throw SocketException - if the delimiter is '\0'.
+	 */
 	std::string Socket::receiveToDelimiter(const char delimiter) const
 	{
 		if (delimiter == '\0')
@@ -556,6 +662,14 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return data;
 	}
 
+	/**
+	 * Reads data while the stream is *ready()*.
+	 * 
+	 * @return A std::string containing the characters read while the stream was *ready()*.
+	 * 
+	 * **NOTE:** This method can take a long time to execute. If you know the desired size and/or a delimiter, the other methods may be more fitting. 
+	 * This method may take some time for the receiver to retreive the whole message due to the inability to flush streams when using sockets.
+	 */
 	std::string Socket::receiveAll(const unsigned long timeout) const
 	{
 		std::string result = "";
@@ -583,10 +697,20 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		return std::move(result);
 	}
 
-#ifdef _WIN32
-
+	/**
+	 * **In progress**
+	 * 
+	 * Scans for bluetooth devices and returns a std::vector&lt;std::pair&lt;std::string, std::string>> of the device names and addresses.
+	 * 
+	 * @param duration - The duration for which the scan should take to discover nearby bluetooth devices.
+	 * 
+	 * @return A std::vector&lt;std::pair&lt;std::string, std::string>> where .first is the devices address, and .second is the device name.
+	 */
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
+
+#ifdef _WIN32
+	
  		WSADATA wsaData;
         int res = WSAStartup(MAKEWORD(2,2), &wsaData);
         if(res != 0)
@@ -625,12 +749,9 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 
 			// std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
 		}*/
-	}
 
 #elif __linux__
 
-	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
-	{
 		std::vector<std::pair<std::string, std::string> > devices;
 		std::pair<std::string, std::string> tempPair;
 
@@ -674,14 +795,16 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 	    ::close( tempSocket );
 
 		return std::move(devices);
-	}
 
 #endif
 
-#ifdef _WIN32
+}
 
 	std::string Socket::getLocalMACAddress()
 	{
+
+#ifdef _WIN32
+
 		// Up to 20 Interfaces
 		IP_ADAPTER_INFO AdapterInfo[20];
 		DWORD dwBufLen = sizeof(AdapterInfo);
@@ -708,12 +831,9 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		}
 
 		return ss.str();
-	}
 
 #elif __linux__
 
-	std::string Socket::getLocalMACAddress()
-	{
 		int id;
 		bdaddr_t btaddr;
 		char localMACAddress[18];
@@ -737,8 +857,9 @@ Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt:
 		}
 		
 		return std::string(localMACAddress);
-	}
 
 #endif
+	}
+
 
 } // End namespace kt

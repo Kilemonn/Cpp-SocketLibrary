@@ -37,7 +37,8 @@ namespace kt
 	{
 		private:
 			unsigned int port;
-			kt::SocketType type;
+			kt::SocketType type = SocketType::None;
+			int socketDescriptor = 0;
 
 #ifdef _WIN32
 
@@ -45,11 +46,9 @@ namespace kt
 			struct addrinfo *serverAddress;
 	        struct addrinfo hints;
 	        SOCKADDR_BTH bluetoothAddress;
-			SOCKET socketDescriptor;
 
 #elif __linux__
 
-			int socketDescriptor;
 			struct sockaddr_in serverAddress;
 	    	socklen_t socketSize;
 

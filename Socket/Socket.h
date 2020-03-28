@@ -44,22 +44,21 @@ namespace kt
 			std::string hostname;
 			unsigned int port;
 			kt::SocketProtocol protocol = kt::SocketProtocol::None;
-			kt::SocketType type;
+			kt::SocketType type = SocketType::None;
 			bool bound = false;
 			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
+			int socketDescriptor = 0;
 
 #ifdef _WIN32
 
 			// Wifi Properties
 			struct addrinfo* serverAddress;
 	        struct addrinfo hints;
-	    	SOCKET socketDescriptor;
 
 	    	SOCKADDR_BTH bluetoothAddress;
 
 #elif __linux__
-
-			int socketDescriptor;
+			
 			struct sockaddr_in serverAddress; // For Wifi
 			struct sockaddr_rc bluetoothAddress; // For Bluetooth
 
@@ -75,16 +74,7 @@ namespace kt
 		public:
 			Socket();
 			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
-
-#ifdef _WIN32
-
-			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
-
-#elif __linux__
-
 			Socket(const int&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
-
-#endif
 
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);

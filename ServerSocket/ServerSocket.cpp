@@ -42,20 +42,31 @@
 
 namespace kt
 {
+
+    /**
+     * Default constructor. Should be provided by the compiler, but there has been some scenarios where this is required. 
+     */
     ServerSocket::ServerSocket()
     {
-        this->type = SocketType::None;
-        this->socketDescriptor = 0;
+        // Nothing to do, defaults set in header file
     }
 
+    /**
+     * ServerSocket constructor. Creates a wifi/bluetooth ServerSocket and begins listening for connections.
+     *
+     * @param type - Determines whether this ServerSocket is a wifi or bluetooth ServerSocket.
+     * @param port - The port number for this server to communicate through. If value is not passed in a random, available port number will be assigned.
+     * @param connectionBacklogSize - You can enter a value here to specify the length of the server connection pool. The default value is 20.
+     * 
+     * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
+     * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
+     */
     ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize)
     {
         this->port = port;
         this->type = type;
 
  #ifdef _WIN32
-
-        this->socketDescriptor = INVALID_SOCKET;
 
         WSADATA wsaData;
         int res = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -77,6 +88,11 @@ namespace kt
         }
     }
 
+    /**
+     * ServerSocket copy constructor.
+     * 
+     * @param socket - The ServerSocket object to be copied.
+     */
     ServerSocket::ServerSocket(const ServerSocket& socket)
     {
         this->port = socket.port;
@@ -91,6 +107,13 @@ namespace kt
 #endif
     }
 
+    /**
+     * Overloaded assignment operator for the ServerSocket class.
+     * 
+     * @param socket - The ServerSocket object to be copied.
+     * 
+     * @return the copied socket
+     */
     ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
     {
         this->port = socket.port;
@@ -350,16 +373,31 @@ namespace kt
 
 #endif
 
+    /**
+     * @return the *kt::SocketType* for this *kt::Socket*.
+     */
     kt::SocketType ServerSocket::getType() const
     {
         return this->type;
     }
 
+    /**
+     * Used to get the port number that the ServerSocket is listening on.
+     * @return An unsigned int of the port number that the ServerSocket is listening on.
+     */
     unsigned int ServerSocket::getPort() const
     {
         return this->port;
     }
 
+    /**
+     * Used to accept a connection on the specific port. 
+     * Upon accepting a new connection it will return a Socket object used to communicate with the receiver.
+     * 
+     * @param timeout - indicates how long the socket should be polled for before assuming there is no response. Default is 0 (unlimited).
+     * 
+     * @returns kt::Socket object of the receiver who has just connected to the kt::ServerSocket.
+     */
     Socket ServerSocket::accept(const unsigned int& timeout)
     {
         if (timeout != 0)
@@ -425,6 +463,11 @@ namespace kt
         return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portnum);
     }
 
+    /**
+     * Closes the existing connection. If no connection is open, then it will do nothing.
+     * 
+     * NOTE: This should be called before the server goes out of scope
+     */
     void ServerSocket::close()
     {
         #ifdef _WIN32
