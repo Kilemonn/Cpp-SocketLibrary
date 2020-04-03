@@ -358,7 +358,7 @@ namespace kt
 
     void ServerSocket::setDiscoverable()
     {
-        throw SocketException(__func__ + " not implemented.");
+        throw SocketException("ServerSocket::setDiscoverable() not implemented.");
 
         hci_dev_req req;
         req.dev_id = 0;
