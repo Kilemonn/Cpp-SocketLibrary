@@ -16,7 +16,7 @@
  * @return true if an exception was thrown and was of type T, otherwise false.
  */
 template <typename T>
-bool throwsException(const std::function<void()> function)
+bool throwsException(const std::function<void()> function, bool logException = false)
 {
     try
     {
@@ -24,7 +24,10 @@ bool throwsException(const std::function<void()> function)
     }
     catch (T ex)
     {
-        std::cout << ex.what() << std::endl;
+        if (logException)
+        {
+            std::cout << ex.what() << std::endl;
+        }
         return true;
     }
     catch (...)
