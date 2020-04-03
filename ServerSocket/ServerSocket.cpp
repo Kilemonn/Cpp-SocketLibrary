@@ -358,7 +358,7 @@ namespace kt
 
     void ServerSocket::setDiscoverable()
     {
-        throw SocketException("Still in progress.");
+        throw SocketException(__func__ + " not implemented.");
 
         hci_dev_req req;
         req.dev_id = 0;

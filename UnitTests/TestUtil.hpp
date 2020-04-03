@@ -24,6 +24,7 @@ bool throwsException(const std::function<void()> function)
     }
     catch (T ex)
     {
+        std::cout << ex.what() << std::endl;
         return true;
     }
     catch (...)
