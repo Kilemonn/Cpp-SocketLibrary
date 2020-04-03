@@ -149,8 +149,8 @@ void testWifiSocketMethods()
 {
     preFunctionTest(__func__);
 
-    kt::ServerSocket server(kt::SocketType::Wifi, PORT_NUMBER);
-    kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+    kt::ServerSocket server(kt::SocketType::Wifi);
+    kt::Socket client(LOCALHOST, server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
     kt::Socket serverSocket = server.accept();
 
