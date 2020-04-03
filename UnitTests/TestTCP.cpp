@@ -101,24 +101,19 @@ void testWifiServerSocketConstructors()
         kt::ServerSocket server2(kt::SocketType::Wifi, PORT_NUMBER);
     }));
 
-    // Ensure Close method works as expected
-    server.close();
-    // By closing the initial server the second server should be constructed successfully
-    kt::ServerSocket server2(kt::SocketType::Wifi, PORT_NUMBER);
-
     // Check copy constructor by making sure a client can connect and send a message successfully
-    kt::ServerSocket server3(server2);
+    kt::ServerSocket server2(server);
 
     kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
-    kt::Socket serverSocket = server3.accept();
+    kt::Socket serverSocket = server2.accept();
     const std::string testString = "I'm Too Hot!";
 
     assert(client.send(testString));
     const std::string responseString = serverSocket.receiveAmount(testString.size());
     assert(responseString == testString);
 
-    server3.close();
+    server2.close();
     serverSocket.close();
     client.close();
 
@@ -133,6 +128,7 @@ void testWifiServerSocketConstructors()
         actualServer.accept();
     }));
 
+    // Should fail as all server sockets are closed
     assert(throwsException<kt::SocketException>([] 
     {
         kt::Socket client = kt::Socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
