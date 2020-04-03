@@ -102,7 +102,7 @@ void testWifiServerSocketConstructors()
     kt::ServerSocket server(kt::SocketType::Wifi);
 
     // Ensure a binding exception is thrown if another process, (in this case another server) is using the port
-    assert(throwsException<kt::BindingException>([] 
+    assert(throwsException<kt::BindingException>([&server] 
     {
         kt::ServerSocket server2(kt::SocketType::Wifi, server.getPort());
     }));
