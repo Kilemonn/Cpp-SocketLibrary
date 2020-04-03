@@ -773,7 +773,7 @@ namespace kt
 	    numberOfResponses = hci_inquiry(ownId, duration, maxResponse, nullptr, &ii, flags);
 	    if( numberOfResponses < 0 )
 	    {
-	    	delete ii;
+	    	delete []ii;
 	    	throw SocketException("Error scanning for bluetooth devices");
 	    }
 
@@ -791,7 +791,7 @@ namespace kt
 
 	    }
 
-	    delete ii;
+	    delete []ii;
 	    ::close( tempSocket );
 
 		return std::move(devices);

@@ -44,8 +44,20 @@ void testGetLocalMacAddress()
 	assert(address != "");
 }
 
+void testScan()
+{
+	preFunctionTest(__func__);
+
+	std::vector<std::pair<std::string, std::string> > devices = kt::Socket::scanDevices();
+	for (std::pair<std::string, std::string> p : devices)
+	{
+		std::cout << p.first << " - " << p.second << std::endl;
+	}
+}
+
 int main()
 {
 	testFunction(testGetLocalMacAddress);
+	testFunction(testScan);
 	testFunction(testBluetooth);
 }
