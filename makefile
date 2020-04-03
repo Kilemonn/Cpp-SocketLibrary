@@ -2,13 +2,16 @@ CC = g++
 PREFLAGS = -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -L/usr/lib/x86_64-linux-gnu -lglib-2.0 -L/usr/lib/x86_64-linux-gnu -lgio-2.0
 POSTFLAGS = -lbluetooth -Wall -std=c++11 -pthread
 
-all:	TestTCP TestUDP
+all:	TestTCP TestUDP TestBluetooth
 
 TestTCP:	Socket.o Socket/Socket.h ServerSocket.o ServerSocket/ServerSocket.h
 	$(CC) $(PREFLAGS) ServerSocket.o Socket.o UnitTests/TestTCP.cpp -o TestTCP $(POSTFLAGS)
 
 TestUDP:	Socket.o Socket/Socket.h ServerSocket.o ServerSocket/ServerSocket.h
 	$(CC) $(PREFLAGS) ServerSocket.o Socket.o UnitTests/TestUDP.cpp -o TestUDP $(POSTFLAGS)
+
+TestBluetooth:	Socket.o Socket/Socket.h ServerSocket.o ServerSocket/ServerSocket.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o UnitTests/TestBluetooth.cpp -o TestBluetooth $(POSTFLAGS)
 
 Socket.o:	Socket/Socket.cpp Socket/Socket.h
 	$(CC) $(PREFLAGS) -c Socket/Socket.cpp $(POSTFLAGS)
@@ -19,4 +22,4 @@ ServerSocket.o:	ServerSocket/ServerSocket.cpp ServerSocket/ServerSocket.h
 clean:
 	rm *.o
 
-rebuild: clean TestTCP TestUDP
+rebuild: clean TestTCP TestUDP TestBluetooth

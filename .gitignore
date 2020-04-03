@@ -1,6 +1,7 @@
 #Test File:
 TestTCP
 TestUDP
+TestBluetooth
 
 # Prerequisites
 *.d
