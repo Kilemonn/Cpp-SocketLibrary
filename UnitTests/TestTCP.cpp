@@ -42,7 +42,7 @@ void testWifiSocketConstructors()
         kt::Socket socket("", PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
     }));
 
-    // Test that creating a socket will fail to be created if the server is not listening
+    // Test that creating a socket will fail to be created if there is no server listening
     assert(throwsException<kt::SocketException>([] 
     {
         kt::Socket socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
@@ -80,6 +80,12 @@ void testWifiSocketConstructors()
     copiedSocket.close();
     socket.close();
     server.close();
+
+    // Should fail as all server sockets are closed
+    assert(throwsException<kt::SocketException>([] 
+    {
+        kt::Socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+    }));
 }
 
 /**
@@ -120,19 +126,12 @@ void testWifiServerSocketConstructors()
 
     // Test closing the socket of two copied servers will result in a client being unable to connect
     // meaning, "both" server sockets have been closed, make sure a copied server object cannot accept
-    kt::ServerSocket initalServer(kt::SocketType::Wifi, PORT_NUMBER);
-
+    kt::ServerSocket initalServer(kt::SocketType::Wifi, 12346);
     assert(throwsException<kt::SocketException>([&initalServer] 
     {
         kt::ServerSocket actualServer = initalServer;
         initalServer.close();
         actualServer.accept();
-    }));
-
-    // Should fail as all server sockets are closed
-    assert(throwsException<kt::SocketException>([] 
-    {
-        kt::Socket client = kt::Socket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
     }));
 }
 
