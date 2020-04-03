@@ -19,8 +19,10 @@
 
 void testBluetooth()
 {
+	preFunctionTest(__func__);
+
 	kt::ServerSocket server(kt::SocketType::Bluetooth);
-	kt::Socket socket(bluetoothLocalAddress, server.getPort(), kt::SocketType::Bluetooth);
+	kt::Socket socket(kt::Socket::getLocalMACAddress(), server.getPort(), kt::SocketType::Bluetooth);
 
 	kt::Socket client = server.accept();
 	const std::string toSend = "TestBluetooth";
@@ -36,12 +38,14 @@ void testBluetooth()
 
 void testGetLocalMacAddress()
 {
+	preFunctionTest(__func__);
+	
 	std::string address = kt::Socket::getLocalMACAddress();
 	assert(address != "");
 }
 
 int main()
 {
-	testFunction(testGetLocalMacAddress());
-	testFunction(testBluetooth());
+	testFunction(testGetLocalMacAddress);
+	testFunction(testBluetooth);
 }
