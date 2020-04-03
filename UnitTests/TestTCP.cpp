@@ -113,9 +113,10 @@ void testWifiServerSocketConstructors()
     const std::string responseString = serverSocket.receiveAmount(testString.size());
     assert(responseString == testString);
 
-    server2.close();
     serverSocket.close();
     client.close();
+    server2.close();
+    server.close();
 
     // Test closing the socket of two copied servers will result in a client being unable to connect
     // meaning, "both" server sockets have been closed, make sure a copied server object cannot accept
