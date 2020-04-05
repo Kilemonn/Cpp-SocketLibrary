@@ -443,12 +443,6 @@ namespace kt
 	 */
 	bool Socket::connected(const unsigned long timeout) const
 	{
-		// UDP is connectionless
-		if (this->protocol == kt::SocketProtocol::UDP)
-		{
-			return false;
-		}
-
 		int result = this->pollSocket(timeout);
 
 		// -1 indicates that the connection is not available
