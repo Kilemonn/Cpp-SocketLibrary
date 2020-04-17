@@ -186,7 +186,7 @@ namespace kt
 
 		this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
-		if (this->socketDescriptor == INVALID_SOCKET)
+		if (this->socketDescriptor == 0)
 		{
 			throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 		}
@@ -195,7 +195,7 @@ namespace kt
 	    this->bluetoothAddress.btAddr = std::stoull(this->hostname);
 	    this->bluetoothAddress.port = this->port;
 
-	    if (connect(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == SOCKET_ERROR)
+	    if (connect(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == -1)
 	    {
 	    	throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 	    }
@@ -242,12 +242,12 @@ namespace kt
 			}
 
 			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
-			if (this->socketDescriptor == INVALID_SOCKET) 
+			if (this->socketDescriptor == 0) 
 			{
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
 
-			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR)
+			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == -1)
 			{
 				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
 			}
@@ -255,7 +255,7 @@ namespace kt
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
-			if (this->socketDescriptor == INVALID_SOCKET) 
+			if (this->socketDescriptor == 0) 
 			{
 				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
 			}
@@ -273,7 +273,7 @@ namespace kt
 			// 	throw SocketException("Unable to retrieving host address to self (localhost/127.0.0.1): " + std::string(std::strerror(errno)));
 			// }
 
-			// if (bind(this->socketDescriptor, localAddress->ai_addr, (int)localAddress->ai_addrlen) == SOCKET_ERROR)
+			// if (bind(this->socketDescriptor, localAddress->ai_addr, (int)localAddress->ai_addrlen) == -1)
 			// {
 			// 	throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
 			// }
@@ -626,22 +626,20 @@ namespace kt
 			do
 			{
 				character = this->get();
-				data += character;
+				if (character != delimiter)
+				{
+					data += character;
+				}
 			} while (character != delimiter && this->ready());
 
-			size_t subStringLength = data.size() - 1;
-			if (character != delimiter)
-			{
-				subStringLength = data.size();
-			}
-
-			return std::move(data.substr(0, subStringLength));
+			return std::move(data);
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			char temp[this->MAX_BUFFER_SIZE + 1];
 			memset(&temp, 0, sizeof(temp));
 			socklen_t addressLength = sizeof(this->clientAddress);
+			
 			flag = recvfrom(this->socketDescriptor, temp, this->MAX_BUFFER_SIZE, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 
 			if (flag < 1)
@@ -650,12 +648,10 @@ namespace kt
 			}
 
 			data += std::string(temp);
-			for (unsigned int i = 0; i < MAX_BUFFER_SIZE + 1; i++)
+			size_t delimiterIndex = data.find_first_of(delimiter);
+			if (delimiterIndex != std::string::npos)
 			{
-				if (delimiter == temp[i])
-				{
-					return data.substr(0, i);
-				}
+				return std::move(data.substr(0, delimiterIndex));
 			}
 		}
 
@@ -733,7 +729,7 @@ namespace kt
 
 		int res = WSALookupServiceBegin(&wsaQuery, LUP_CONTAINERS, &hLoopUp);
 
-		if (res == SOCKET_ERROR)
+		if (res == -1)
 		{
 			throw SocketException("Unable to search for devices. Could not begin search.");
 		}

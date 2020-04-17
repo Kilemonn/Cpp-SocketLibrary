@@ -151,7 +151,7 @@ namespace kt
 
         this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
-        if (this->socketDescriptor == INVALID_SOCKET)
+        if (this->socketDescriptor == 0)
         {
             throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
         }
@@ -160,12 +160,12 @@ namespace kt
         this->bluetoothAddress.btAddr = 0;
         this->bluetoothAddress.port = this->port;
 
-        if (bind(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH) ) == SOCKET_ERROR) 
+        if (bind(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH) ) == -1) 
         {
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
         }
 
-        if (listen(this->socketDescriptor, connectionBacklogSize) == SOCKET_ERROR) 
+        if (listen(this->socketDescriptor, connectionBacklogSize) == -1) 
         {
             this->close();
             throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -188,7 +188,7 @@ namespace kt
 
         std::cout << "HERE..." << std::endl;
 
-        if (WSASetService(&wsaQuerySet, RNRSERVICE_REGISTER, 0) == SOCKET_ERROR) 
+        if (WSASetService(&wsaQuerySet, RNRSERVICE_REGISTER, 0) == -1) 
         {
         	std::cout << "RIP..." << std::endl;
             throw SocketException("Unable to make bluetooth server discoverable: " + std::to_string(WSAGetLastError()));
@@ -201,7 +201,6 @@ namespace kt
     void ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
     {
         struct sockaddr_rc localAddress = {0};
-        bdaddr_t tmp = ((bdaddr_t) {{0, 0, 0, 0, 0, 0}});
         this->socketSize = sizeof(localAddress);
 
         this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
@@ -212,7 +211,7 @@ namespace kt
         }
 
         localAddress.rc_family = AF_BLUETOOTH;
-        localAddress.rc_bdaddr = tmp;
+        localAddress.rc_bdaddr = ((bdaddr_t) {{0, 0, 0, 0, 0, 0}});
         localAddress.rc_channel = static_cast<uint8_t>(port);
         
         if (bind(this->socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
@@ -247,17 +246,17 @@ namespace kt
         }
 
         this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
-        if (this->socketDescriptor == INVALID_SOCKET) 
+        if (this->socketDescriptor == 0)
         {
              throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
         }
 
-        if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == SOCKET_ERROR) 
+        if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == -1) 
         {
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if(listen(this->socketDescriptor, connectionBacklogSize) == SOCKET_ERROR)
+        if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -424,7 +423,7 @@ namespace kt
 
 #ifdef _WIN32
 
-        SOCKET temp = ::accept(this->socketDescriptor, nullptr, nullptr);
+        int temp = ::accept(this->socketDescriptor, nullptr, nullptr);
 
 #elif __linux__
 
