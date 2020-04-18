@@ -66,6 +66,11 @@ namespace kt
         this->port = port;
         this->type = type;
 
+        if (this->type == kt::SocketType::None)
+        {
+            throw SocketException("Failed to create ServerSocket with 'None' SocketType.");
+        }
+
  #ifdef _WIN32
 
         WSADATA wsaData;
@@ -136,7 +141,7 @@ namespace kt
         {
             this->constructWifiSocket(connectionBacklogSize);
         }
-        else
+        else if (this->type == kt::SocketType::Bluetooth)
         {
             this->constructBluetoothSocket(connectionBacklogSize);
             this->setDiscoverable();
@@ -293,36 +298,53 @@ namespace kt
 
 #endif
 
+    /**
+     * 
+     * 
+     * 
+     */
     void ServerSocket::randomlyAllocatePort(const unsigned int &connectionBacklogSize)
     {
-        bool done = false;
         std::random_device rd;
-        std::mt19937 gen(rd());
-        // Random port number inside the 'dynamic' port range (49152 - 65535)
-        std::uniform_int_distribution<> wifiRand(49152, 65535);
+        // Random wifi port range inside the 'dynamic' port range (49152 - 65535)
+        const unsigned int WIFI_LOWER_BOUND = 49152;
+        const unsigned int WIFI_UPPER_BOUND = 65535;
         // Random bluetooth ports from 1-30
-        std::uniform_int_distribution<> btRand(1, 30);
+        const unsigned int BLUETOOTH_LOWER_BOUND = 1;
+        const unsigned int BLUETOOTH_UPPER_BOUND = 30;
+        
+        unsigned int upperBound = 0;
+        unsigned int lowerBound = 0;
 
-        while (!done)
+        if (this->type == kt::SocketType::Wifi)
+        {
+            lowerBound = WIFI_LOWER_BOUND;
+            upperBound = WIFI_UPPER_BOUND;
+        }
+        else if (this->type == kt::SocketType::Bluetooth)
+        {
+            lowerBound = BLUETOOTH_LOWER_BOUND;
+            upperBound = BLUETOOTH_UPPER_BOUND;
+        }
+        
+        std::uniform_int_distribution<> randDist(lowerBound, upperBound);
+
+        // Only try to allocate the port 50 times, if it still fails then throw
+        for (unsigned int i = 0; i < 50; i++)
         {
             try
             {
-                if (this->type == kt::SocketType::Wifi)
-                {
-                    this->port = wifiRand(gen);
-                }
-                else
-                {
-                    this->port = btRand(gen);
-                }
+                this->port = randDist(rd);
                 this->constructSocket(connectionBacklogSize);
-                done = true;
+                return;
             }
             catch (BindingException be)
             {
                 // Nothing to do
             }
         }
+
+        throw BindingException("Failed to randomly allocate port for ServerSocket after 50 attempts.");
     }
 
 #ifdef _WIN32

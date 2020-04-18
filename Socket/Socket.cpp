@@ -106,10 +106,15 @@ namespace kt
 	    {
 			this->constructWifiSocket();
 	    }
-	    else
+	    else if (type == kt::SocketType::Bluetooth)
 	    {
 			this->constructBluetoothSocket();
 	    }
+		else
+		{
+			// kt::SocketType::None
+			throw SocketException("Unable to build Socket with 'None' as its SocketType");
+		}
 	}
 
 	/**
