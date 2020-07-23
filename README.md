@@ -48,7 +48,7 @@ kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::
 const std::string testString = "UDP Test";
 const char delimiter = '~';
 client.send(testString + delimiter);
-const std::string response = server.receiveToDelimiter(delimiter);
+const std::string response = serverSocket.receiveToDelimiter(delimiter);
 assert(response == testString);
 
 serverSocket.close();
