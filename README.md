@@ -8,14 +8,7 @@ A ServerSocket and Socket library used to support both Wifi and Bluetooth commun
 
 - Run make
 
-### Windows - WARNING: Windows support is very limitted and still a work in progress.
-
-- Manual compilation
-- Required libraries:
-  - windows.h
-  - winsock2.h
-  - ws2tcpip.h
-  - iphlpapi.h
+### NOTE: Windows support is still a work in progress.
 
 ## Usage Examples
 
@@ -80,6 +73,6 @@ signal(SIGPIPE, SIG_IGN);
 
 ```
 
-### UDP Read Sizes
+### NOTE: UDP Read Sizes
 
 - Take care when reading UDP messages. If you do not read the entire length of the message the rest of the data will be lost. Try using receiveAll()/recieveToDelimiter()/receiveAmount() instead of get(), unless you know the amount of data that you are expecting.
