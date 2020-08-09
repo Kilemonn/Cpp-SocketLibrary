@@ -35,3 +35,6 @@ TestBluetooth
 *.exe
 *.out
 *.app
+
+# vsCode
+.vscode/
