@@ -22,4 +22,26 @@ ServerSocket.o:	src/ServerSocket/ServerSocket.cpp src/ServerSocket/ServerSocket.
 clean:
 	rm *.o
 
-rebuild: clean TestTCP TestUDP TestBluetooth
+check: CheckTestTCP CheckTestUDP CheckTestBluetooth
+
+CheckTestTCP:	TestTCP
+	./TestTCP
+
+CheckTestUDP:	TestUDP
+	./TestUDP
+
+CheckTestBluetooth:	TestBluetooth
+	./TestBluetooth
+
+memcheck: MemCheckTestTCP MemCheckTestUDP MemCheckTestBluetooth
+
+MemCheckTestTCP:	TestTCP
+	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all -v ./TestTCP
+
+MemCheckTestUDP:	TestUDP
+	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all -v ./TestUDP
+
+MemCheckTestBluetooth:	TestBluetooth
+	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all -v ./TestBluetooth
+
+rebuild: clean all

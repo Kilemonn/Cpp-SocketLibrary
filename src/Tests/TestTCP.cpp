@@ -99,7 +99,8 @@ void testWifiServerSocketConstructors()
 {
     preFunctionTest(__func__);
 
-    kt::ServerSocket server(kt::SocketType::Wifi);
+    const unsigned int PORT = 87682;
+    kt::ServerSocket server(kt::SocketType::Wifi, PORT);
 
     // Ensure a binding exception is thrown if another process, (in this case another server) is using the port
     assert(throwsException<kt::BindingException>([&server] 
@@ -126,7 +127,8 @@ void testWifiServerSocketConstructors()
 
     // Test closing the socket of two copied servers will result in a client being unable to connect
     // meaning, "both" server sockets have been closed, make sure a copied server object cannot accept
-    kt::ServerSocket initalServer(kt::SocketType::Wifi);
+    const unsigned int PORT_3 = 97654;
+    kt::ServerSocket initalServer(kt::SocketType::Wifi, PORT_3);
     assert(throwsException<kt::SocketException>([&initalServer] 
     {
         kt::ServerSocket actualServer = initalServer;
@@ -149,7 +151,8 @@ void testWifiSocketMethods()
 {
     preFunctionTest(__func__);
 
-    kt::ServerSocket server(kt::SocketType::Wifi);
+    const unsigned int PORT = 75634;
+    kt::ServerSocket server(kt::SocketType::Wifi, PORT);
     kt::Socket client(LOCALHOST, server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
     kt::Socket serverSocket = server.accept();
