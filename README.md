@@ -1,14 +1,12 @@
 # Cpp-SocketLibrary
 
-A ServerSocket and Socket library used to support both Wifi and Bluetooth communication.
+A ServerSocket and Socket library for Linux aiming to support both Wifi and Bluetooth communication.
 
-## Set up
+## Get Started
 
-### Linux
-
-- Run make
-
-### NOTE: Windows support is still a work in progress.
+1. **Optional Step** If you want to run this in the provided Docker container, ensure that Docker is installed and running then execute `docker build .`. Once this is done launch the image and connect to the container.
+2. Once in the docker container, or locally and in the base directory of the repo, run `make` and link the generated object files and headers accordingly.
+3. Some general tests can be run using `make check`. **Bluetooth test currently still in progress since I am unable to be the host and client from the same machine**
 
 ## Usage Examples
 

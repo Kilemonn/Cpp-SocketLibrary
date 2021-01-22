@@ -7,29 +7,10 @@
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
 
-#ifdef _WIN32
-
-#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
-#endif
-
-#define _WIN32_WINNT 0x501
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <windows.h>
-#include <guiddef.h>
-#include <ws2bth.h>
-
-#elif __linux__
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
-#endif
 
 namespace kt
 {
@@ -39,20 +20,8 @@ namespace kt
 			unsigned int port;
 			kt::SocketType type = SocketType::None;
 			int socketDescriptor = 0;
-
-#ifdef _WIN32
-
-			// Wifi properties
-			struct addrinfo *serverAddress;
-	        struct addrinfo hints;
-	        SOCKADDR_BTH bluetoothAddress;
-
-#elif __linux__
-
 			struct sockaddr_in serverAddress;
 	    	socklen_t socketSize;
-
-#endif
 
 			void setDiscoverable();
 			void constructSocket(const unsigned int&);

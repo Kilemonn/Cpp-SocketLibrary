@@ -13,23 +13,6 @@
 #include <cerrno>
 #include <cstring>
 
-#ifdef _WIN32
-
-#ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
-#endif
-
-#define _WIN32_WINNT 0x501
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <windows.h>
-#include <guiddef.h>
-#include <ws2bth.h>
-
-#elif __linux__
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -37,8 +20,6 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 #include <unistd.h>
-
-#endif
 
 namespace kt
 {
@@ -62,17 +43,6 @@ namespace kt
             throw SocketException("Failed to create ServerSocket with 'None' SocketType.");
         }
 
- #ifdef _WIN32
-
-        WSADATA wsaData;
-        int res = WSAStartup(MAKEWORD(2,2), &wsaData);
-        if(res != 0)
-        {
-            throw SocketException("WSAStartup Failed: " + std::to_string(res));
-        }
-
-#endif
-
         // Randomly allocate port and construct socket
         if (this->port == 0)
         {
@@ -95,12 +65,7 @@ namespace kt
         this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
-
-#ifdef __linux__
-
         this->socketSize = socket.socketSize;
-
-#endif
     }
 
     /**
@@ -116,12 +81,7 @@ namespace kt
         this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
-
-#ifdef __linux__
-
         this->socketSize = socket.socketSize;
-
-#endif
 
         return *this;
     }
@@ -138,61 +98,6 @@ namespace kt
             this->setDiscoverable();
         }
     }
-
-#ifdef _WIN32
-
-    void ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
-    {
-        SOCKADDR_BTH bluetoothAddress;
-
-        this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
-
-        if (this->socketDescriptor == 0)
-        {
-            throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
-        }
-
-        this->bluetoothAddress.addressFamily = AF_BTH;
-        this->bluetoothAddress.btAddr = 0;
-        this->bluetoothAddress.port = this->port;
-
-        if (bind(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH) ) == -1) 
-        {
-            throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
-        }
-
-        if (listen(this->socketDescriptor, static_cast<int>(connectionBacklogSize)) == -1)
-        {
-            this->close();
-            throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
-        }
-        // Make discoverable
-
-        /*LPCSADDR_INFO lpCSAddrInfo = nullptr;
-        lpCSAddrInfo[0].LocalAddr.iSockaddrLength = sizeof(SOCKADDR_BTH);
-        lpCSAddrInfo[0].LocalAddr.lpSockaddr = (LPSOCKADDR) &bluetoothAddress;
-        lpCSAddrInfo[0].RemoteAddr.iSockaddrLength = sizeof(SOCKADDR_BTH);
-        lpCSAddrInfo[0].RemoteAddr.lpSockaddr = (LPSOCKADDR) &bluetoothAddress;
-        lpCSAddrInfo[0].iSocketType = SOCK_STREAM;
-        lpCSAddrInfo[0].iProtocol = BTHPROTO_RFCOMM;*/
-
-        /*WSAQUERYSET wsaQuerySet;
-        memset(&wsaQuerySet, 0, sizeof(WSAQUERYSET));
-        wsaQuerySet.dwSize = sizeof(WSAQUERYSET);
-        wsaQuerySet.dwNameSpace = NS_BTH;
-        wsaQuerySet.lpServiceClassId = nullptr;
-
-        std::cout << "HERE..." << std::endl;
-
-        if (WSASetService(&wsaQuerySet, RNRSERVICE_REGISTER, 0) == -1) 
-        {
-        	std::cout << "RIP..." << std::endl;
-            throw SocketException("Unable to make bluetooth server discoverable: " + std::to_string(WSAGetLastError()));
-        }
-        std::cout << "DONE!" << std::endl;*/
-    }
-
-#elif __linux__
 
     void ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
     {
@@ -224,43 +129,6 @@ namespace kt
         // Make discoverable
     }
 
-#endif
-
-#ifdef _WIN32
-
-    void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
-    {
-        memset(&this->hints, 0, sizeof(this->hints));
-        this->hints.ai_family = AF_INET;
-		this->hints.ai_socktype = SOCK_STREAM;
-		this->hints.ai_protocol = IPPROTO_TCP;
-        this->hints.ai_flags = AI_PASSIVE;
-
-        if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0) 
-        {
-            throw SocketException("Unable to retrieving Wifi serversocket host address. (Self)");
-        }
-
-        this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
-        if (this->socketDescriptor == 0)
-        {
-             throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
-        }
-
-        if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == -1) 
-        {
-            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
-        }
-
-        if(listen(this->socketDescriptor, static_cast<int>(connectionBacklogSize)) == -1)
-        {
-            this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
-        }
-    }
-
-#elif __linux__
-
     void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
         this->socketSize = sizeof(serverAddress);
@@ -286,8 +154,6 @@ namespace kt
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
     }
-
-#endif
 
     /**
      * 
@@ -338,36 +204,6 @@ namespace kt
         throw BindingException("Failed to randomly allocate port for ServerSocket after 50 attempts.");
     }
 
-#ifdef _WIN32
-
-    void ServerSocket::setDiscoverable()
-    {
-        throw SocketException("Not yet implemented on Windows.");
-        std::cout << "SETTING DISCOVERABLE" << std::endl;
-        CSADDR_INFO address[1];
-
-        memset(&address, 0, sizeof(address));
-        address[0].LocalAddr.iSockaddrLength = sizeof(socketDescriptor);
-        address[0].LocalAddr.lpSockaddr = (struct sockaddr*) &socketDescriptor;
-        address[0].iSocketType = SOCK_STREAM;
-        address[0].iProtocol = BTHPROTO_RFCOMM;
-
-        WSAQUERYSET wsaQuery;
-        memset(&wsaQuery, 0, sizeof(WSAQUERYSET));
-        wsaQuery.dwSize = sizeof(WSAQUERYSET);
-        wsaQuery.dwNameSpace = NS_BTH;
-        wsaQuery.dwNumberOfCsAddrs = 1;
-        wsaQuery.lpcsaBuffer = address;
-
-        if (WSASetService(&wsaQuery, RNRSERVICE_REGISTER, 0) != 0)
-        {
-            throw SocketException("Failed to make device discoverable. " + std::to_string(WSAGetLastError()));
-        }
-        std::cout << "SETTING DISCOVERABLE" << std::endl;
-    }
-
-#elif __linux__
-
     void ServerSocket::setDiscoverable()
     {
         throw SocketException("ServerSocket::setDiscoverable() not implemented.");
@@ -382,8 +218,6 @@ namespace kt
             throw SocketException("Failed to make device discoverable.");            
         }
     }
-
-#endif
 
     /**
      * @return the *kt::SocketType* for this *kt::Socket*.
@@ -434,12 +268,6 @@ namespace kt
             }
         }
 
-#ifdef _WIN32
-
-        int temp = ::accept(this->socketDescriptor, nullptr, nullptr);
-
-#elif __linux__
-
         struct sockaddr_rc remoteDevice = {0};
         int temp = ::accept(this->socketDescriptor, (struct sockaddr *) &remoteDevice, &this->socketSize);
 
@@ -455,8 +283,6 @@ namespace kt
 
 	        std::cout << "Accepted connection from " << remoteAddress << std::endl;
         }
-
-#endif 
 
         struct sockaddr_in address;
 		socklen_t addr_size = sizeof(struct sockaddr_in);
@@ -482,16 +308,7 @@ namespace kt
      */
     void ServerSocket::close()
     {
-        #ifdef _WIN32
-
-        freeaddrinfo(this->serverAddress);
-        closesocket(this->socketDescriptor);
-
-        #elif __linux__
-
         ::close(this->socketDescriptor);
-
-        #endif
     }
 
 } // End namespace kt

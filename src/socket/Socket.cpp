@@ -12,23 +12,6 @@
 #include <sstream>
 #include <iomanip>
 
-#ifdef _WIN32
-
-#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
-#endif
-
-#define _WIN32_WINNT 0x501
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <windows.h>
-#include <guiddef.h>
-#include <ws2bth.h>
-
-#elif __linux__
-
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -40,8 +23,6 @@
 #include <netpacket/packet.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#endif
 
 namespace kt
 {
@@ -65,20 +46,7 @@ namespace kt
 		this->serverAddress = { 0 };
 		this->socketDescriptor = 0;
 
-#ifdef _WIN32
-
-		WSADATA wsaData;
-		int res = WSAStartup(MAKEWORD(2,2), &wsaData);
-	    if (res != 0)
-	    {
-	    	throw SocketException("WSAStartup Failed. " + std::to_string(res));
-	    }
-
-#elif __linux__
-
 		this->bluetoothAddress = { 0 };
-
-#endif
 
 		if (this->type == kt::SocketType::Wifi && this->protocol == kt::SocketProtocol::None)
         {
@@ -137,12 +105,7 @@ namespace kt
 		this->type = socket.type;
 
 		this->serverAddress = socket.serverAddress;
-
-#ifdef __linux__
-
 		this->bluetoothAddress = socket.bluetoothAddress;
-
-#endif
 	}
 
 	/**
@@ -161,40 +124,10 @@ namespace kt
 		this->type = socket.type;
 
 		this->serverAddress = socket.serverAddress;
-
-#ifdef __linux__
-
 		this->bluetoothAddress = socket.bluetoothAddress;
-
-#endif
 
 		return *this;
 	}
-
-#ifdef _WIN32
-
-	void Socket::constructBluetoothSocket()
-	{
-		// throw SocketException("Bluetooth sockets are not supported in Windows.");
-
-		this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
-
-		if (this->socketDescriptor == 0)
-		{
-			throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
-		}
-
-		this->bluetoothAddress.addressFamily = AF_BTH;
-	    this->bluetoothAddress.btAddr = std::stoull(this->hostname);
-	    this->bluetoothAddress.port = this->port;
-
-	    if (connect(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == -1)
-	    {
-	    	throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
-	    }
-	}
-
-#elif __linux__
 
 	void Socket::constructBluetoothSocket()
 	{
@@ -214,66 +147,6 @@ namespace kt
 	   		throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 		}
 	}
-#endif
-
-#ifdef _WIN32
-
-	void Socket::constructWifiSocket()
-	{
-		memset(&this->hints, 0, sizeof(this->hints));
-		this->hints.ai_family = AF_INET;
-        int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
-		this->hints.ai_socktype = socketType;
-		int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
-		this->hints.ai_protocol = socketProtocol;
-
-		if (this->protocol == kt::SocketProtocol::TCP)
-		{
-			if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0)
-			{
-				throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
-			}
-
-			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
-			if (this->socketDescriptor == 0) 
-			{
-				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
-			}
-
-			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == -1)
-			{
-				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
-			}
-		}
-		else if (this->protocol == kt::SocketProtocol::UDP)
-		{
-			this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
-			if (this->socketDescriptor == 0) 
-			{
-				throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
-			}
-
-			// struct addrinfo* localAddress;
-			// struct addrinfo localHints;
-			// memset(&localHints, 0, sizeof(localHints));
-			// localHints.ai_family = AF_INET;
-			// localHints.ai_socktype = SOCK_STREAM;
-			// localHints.ai_protocol = IPPROTO_TCP;
-			// localHints.ai_flags = AI_PASSIVE;
-
-			// if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &this->hints, &localAddress) != 0) 
-			// {
-			// 	throw SocketException("Unable to retrieving host address to self (localhost/127.0.0.1): " + std::string(std::strerror(errno)));
-			// }
-
-			// if (bind(this->socketDescriptor, localAddress->ai_addr, (int)localAddress->ai_addrlen) == -1)
-			// {
-			// 	throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
-			// }
-		}
-	}
-
-#elif __linux__
 
 	void Socket::constructWifiSocket()
 	{
@@ -307,25 +180,13 @@ namespace kt
 		}
 	}
 
-#endif
-
 	/**
 	 * Closes the existing connection. If no connection is open, then it will do nothing.
 	 * This method should be called before the object itself is distructed.
 	 */
 	void Socket::close()
 	{
-#ifdef _WIN32
-
-		freeaddrinfo(this->serverAddress);
-		closesocket(this->socketDescriptor);
-
-#elif __linux__
-
 		::close(this->socketDescriptor);
-
-#endif
-
 		this->bound = false;
 	}
 
@@ -697,50 +558,6 @@ namespace kt
 	 */
 	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
 	{
-
-#ifdef _WIN32
-	
- 		WSADATA wsaData;
-        int res = WSAStartup(MAKEWORD(2,2), &wsaData);
-        if(res != 0)
-        {
-            throw SocketException("WSAStartup Failed: " + std::to_string(res));
-        }
-
-		throw SocketException("Not yet implemented on Windows.");
-		
-		/*WSAQUERYSET wsaQuery;
-		HANDLE hLoopUp;
-		LPWSAQUERYSET pQuerySet = nullptr;
-		SOCKADDR_BTH tempAddress;
-		DWORD dwSize = 5000 * sizeof(unsigned char);
-
-		memset(&wsaQuery, 0, sizeof(WSAQUERYSET));
-		wsaQuery.dwSize = sizeof(WSAQUERYSET);
-		wsaQuery.dwNameSpace = NS_BTH;
-		wsaQuery.lpcsaBuffer = nullptr;
-
-		int res = WSALookupServiceBegin(&wsaQuery, LUP_CONTAINERS, &hLoopUp);
-
-		if (res == -1)
-		{
-			throw SocketException("Unable to search for devices. Could not begin search.");
-		}
-		
-		memset(&pQuerySet, 0, sizeof(WSAQUERYSET));
-		pQuerySet->dwSize = sizeof(WSAQUERYSET);
-		pQuerySet->dwNameSpace = NS_BTH;
-		pQuerySet->lpBlob = nullptr;
-
-		while (WSALookupServiceNext(hLoopUp, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, pQuerySet) == 0)
-		{
-			tempAddress = ((SOCKADDR_BTH*) pQuerySet->lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
-
-			// std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
-		}*/
-
-#elif __linux__
-
 		std::vector<std::pair<std::string, std::string> > devices;
 		std::pair<std::string, std::string> tempPair;
 
@@ -783,46 +600,11 @@ namespace kt
 	    delete []ii;
 	    ::close( tempSocket );
 
-		return std::move(devices);
-
-#endif
-
+		return devices;
 }
 
 	std::string Socket::getLocalMACAddress()
 	{
-
-#ifdef _WIN32
-
-		// Up to 20 Interfaces
-		IP_ADAPTER_INFO AdapterInfo[20];
-		DWORD dwBufLen = sizeof(AdapterInfo);
-
-		DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
-		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
-
-		while(std::string(pAdapterInfo->Description).find("Bluetooth") == std::string::npos)
-		{
-			pAdapterInfo = pAdapterInfo->Next;
-		}
-
-		std::stringstream ss;
-
-		for (int i = 0; i < 6; i++)
-		{
-			ss << std::hex << std::setfill('0');
-			ss << std::setw(2) << static_cast<unsigned>(pAdapterInfo->Address[i]);
-
-			if (i != 5)
-			{
-				ss << ":";
-			}
-		}
-
-		return ss.str();
-
-#elif __linux__
-
 		int id;
 		bdaddr_t btaddr;
 		char localMACAddress[18];
@@ -846,8 +628,6 @@ namespace kt
 		}
 		
 		return std::string(localMACAddress);
-
-#endif
 	}
 
 

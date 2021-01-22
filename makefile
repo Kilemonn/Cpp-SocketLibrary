@@ -4,20 +4,20 @@ POSTFLAGS = -lbluetooth -Wall -std=c++11 -pthread
 
 all:	TestTCP TestUDP TestBluetooth
 
-TestTCP:	Socket.o src/Socket/Socket.h ServerSocket.o src/ServerSocket/ServerSocket.h
-	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/Tests/TestTCP.cpp -o TestTCP $(POSTFLAGS)
+TestTCP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestTCP.cpp -o TestTCP $(POSTFLAGS)
 
-TestUDP:	Socket.o src/Socket/Socket.h ServerSocket.o src/ServerSocket/ServerSocket.h
-	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/Tests/TestUDP.cpp -o TestUDP $(POSTFLAGS)
+TestUDP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestUDP.cpp -o TestUDP $(POSTFLAGS)
 
-TestBluetooth:	Socket.o src/Socket/Socket.h ServerSocket.o src/ServerSocket/ServerSocket.h
-	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/Tests/TestBluetooth.cpp -o TestBluetooth $(POSTFLAGS)
+TestBluetooth:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestBluetooth.cpp -o TestBluetooth $(POSTFLAGS)
 
-Socket.o:	src/Socket/Socket.cpp src/Socket/Socket.h
-	$(CC) $(PREFLAGS) -c src/Socket/Socket.cpp $(POSTFLAGS)
+Socket.o:	src/socket/Socket.cpp src/socket/Socket.h
+	$(CC) $(PREFLAGS) -c src/socket/Socket.cpp $(POSTFLAGS)
 
-ServerSocket.o:	src/ServerSocket/ServerSocket.cpp src/ServerSocket/ServerSocket.h
-	$(CC) $(PREFLAGS) -c src/ServerSocket/ServerSocket.cpp $(POSTFLAGS)
+ServerSocket.o:	src/serversocket/ServerSocket.cpp src/serversocket/ServerSocket.h
+	$(CC) $(PREFLAGS) -c src/serversocket/ServerSocket.cpp $(POSTFLAGS)
 
 clean:
 	rm *.o

@@ -10,31 +10,12 @@
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
 
-#ifdef _WIN32
-
-#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
-#endif
-
-#define _WIN32_WINNT 0x501
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <windows.h>
-#include <guiddef.h>
-#include <ws2bth.h>
-
-#elif __linux__
-
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
-
-#endif // _WIN32 / __linux__
 
 namespace kt
 {
@@ -48,22 +29,8 @@ namespace kt
 			bool bound = false;
 			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
 			int socketDescriptor = 0;
-
-#ifdef _WIN32
-
-			// Wifi Properties
-			struct addrinfo* serverAddress;
-	        struct addrinfo hints;
-
-	    	SOCKADDR_BTH bluetoothAddress;
-
-#elif __linux__
-			
 			struct sockaddr_in serverAddress; // For Wifi
 			struct sockaddr_rc bluetoothAddress; // For Bluetooth
-
-#endif // _WIN32 / __linux__
-
 			const unsigned int MAX_BUFFER_SIZE = 10240;
 
 			void constructBluetoothSocket();
