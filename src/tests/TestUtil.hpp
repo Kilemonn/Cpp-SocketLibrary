@@ -16,13 +16,13 @@
  * @return true if an exception was thrown and was of type T, otherwise false.
  */
 template <typename T>
-bool throwsException(const std::function<void()> function, bool logException = false)
+bool throwsException(const std::function<void()>& function, bool logException = false)
 {
     try
     {
         function();
     }
-    catch (T ex)
+    catch (T &ex)
     {
         if (logException)
         {
@@ -42,7 +42,7 @@ bool throwsException(const std::function<void()> function, bool logException = f
  * 
  * @param functionName the function name to be printed
  */
-void preFunctionTest(std::string functionName)
+void preFunctionTest(const std::string& functionName)
 {
     std::cout << "Running... " << functionName << "()... " << std::flush;
 }
@@ -52,7 +52,7 @@ void preFunctionTest(std::string functionName)
  * 
  * @param function the function to call
  */
-void testFunction(std::function<void()> function)
+void testFunction(const std::function<void()>& function)
 {
     function();
     std::cout << "PASS" << std::endl;

@@ -42,15 +42,6 @@
 
 namespace kt
 {
-
-    /**
-     * Default constructor. Should be provided by the compiler, but there has been some scenarios where this is required. 
-     */
-    ServerSocket::ServerSocket()
-    {
-        // Nothing to do, defaults set in header file
-    }
-
     /**
      * ServerSocket constructor. Creates a wifi/bluetooth ServerSocket and begins listening for connections.
      *
@@ -170,7 +161,7 @@ namespace kt
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
         }
 
-        if (listen(this->socketDescriptor, connectionBacklogSize) == -1) 
+        if (listen(this->socketDescriptor, static_cast<int>(connectionBacklogSize)) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -261,7 +252,7 @@ namespace kt
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
         }
 
-        if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
+        if(listen(this->socketDescriptor, static_cast<int>(connectionBacklogSize)) == -1)
         {
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
@@ -338,7 +329,7 @@ namespace kt
                 this->constructSocket(connectionBacklogSize);
                 return;
             }
-            catch (BindingException be)
+            catch (BindingException& be)
             {
                 // Nothing to do
             }
@@ -426,7 +417,7 @@ namespace kt
             fd_set sready;
             struct timeval timeOutVal;
             memset((char *)&timeOutVal, 0, sizeof(timeOutVal));
-            timeOutVal.tv_usec = timeout;
+            timeOutVal.tv_usec = static_cast<int>(timeout);
 
             FD_ZERO(&sready);
             FD_SET((unsigned int)this->socketDescriptor, &sready);
@@ -471,17 +462,17 @@ namespace kt
 		socklen_t addr_size = sizeof(struct sockaddr_in);
 		int res = getpeername(temp, (struct sockaddr *)&address, &addr_size);
 
-        std::string hostname = "";
-        unsigned int portnum = 0;
+        std::string hostname;
+        unsigned int portNum = 0;
 		if (res == 0)
 		{ 
 			char ip[20];
     		strcpy(ip, inet_ntoa(address.sin_addr));
 			hostname = std::string(ip);
-            portnum = htons(address.sin_port);
+            portNum = htons(address.sin_port);
 		}
 
-        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portnum);
+        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portNum);
     }
 
     /**

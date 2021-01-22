@@ -1,18 +1,11 @@
 
-#include <iostream>
-#include <fstream>
-#include <thread>
-#include <exception>
 #include <cassert>
 #include <stdexcept>
-#include <functional>
 
 #include "../socket/Socket.h"
 #include "../serversocket/ServerSocket.h"
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
 
 #include "TestUtil.hpp"
 

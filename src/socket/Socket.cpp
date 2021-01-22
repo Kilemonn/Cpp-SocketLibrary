@@ -45,17 +45,6 @@
 
 namespace kt
 {
-
-	/**
-	 * Default constructor. Should be provided by the compiler, but there has been some scenarios where this is required. 
-	 * 
-	 * A default constructed socket has no use.
-	 */
-	Socket::Socket()
-	{
-		// Nothing to, defaults are set in header file
-	}
-
 	/**
 	 * A constructor which will immediately attempt to connect to the host via the port specified.
 	 * 
@@ -380,7 +369,7 @@ namespace kt
 	 */
 	bool Socket::send(const std::string& message, int flag)
 	{
-		if (message.size() > 0)
+		if (!message.empty())
 		{
 			if (this->protocol == kt::SocketProtocol::TCP)
 			{
@@ -401,7 +390,7 @@ namespace kt
 		struct timeval timeOutVal;
 
 		memset((char*) &timeOutVal, 0, sizeof(timeOutVal));
-		timeOutVal.tv_usec = timeout;
+		timeOutVal.tv_usec = static_cast<long>(timeout);
 
 		FD_ZERO(&sReady);
 		FD_SET(this->socketDescriptor, &sReady);
@@ -575,11 +564,11 @@ namespace kt
 		{
 			do
 			{
-				flag = recv(this->socketDescriptor, data, (amountToReceive - counter), 0);
+				flag = recv(this->socketDescriptor, data, static_cast<int>(amountToReceive - counter), 0);
 				
 				if (flag < 1)
 				{
-					return std::move(result);
+					return result;
 				}
 				result += std::string(data);
 				counter += flag;
@@ -589,15 +578,15 @@ namespace kt
 		{
 			// UDP is odd, and will consume the entire datagram after a single read even if not all bytes are read
 			socklen_t addressLength = sizeof(this->clientAddress);
-			flag = recvfrom(this->socketDescriptor, data, amountToReceive, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			flag = recvfrom(this->socketDescriptor, data, static_cast<int>(amountToReceive), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 
 			if (flag < 1)
 			{
-				return std::move(result);
+				return result;
 			}
 			result += std::string(data);
 		}
-		return std::move(result);
+		return result;
 	}
 
 	/**
@@ -616,7 +605,7 @@ namespace kt
 			throw SocketException("The null terminator '\\0' is an invalid delimiter.");
 		}
 
-		std::string data = "";
+		std::string data;
 		int flag;
 
 		if (!this->ready())
@@ -636,7 +625,7 @@ namespace kt
 				}
 			} while (character != delimiter && this->ready());
 
-			return std::move(data);
+			return data;
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
@@ -644,18 +633,18 @@ namespace kt
 			memset(&temp, 0, sizeof(temp));
 			socklen_t addressLength = sizeof(this->clientAddress);
 			
-			flag = recvfrom(this->socketDescriptor, temp, this->MAX_BUFFER_SIZE, 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			flag = recvfrom(this->socketDescriptor, temp, static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 
 			if (flag < 1)
 			{
-				return std::move(data);
+				return data;
 			}
 
 			data += std::string(temp);
 			size_t delimiterIndex = data.find_first_of(delimiter);
 			if (delimiterIndex != std::string::npos)
 			{
-				return std::move(data.substr(0, delimiterIndex));
+				return data.substr(0, delimiterIndex);
 			}
 		}
 
@@ -672,7 +661,7 @@ namespace kt
 	 */
 	std::string Socket::receiveAll(const unsigned long timeout) const
 	{
-		std::string result = "";
+		std::string result;
 		result.reserve(1024);
 		bool hitEOF = false;
 
@@ -684,7 +673,7 @@ namespace kt
 		while (this->ready(timeout) && !hitEOF)
 		{
 			std::string res = receiveAmount(this->pollSocket(timeout));
-			if (res.size() > 0 && res[0] == '\0')
+			if (!res.empty() && res[0] == '\0')
 			{
 				hitEOF = true;
 			}
@@ -694,7 +683,7 @@ namespace kt
 			}
 		}
 		result.shrink_to_fit();
-		return std::move(result);
+		return result;
 	}
 
 	/**
