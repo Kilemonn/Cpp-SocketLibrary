@@ -25,8 +25,8 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
-#include "../includes/guiddef.h"
-#include "../includes/ws2bth.h"
+#include <guiddef.h>
+#include <ws2bth.h>
 
 #elif __linux__
 

@@ -7,8 +7,8 @@
 #include <vector>
 #include <utility>
 
-#include "../Enums/SocketProtocol.cpp"
-#include "../Enums/SocketType.cpp"
+#include "../enums/SocketProtocol.cpp"
+#include "../enums/SocketType.cpp"
 
 #ifdef _WIN32
 
@@ -22,8 +22,8 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
-#include "../includes/guiddef.h"
-#include "../includes/ws2bth.h"
+#include <guiddef.h>
+#include <ws2bth.h>
 
 #elif __linux__
 

@@ -1,9 +1,9 @@
 
 #include "Socket.h"
-#include "../SocketExceptions/SocketException.hpp"
-#include "../SocketExceptions/BindingException.hpp"
+#include "../socketexceptions/SocketException.hpp"
+#include "../socketexceptions/BindingException.hpp"
 #include "../enums/SocketProtocol.cpp"
-#include "../Enums/SocketType.cpp"
+#include "../enums/SocketType.cpp"
 
 #include <iostream>
 #include <vector>
@@ -24,9 +24,8 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
-
-#include "../includes/guiddef.h"
-#include "../includes/ws2bth.h"
+#include <guiddef.h>
+#include <ws2bth.h>
 
 #elif __linux__
 
