@@ -2,7 +2,7 @@
 #include "Socket.h"
 #include "../SocketExceptions/SocketException.hpp"
 #include "../SocketExceptions/BindingException.hpp"
-#include "../Enums/SocketProtocol.cpp"
+#include "../enums/SocketProtocol.cpp"
 #include "../Enums/SocketType.cpp"
 
 #include <iostream>
@@ -568,7 +568,7 @@ namespace kt
 		char data[bufferSize];
 		memset(&data, 0, bufferSize);
 		unsigned int counter = 0;
-		int flag = 0;
+		int flag;
 		std::string result;
 		result.reserve(bufferSize - 1);
 
@@ -618,7 +618,7 @@ namespace kt
 		}
 
 		std::string data = "";
-		int flag = 0;
+		int flag;
 
 		if (!this->ready())
 		{

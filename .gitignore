@@ -38,3 +38,6 @@ TestBluetooth
 
 # vsCode
 .vscode/
+
+# Intellij
+.idea/

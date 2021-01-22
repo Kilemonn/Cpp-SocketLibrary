@@ -7,12 +7,12 @@
 #include <stdexcept>
 #include <functional>
 
-#include "../Socket/Socket.h"
-#include "../ServerSocket/ServerSocket.h"
-#include "../SocketExceptions/SocketException.hpp"
-#include "../SocketExceptions/BindingException.hpp"
-#include "../Enums/SocketProtocol.cpp"
-#include "../Enums/SocketType.cpp"
+#include "../socket/Socket.h"
+#include "../serversocket/ServerSocket.h"
+#include "../socketexceptions/SocketException.hpp"
+#include "../socketexceptions/BindingException.hpp"
+#include "../enums/SocketProtocol.cpp"
+#include "../enums/SocketType.cpp"
 
 #include "TestUtil.hpp"
 

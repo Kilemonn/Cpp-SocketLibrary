@@ -1,11 +1,11 @@
 
 #include "ServerSocket.h"
-#include "../Socket/Socket.h"
-#include "../SocketExceptions/SocketException.hpp"
-#include "../SocketExceptions/BindingException.hpp"
-#include "../SocketExceptions/TimeoutException.hpp"
-#include "../Enums/SocketProtocol.cpp"
-#include "../Enums/SocketType.cpp"
+#include "../socket/Socket.h"
+#include "../socketexceptions/SocketException.hpp"
+#include "../socketexceptions/BindingException.hpp"
+#include "../socketexceptions/TimeoutException.hpp"
+#include "../enums/SocketProtocol.cpp"
+#include "../enums/SocketType.cpp"
 
 #include <iostream>
 #include <random>
