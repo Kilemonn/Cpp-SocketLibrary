@@ -490,11 +490,11 @@ namespace kt
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			char temp[this->MAX_BUFFER_SIZE + 1];
+			char temp[this->udpMaxBufferSize + 1];
 			memset(&temp, 0, sizeof(temp));
 			socklen_t addressLength = sizeof(this->clientAddress);
 			
-			flag = recvfrom(this->socketDescriptor, temp, static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			flag = recvfrom(this->socketDescriptor, temp, static_cast<int>(this->udpMaxBufferSize), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 
 			if (flag < 1)
 			{
@@ -629,4 +629,24 @@ namespace kt
 		
 		return std::string(localMACAddress);
 	}
+
+	/**
+	 * Get the underlying max buffer size used to limit the amount of bytes received per `receiveToDelimiter()` call for UDP Sockets.
+	 *
+	 * @return underlying receiving buffer limit, default is 10240
+	 */
+    unsigned int Socket::getUdpMaxBufferSize() const
+    {
+        return this->udpMaxBufferSize;
+    }
+
+    /**
+     * Set the underlying max buffer size used to limit the amount of bytes received per `receiveToDelimiter()` call for UDP Sockets.
+     *
+     * @param newLimit the new limit to set
+     */
+    void Socket::setUdpMaxBufferSize(const unsigned int& newLimit)
+    {
+        this->udpMaxBufferSize = newLimit;
+    }
 } // End namespace kt

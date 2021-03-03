@@ -31,7 +31,7 @@ namespace kt
 			int socketDescriptor = 0;
 			struct sockaddr_in serverAddress; // For Wifi
 			struct sockaddr_rc bluetoothAddress; // For Bluetooth
-			const unsigned int MAX_BUFFER_SIZE = 10240;
+			unsigned int udpMaxBufferSize = 10240;
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
@@ -59,6 +59,8 @@ namespace kt
 			kt::SocketType getType() const;
 			std::string getLastRecievedAddress() const;
 			std::string getAddress() const;
+			unsigned int getUdpMaxBufferSize() const;
+			void setUdpMaxBufferSize(const unsigned int&);
 
 			char get() const;
 			std::string receiveAmount(const unsigned int) const;
