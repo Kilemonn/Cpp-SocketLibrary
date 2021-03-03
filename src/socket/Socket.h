@@ -23,7 +23,7 @@ namespace kt
 	{
 		private:
 			std::string hostname;
-			unsigned int port;
+			unsigned int port = 0;
 			kt::SocketProtocol protocol = kt::SocketProtocol::None;
 			kt::SocketType type = SocketType::None;
 			bool bound = false;
@@ -46,7 +46,7 @@ namespace kt
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);
 			
-			bool bind();
+			bool bindUdpSocket();
 			void close();
 			
 			bool ready(const unsigned long = 1000) const;

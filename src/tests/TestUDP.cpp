@@ -29,7 +29,7 @@ void testWifiConstructors()
 
 /**
  * Test the kt::Socket constructors and exception handling. This covers the following scenarios:
- * - Test bind()
+ * - Test bindUdpSocket()
  * - Test ready()
  * - Test isBound()
  * - Test send()
@@ -46,7 +46,7 @@ void testWifiFunctions()
     kt::Socket server(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
     assert(!server.isBound());
-    server.bind();
+    server.bindUdpSocket();
     assert(server.isBound());
 
     kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);

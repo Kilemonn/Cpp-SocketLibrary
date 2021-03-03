@@ -34,8 +34,8 @@ namespace kt
 	 * @param type - Determines whether this socket is a wifi or bluetooth socket. 
 	 * @param protocol - Indicates the protocol being used by this socket, for Wifi this value can be *kt::SocketProtocol::TCP* or *kt::SocketProtocol::UDP* Default value is *kt::SocketProtocol::None*.
 	 * 
-	 * @throw SocketException - If the Socket is unable to be instanciated or connect to server.
-	 * @throw BindingException - If the Socket is unable to bind to the port specified.
+	 * @throw SocketException - If the Socket is unable to be instantiated or connect to server.
+	 * @throw BindingException - If the Socket is unable to bindUdpSocket to the port specified.
 	 */
 	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
 	{
@@ -58,24 +58,24 @@ namespace kt
 			throw SocketException("Bluetooth socket Protocol should be 'None'.");
 		}
 
-	    if (type == kt::SocketType::Wifi)
-	    {
-			this->constructWifiSocket();
-	    }
-	    else if (type == kt::SocketType::Bluetooth)
-	    {
-			this->constructBluetoothSocket();
-	    }
-		else
-		{
-			// kt::SocketType::None
-			throw SocketException("Unable to build Socket with 'None' as its SocketType");
-		}
+        if (type == kt::SocketType::Wifi)
+        {
+            this->constructWifiSocket();
+        }
+        else if (type == kt::SocketType::Bluetooth)
+        {
+            this->constructBluetoothSocket();
+        }
+        else
+        {
+            // kt::SocketType::None
+            throw SocketException("Unable to build Socket with 'None' as its SocketType");
+        }
 	}
 
 	/**
 	 * A constructor used by ServerSocket to create and copy of a currently connected socket. **This should not be used directly**.
-	 * 
+	 *
 	 * @param socketDescriptor - Is the file descriptor for the connection.
 	 * @param type - Determines whether this socket is a wifi or bluetooth socket.
 	 * @param protocol - Indicates the protocol being used by this socket, for Wifi this value can be *kt::SocketProtocol::TCP* or *kt::SocketProtocol::UDP* Default value is *kt::SocketProtocol::None*.
@@ -197,9 +197,9 @@ namespace kt
 	 * 
 	 * @return bool - true if the socket was bound successfully, otherwise false
 	 * 
-	 * @throw BindingException - if the socket fails to bind
+	 * @throw BindingException - if the socket fails to bindUdpSocket
 	 */ 
-	bool Socket::bind()
+	bool Socket::bindUdpSocket()
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
@@ -601,7 +601,7 @@ namespace kt
 	    ::close( tempSocket );
 
 		return devices;
-}
+    }
 
 	std::string Socket::getLocalMACAddress()
 	{
@@ -629,6 +629,4 @@ namespace kt
 		
 		return std::string(localMACAddress);
 	}
-
-
 } // End namespace kt

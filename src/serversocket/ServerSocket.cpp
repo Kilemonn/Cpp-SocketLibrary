@@ -162,6 +162,7 @@ namespace kt
      */
     void ServerSocket::randomlyAllocatePort(const unsigned int &connectionBacklogSize)
     {
+        const unsigned short maxAttempts = 50;
         std::random_device rd;
         // Random wifi port range inside the 'dynamic' port range (49152 - 65535)
         const unsigned int WIFI_LOWER_BOUND = 49152;
@@ -183,11 +184,15 @@ namespace kt
             lowerBound = BLUETOOTH_LOWER_BOUND;
             upperBound = BLUETOOTH_UPPER_BOUND;
         }
+        else
+        {
+            throw BindingException("Unable to allocate port since SocketType is None.");
+        }
         
-        std::uniform_int_distribution<> randDist(lowerBound, upperBound);
+        std::uniform_int_distribution<unsigned int> randDist(lowerBound, upperBound);
 
         // Only try to allocate the port 50 times, if it still fails then throw
-        for (unsigned int i = 0; i < 50; i++)
+        for (unsigned int i = 0; i < maxAttempts; i++)
         {
             try
             {
@@ -201,7 +206,7 @@ namespace kt
             }
         }
 
-        throw BindingException("Failed to randomly allocate port for ServerSocket after 50 attempts.");
+        throw BindingException("Failed to randomly allocate port for ServerSocket after " + std::to_string(maxAttempts) + " attempts.");
     }
 
     void ServerSocket::setDiscoverable()
@@ -306,7 +311,7 @@ namespace kt
      * 
      * NOTE: This should be called before the server goes out of scope
      */
-    void ServerSocket::close()
+    void ServerSocket::close() const
     {
         ::close(this->socketDescriptor);
     }

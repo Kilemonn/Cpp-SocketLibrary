@@ -39,7 +39,7 @@ server.close();
 kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 // Which ever socket is acting as the "server" needs to bind, only a single process can be bound 
 // to a specific port at a time
-serverSocket.bind();
+serverSocket.bindUdpSocket();
 
 kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
