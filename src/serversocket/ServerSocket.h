@@ -17,7 +17,7 @@ namespace kt
 	class ServerSocket
 	{
 		private:
-			unsigned int port;
+			unsigned int port = 0;
 			kt::SocketType type = SocketType::None;
 			int socketDescriptor = 0;
 			struct sockaddr_in serverAddress;
@@ -39,7 +39,7 @@ namespace kt
 			unsigned int getPort() const;
 
 			Socket accept(const unsigned int& = 0);
-			void close();
+			void close() const;
 	};
 
 } // End namespace kt
