@@ -4,19 +4,19 @@ POSTFLAGS = -lbluetooth -Wall -std=c++11 -pthread
 
 all:	TestTCP TestUDP TestBluetooth
 
-TestTCP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h
+TestTCP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
 	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestTCP.cpp -o TestTCP $(POSTFLAGS)
 
-TestUDP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h
+TestUDP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
 	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestUDP.cpp -o TestUDP $(POSTFLAGS)
 
-TestBluetooth:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h
+TestBluetooth:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
 	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestBluetooth.cpp -o TestBluetooth $(POSTFLAGS)
 
-Socket.o:	src/socket/Socket.cpp src/socket/Socket.h
+Socket.o:	src/socket/Socket.cpp src/socket/Socket.h src/template/SocketSerialisable.h
 	$(CC) $(PREFLAGS) -c src/socket/Socket.cpp $(POSTFLAGS)
 
-ServerSocket.o:	src/serversocket/ServerSocket.cpp src/serversocket/ServerSocket.h
+ServerSocket.o:	src/serversocket/ServerSocket.cpp src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
 	$(CC) $(PREFLAGS) -c src/serversocket/ServerSocket.cpp $(POSTFLAGS)
 
 clean:

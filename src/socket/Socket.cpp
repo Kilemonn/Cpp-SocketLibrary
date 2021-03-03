@@ -4,6 +4,7 @@
 #include "../socketexceptions/BindingException.hpp"
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
+#include "../template/SocketSerialisable.h"
 
 #include <iostream>
 #include <vector>
@@ -232,18 +233,24 @@ namespace kt
 	{
 		if (!message.empty())
 		{
-			if (this->protocol == kt::SocketProtocol::TCP)
-			{
-				return ::send(this->socketDescriptor, message.c_str(), message.size(), flag) != -1;
-			}
-			else if (this->protocol == kt::SocketProtocol::UDP)
-			{
-				struct sockaddr_in address = this->getSendAddress();
-				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&address, sizeof(address)) != -1;
-			}
+            return this->send(message.c_str(), message.size(), flag);
 		}
 		return false;
 	}
+
+	bool Socket::send(const char* bytes, unsigned int size, int flag)
+    {
+        if (this->protocol == kt::SocketProtocol::TCP)
+        {
+            return ::send(this->socketDescriptor, bytes, size, flag) != -1;
+        }
+        else if (this->protocol == kt::SocketProtocol::UDP)
+        {
+            struct sockaddr_in address = this->getSendAddress();
+            return ::sendto(this->socketDescriptor, bytes, size, flag, (const struct sockaddr *)&address, sizeof(address)) != -1;
+        }
+        return false;
+    }
 
 	int Socket::pollSocket(const unsigned long timeout) const
 	{
@@ -518,7 +525,7 @@ namespace kt
 	 * @return A std::string containing the characters read while the stream was *ready()*.
 	 * 
 	 * **NOTE:** This method can take a long time to execute. If you know the desired size and/or a delimiter, the other methods may be more fitting. 
-	 * This method may take some time for the receiver to retreive the whole message due to the inability to flush streams when using sockets.
+	 * This method may take some time for the receiver to retrieve the whole message due to the inability to flush streams when using sockets.
 	 */
 	std::string Socket::receiveAll(const unsigned long timeout) const
 	{
@@ -649,4 +656,43 @@ namespace kt
     {
         this->udpMaxBufferSize = newLimit;
     }
+
+    /**
+     *
+     * @tparam T the type of the object that will be serialised
+     *
+     * @param object object of type T to serialise and send
+     * @param serialiser the serialiser defining how the object of type T can be serialised
+     * @param flag used in send
+     * @return true if the object was serialised and sent successfully otherwise false
+     */
+    template<typename T>
+    bool Socket::sendObject(T object, SocketSerialisable<T> serialiser, int flag)
+    {
+        std::vector<char> bytes = serialiser.serialise(object);
+        if (bytes.empty())
+        {
+            return false;
+        }
+        return this->send(bytes.data(), bytes.size(), flag);
+    }
+
+    /**
+     * For UDP Sockets, tweak the internal udpMaxBuffer to extend the UDP read size
+     *
+     * @tparam T object of type T to be received and deserialised
+     * @param serialiser serialiser defining how to serialise object of type T
+     * @return the deserialised object
+     */
+    template<typename T>
+    T Socket::receiveObject(SocketSerialisable<T> serialiser)
+    {
+        std::string bytes = this->receiveToDelimiter('\0');
+        std::vector<char> vector;
+        vector.reserve(bytes.size());
+        vector.assign(bytes.begin(), bytes.end());
+        return serialiser.deserialise(bytes.c_str());
+    }
+
+
 } // End namespace kt
