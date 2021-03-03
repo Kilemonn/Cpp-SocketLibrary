@@ -25,7 +25,7 @@ namespace kt
          *
          * @return the deserialised object of type T
          */
-        virtual T deserialise(std::vector<char> ) = 0;
+        virtual T deserialise(std::vector<char>) = 0;
     };
 }
 

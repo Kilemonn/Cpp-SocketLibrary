@@ -658,6 +658,7 @@ namespace kt
     }
 
     /**
+     * Takes an object of type T, serailises it using the provided serialiser then sends it through the underlying socket connection.
      *
      * @tparam T the type of the object that will be serialised
      *
@@ -678,10 +679,13 @@ namespace kt
     }
 
     /**
-     * For UDP Sockets, tweak the internal udpMaxBuffer to extend the UDP read size
+     * Read the underlying socket until the `\0` character is read. (Or the max bytes for UDP).
+     * The read bytes will be transformed using the deserialiser into the object of type T and returned.
+     *
+     * For UDP Sockets, tweak the internal udpMaxBuffer to extend the UDP read size.
      *
      * @tparam T object of type T to be received and deserialised
-     * @param serialiser serialiser defining how to serialise object of type T
+     * @param serialiser serialiser defining how to deserialise object of type T
      * @return the deserialised object
      */
     template<typename T>
