@@ -656,46 +656,4 @@ namespace kt
         this->udpMaxBufferSize = newLimit;
     }
 
-    /**
-     * Takes an object of type T, serailises it using the provided serialiser then sends it through the underlying socket connection.
-     *
-     * @tparam T the type of the object that will be serialised
-     *
-     * @param object object of type T to serialise and send
-     * @param serialiser the serialiser defining how the object of type T can be serialised
-     * @param flag used in send
-     * @return true if the object was serialised and sent successfully otherwise false
-     */
-    template<typename T>
-    bool Socket::sendObject(T object, SocketSerialiser<T>* serialiser, int flag)
-    {
-        std::vector<char> bytes = serialiser->serialise(object);
-        if (bytes.empty())
-        {
-            return false;
-        }
-        return this->send(bytes.data(), bytes.size(), flag);
-    }
-
-    /**
-     * Read the underlying socket until the `\0` character is read. (Or the max bytes for UDP).
-     * The read bytes will be transformed using the deserialiser into the object of type T and returned.
-     *
-     * For UDP Sockets, tweak the internal udpMaxBuffer to extend the UDP read size.
-     *
-     * @tparam T object of type T to be received and deserialised
-     * @param serialiser serialiser defining how to deserialise object of type T
-     * @return the deserialised object
-     */
-    template<typename T>
-    T Socket::receiveObject(SocketSerialiser<T>* serialiser)
-    {
-        std::string bytes = this->receiveToDelimiter('\0');
-        std::vector<char> vector;
-        vector.reserve(bytes.size());
-        vector.assign(bytes.begin(), bytes.end());
-        return serialiser->deserialise(bytes.c_str());
-    }
-
-
 } // End namespace kt
