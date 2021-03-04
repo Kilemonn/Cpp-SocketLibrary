@@ -8,6 +8,8 @@
 #include "../socketexceptions/BindingException.hpp"
 
 #include "TestUtil.hpp"
+#include "TestClass.h"
+#include "TestClassSerialiser.h"
 
 const int PORT_NUMBER = 12345;
 const std::string LOCALHOST = "127.0.0.1";
@@ -212,6 +214,32 @@ void testWifiSocketMethods()
     server.close();
 }
 
+void testSendAndReceiveObject()
+{
+    preFunctionTest(__func__);
+    kt::ServerSocket server(kt::SocketType::Wifi);
+
+    kt::Socket sender(LOCALHOST, server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+    kt::Socket receiver = server.accept();
+
+    assert(sender.connected());
+    assert(receiver.connected());
+
+    int ints[] = {1, 2, 3, 42, 5, 61, 7, 8, 100};
+    char* chars = (char *) &"this is a test";
+    std::string str = "TEST";
+    kt::TestClassSerialiser serialiser;
+    kt::TestClass test(ints, chars, str);
+
+    assert(sender.sendObject(test, dynamic_cast<kt::TestClassSerialiser::SocketSerialiser*>(&serialiser)));
+    assert(receiver.ready());
+    kt::TestClass result = receiver.receiveObject(dynamic_cast<kt::TestClassSerialiser::SocketSerialiser*>(&serialiser));
+
+    receiver.close();
+    sender.close();
+    server.close();
+}
+
 /**
  * The main used to call the TCP test functions.
  */
@@ -220,4 +248,5 @@ int main()
     testFunction(testWifiSocketConstructors);
     testFunction(testWifiServerSocketConstructors);
     testFunction(testWifiSocketMethods);
+    testFunction(testSendAndReceiveObject);
 }

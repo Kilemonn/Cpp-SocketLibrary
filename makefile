@@ -4,19 +4,19 @@ POSTFLAGS = -lbluetooth -Wall -std=c++11 -pthread
 
 all:	TestTCP TestUDP TestBluetooth
 
-TestTCP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
-	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestTCP.cpp -o TestTCP $(POSTFLAGS)
+TestTCP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialiser.h src/tests/TestClass.h src/tests/TestClassSerialiser.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestClass.cpp src/tests/TestClassSerialiser.cpp src/tests/TestTCP.cpp -o TestTCP $(POSTFLAGS)
 
-TestUDP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
-	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestUDP.cpp -o TestUDP $(POSTFLAGS)
+TestUDP:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialiser.h src/tests/TestClass.h src/tests/TestClassSerialiser.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestClass.cpp src/tests/TestClassSerialiser.cpp src/tests/TestUDP.cpp -o TestUDP $(POSTFLAGS)
 
-TestBluetooth:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
-	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestBluetooth.cpp -o TestBluetooth $(POSTFLAGS)
+TestBluetooth:	Socket.o src/socket/Socket.h ServerSocket.o src/serversocket/ServerSocket.h src/template/SocketSerialiser.h src/tests/TestClass.h src/tests/TestClassSerialiser.h
+	$(CC) $(PREFLAGS) ServerSocket.o Socket.o src/tests/TestClass.cpp src/tests/TestClassSerialiser.cpp src/tests/TestBluetooth.cpp -o TestBluetooth $(POSTFLAGS)
 
-Socket.o:	src/socket/Socket.cpp src/socket/Socket.h src/template/SocketSerialisable.h
+Socket.o:	src/socket/Socket.cpp src/socket/Socket.h src/template/SocketSerialiser.h
 	$(CC) $(PREFLAGS) -c src/socket/Socket.cpp $(POSTFLAGS)
 
-ServerSocket.o:	src/serversocket/ServerSocket.cpp src/serversocket/ServerSocket.h src/template/SocketSerialisable.h
+ServerSocket.o:	src/serversocket/ServerSocket.cpp src/serversocket/ServerSocket.h src/template/SocketSerialiser.h
 	$(CC) $(PREFLAGS) -c src/serversocket/ServerSocket.cpp $(POSTFLAGS)
 
 clean:

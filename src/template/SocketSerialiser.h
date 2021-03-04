@@ -2,15 +2,15 @@
 // Created by Kyle on 3/03/2021.
 //
 
-#ifndef CPP_SOCKETLIBRARY_SOCKETSERIALISABLE_H
-#define CPP_SOCKETLIBRARY_SOCKETSERIALISABLE_H
+#ifndef CPP_SOCKETLIBRARY_SOCKETSERIALISER_H
+#define CPP_SOCKETLIBRARY_SOCKETSERIALISER_H
 
 #include <vector>
 
 namespace kt
 {
     template<typename T>
-    class SocketSerialisable
+    class SocketSerialiser
     {
     public:
         /**
@@ -29,4 +29,4 @@ namespace kt
     };
 }
 
-#endif //CPP_SOCKETLIBRARY_SOCKETSERIALISABLE_H
+#endif //CPP_SOCKETLIBRARY_SOCKETSERIALISER_H

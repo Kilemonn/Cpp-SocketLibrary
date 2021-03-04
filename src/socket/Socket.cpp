@@ -4,7 +4,7 @@
 #include "../socketexceptions/BindingException.hpp"
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
-#include "../template/SocketSerialisable.h"
+#include "../template/SocketSerialiser.h"
 
 #include <iostream>
 #include <vector>
@@ -46,7 +46,6 @@ namespace kt
 		this->protocol = protocol;
 		this->serverAddress = { 0 };
 		this->socketDescriptor = 0;
-
 		this->bluetoothAddress = { 0 };
 
 		if (this->type == kt::SocketType::Wifi && this->protocol == kt::SocketProtocol::None)
@@ -668,9 +667,9 @@ namespace kt
      * @return true if the object was serialised and sent successfully otherwise false
      */
     template<typename T>
-    bool Socket::sendObject(T object, SocketSerialisable<T> serialiser, int flag)
+    bool Socket::sendObject(T object, SocketSerialiser<T>* serialiser, int flag)
     {
-        std::vector<char> bytes = serialiser.serialise(object);
+        std::vector<char> bytes = serialiser->serialise(object);
         if (bytes.empty())
         {
             return false;
@@ -689,13 +688,13 @@ namespace kt
      * @return the deserialised object
      */
     template<typename T>
-    T Socket::receiveObject(SocketSerialisable<T> serialiser)
+    T Socket::receiveObject(SocketSerialiser<T>* serialiser)
     {
         std::string bytes = this->receiveToDelimiter('\0');
         std::vector<char> vector;
         vector.reserve(bytes.size());
         vector.assign(bytes.begin(), bytes.end());
-        return serialiser.deserialise(bytes.c_str());
+        return serialiser->deserialise(bytes.c_str());
     }
 
 

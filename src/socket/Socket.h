@@ -7,7 +7,7 @@
 #include <vector>
 #include <utility>
 
-#include "../template/SocketSerialisable.h"
+#include "../template/SocketSerialiser.h"
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
 
@@ -56,9 +56,9 @@ namespace kt
             bool send(const char*, unsigned int, int = 0);
 
             template<typename T>
-			bool sendObject(T, SocketSerialisable<T>, int = 0);
+			bool sendObject(T, SocketSerialiser<T>*, int = 0);
             template<typename T>
-            T receiveObject(SocketSerialisable<T>);
+            T receiveObject(SocketSerialiser<T>*);
 
 			unsigned int getPort() const;
 			bool isBound() const;

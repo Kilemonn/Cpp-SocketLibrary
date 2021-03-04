@@ -30,7 +30,7 @@ namespace kt
      * @param port - The port number for this server to communicate through. If value is not passed in a random, available port number will be assigned.
      * @param connectionBacklogSize - You can enter a value here to specify the length of the server connection pool. The default value is 20.
      * 
-     * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
+     * @throw SocketException - If the ServerSocket is unable to be instantiated or begin listening.
      * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
      */
     ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize)
