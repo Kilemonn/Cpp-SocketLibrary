@@ -2,6 +2,9 @@
 // Created by Kyle on 4/03/2021.
 //
 
+#include <algorithm>
+#include <iostream>
+
 #include "TestClassSerialiser.h"
 
 namespace kt
@@ -39,6 +42,64 @@ namespace kt
 
     kt::TestClass TestClassSerialiser::deserialise(std::vector<char> bytes)
     {
-        return kt::TestClass(nullptr, nullptr, "");
+        // Some scuffed deserialiser
+        int ints[10];
+        unsigned int intsIndex = 0;
+        char chars[20];
+        unsigned int charsIndex = 0;
+        std::vector<char>::iterator it = bytes.begin();
+        std::vector<char>::iterator endOfInts = std::find(bytes.begin(), bytes.end(), '\0');
+
+        std::vector<char>::iterator nextNumberEnds;
+        do
+        {
+            std::string temp = "";
+            nextNumberEnds = std::find(it, endOfInts, '-');
+
+            if (nextNumberEnds != endOfInts)
+            {
+                for_each(it, nextNumberEnds, [&temp](char c)
+                {
+                   temp.push_back(c);
+                });
+                ints[intsIndex] = std::stoi(temp, nullptr);
+                intsIndex++;
+                // Move iterator past the "-"
+                nextNumberEnds++;
+                it = nextNumberEnds;
+            }
+
+        } while (nextNumberEnds != endOfInts);
+
+        // Skip "\0"
+        if (endOfInts != bytes.end())
+        {
+            endOfInts++;
+        }
+
+        std::vector<char>::iterator endOfChars = std::find(endOfInts, bytes.end(), '\0');
+        for_each(endOfInts, endOfChars, [&chars, &charsIndex](char c)
+        {
+           chars[charsIndex] = c;
+           charsIndex++;
+        });
+
+        // Skip "\0"
+        if (endOfChars != bytes.end())
+        {
+            endOfChars++;
+        }
+
+        std::string temp = "";
+        for_each(endOfChars, bytes.end(), [&temp](char c)
+        {
+            temp.push_back(c);
+        });
+
+        std::cout << ints[0] << std::endl;
+        std::cout << chars[0] << std::endl;
+        std::cout << temp << std::endl;
+
+        return kt::TestClass(ints, chars, temp);
     }
 }

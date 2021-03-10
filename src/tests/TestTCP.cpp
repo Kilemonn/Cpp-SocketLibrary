@@ -235,6 +235,9 @@ void testSendAndReceiveObject()
     assert(receiver.ready());
     kt::TestClass result = receiver.receiveObject(dynamic_cast<kt::TestClassSerialiser::SocketSerialiser*>(&serialiser));
 
+    std::cout << "Res str: " << result.str << " --- test str: " << test.str << std::endl;
+    assert(result.str == test.str);
+
     receiver.close();
     sender.close();
     server.close();

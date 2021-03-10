@@ -89,7 +89,7 @@ namespace kt
             template<class T>
             T receiveObject(SocketSerialiser<T>* serialiser)
             {
-                std::string bytes = this->receiveToDelimiter('\0');
+                std::string bytes = this->receiveAll();
                 std::vector<char> vector;
                 vector.reserve(bytes.size());
                 vector.assign(bytes.begin(), bytes.end());
