@@ -73,4 +73,4 @@ signal(SIGPIPE, SIG_IGN);
 
 ### NOTE: UDP Read Sizes
 
-- Take care when reading UDP messages. If you do not read the entire length of the message the rest of the data will be lost. Try using receiveAll()/recieveToDelimiter()/receiveAmount() instead of get(), unless you know the amount of data that you are expecting.
+- Take care when reading UDP messages. If you do not read the entire length of the message the rest of the data will be lost. Try using `receiveAll()`/`recieveToDelimiter()`/`receiveAmount()` instead of `get()`, unless you know the amount of data that you are expecting.
