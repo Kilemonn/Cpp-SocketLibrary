@@ -1,6 +1,6 @@
 CC = g++
 PREFLAGS = -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -L/usr/lib/x86_64-linux-gnu -lglib-2.0 -L/usr/lib/x86_64-linux-gnu -lgio-2.0
-POSTFLAGS = -lbluetooth -Wall -std=c++11 -pthread
+POSTFLAGS = -lbluetooth -Wall -std=c++14 -pthread
 
 all:	TestTCP TestUDP TestBluetooth
 

@@ -41,3 +41,6 @@ TestBluetooth
 
 # Intellij
 .idea/
+
+# Build folder
+build/
