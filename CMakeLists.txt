@@ -17,6 +17,9 @@ include_directories(libs/googletest-1.13.0/googletest/include libs/googletest-1.
 # Project Configuration
 add_executable(${PROJECT_NAME} ${SOURCE})
 
+include_directories(/usr/include/glib-2.0)
+include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE gtest) # link google test to this executable
 target_link_libraries(${PROJECT_NAME} PRIVATE bluetooth)
 target_link_libraries(${PROJECT_NAME} PRIVATE glib-2.0)

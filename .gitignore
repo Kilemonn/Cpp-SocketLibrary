@@ -43,4 +43,4 @@ TestBluetooth
 .idea/
 
 # Build folder
-build/
+**/build/
