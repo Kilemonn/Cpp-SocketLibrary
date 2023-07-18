@@ -13,6 +13,11 @@ set(SOURCE
 
 add_executable(${PROJECT_NAME} ${SOURCE})
 
+target_link_libraries(${PROJECT_NAME} PUBLIC
+        gtest_Main
+        CppSocketLibrary # Parent project
+)
+
 add_test(
         Name ServerSocketTest
         COMMAND ServerSocketTest

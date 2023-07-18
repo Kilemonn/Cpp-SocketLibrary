@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(PROJECT_NAME Cpp-SocketLibrary)
+set(PROJECT_NAME CppSocketLibrary)
 
 project(${PROJECT_NAME} VERSION 1.0)
 
@@ -28,7 +28,7 @@ set(SOURCE
 add_library(${PROJECT_NAME} STATIC ${SOURCE} ${HEADERS})
 
 # Add libs
-add_subdirectory(libs/googletest-1.13.0/googletest)
+add_subdirectory(googletest)
 #include_directories(libs/googletest-1.13.0/googletest/include libs/googletest-1.13.0/googletest/src)
 
 include_directories(/usr/include/glib-2.0)
