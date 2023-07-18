@@ -1,7 +1,27 @@
 cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(PROJECT_NAME Cpp-SocketLibrary-Tests)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(SOURCE serversocket/ServerSocket.cpp socket/Socket.cpp)
+set(PROJECT_NAME CppSocketLibraryTests)
+project(${PROJECT_NAME})
+
+set(SOURCE
+        serversocket/ServerSocketTest.cpp
+        socket/SocketTest.cpp
+)
+
+add_executable(${PROJECT_NAME} ${SOURCE})
+
+add_test(
+        Name ServerSocketTest
+        COMMAND ServerSocketTest
+)
+
+add_test(
+        Name SocketTest
+        COMMAND SocketTest
+)
+
+#include(GoogleTest)
+#gtest_discover_tests(tests)
