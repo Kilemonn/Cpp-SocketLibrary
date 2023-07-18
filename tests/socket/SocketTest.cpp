@@ -25,9 +25,9 @@ namespace kt
 
     TEST_F(SocketTest, UDPConstructors)
     {
-        Socket socket(SocketTest::LOCALHOST, SocketTest::PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-        EXPECT_EQ(socket.getType(), kt::SocketType::Wifi);
-        EXPECT_EQ(socket.getProtocol(), kt::SocketProtocol::UDP);
+        Socket socket(SocketTest::LOCALHOST, SocketTest::PORT_NUMBER, SocketType::Wifi, SocketProtocol::UDP);
+        EXPECT_EQ(socket.getType(), SocketType::Wifi);
+        EXPECT_EQ(socket.getProtocol(), SocketProtocol::UDP);
         EXPECT_FALSE(socket.connected());
         EXPECT_FALSE(socket.ready());
         EXPECT_FALSE(socket.isBound());

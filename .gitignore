@@ -46,3 +46,4 @@ TestBluetooth
 **/build/
 
 cmake-build-debug/*
+CMakeFiles/*

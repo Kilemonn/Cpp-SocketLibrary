@@ -23,13 +23,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 enable_testing()
 
 add_test(
-        Name ServerSocketTest
-        COMMAND ServerSocketTest
-)
-
-add_test(
-        Name SocketTest
-        COMMAND SocketTest
+        Name ${PROJECT_NAME}
+        COMMAND ${PROJECT_NAME}
 )
 
 #include(GoogleTest)
