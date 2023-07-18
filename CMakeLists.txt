@@ -1,13 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_NAME CppSocketLibrary)
 
 project(${PROJECT_NAME} VERSION 1.0)
-
-# Enable unit testing
-enable_testing()
 
 set(HEADERS
         src/serversocket/ServerSocket.h

@@ -1,5 +1,7 @@
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
+
+#include "../../src/serversocket/ServerSocket.h"
 
 class ServerSocketTest: public ::testing::Test
 {
