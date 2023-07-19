@@ -33,9 +33,4 @@ include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE bluetooth)
 target_link_libraries(${PROJECT_NAME} PRIVATE glib-2.0)
 
-#foreach(LIBRARY ${LIBRARIES})
-#    add_subdirectory("${LIBRARIES_DIR}/${LIBRARY}")
-#endforeach(LIBRARY)
-#target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
-
 add_subdirectory(tests)

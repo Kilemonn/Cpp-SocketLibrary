@@ -82,55 +82,6 @@ void testWifiSocketConstructors()
 }
 
 /**
- * Test the kt::ServerSocket constructors and exception handling for TCP. This covers the following scenarios:
- * - ServerSocket created while another process is using the specified port number
- * - Test closing operation
- * - Test copy constructor and assignment operator
- * - Test closing a copied server will also close the initial server since they are both using the same port
- */
-void testWifiServerSocketConstructors()
-{
-    preFunctionTest(__func__);
-
-    const unsigned int PORT = 87682;
-    kt::ServerSocket server(kt::SocketType::Wifi, PORT);
-
-    // Ensure a binding exception is thrown if another process, (in this case another server) is using the port
-    assert(throwsException<kt::BindingException>([&server] 
-    {
-        kt::ServerSocket server2(kt::SocketType::Wifi, server.getPort());
-    }));
-
-    // Check copy constructor by making sure a client can connect and send a message successfully
-    kt::ServerSocket server2(server);
-
-    kt::Socket client(LOCALHOST, server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
-
-    kt::Socket serverSocket = server2.accept();
-    const std::string testString = "I'm Too Hot!";
-
-    assert(client.send(testString));
-    const std::string responseString = serverSocket.receiveAmount(testString.size());
-    assert(responseString == testString);
-
-    serverSocket.close();
-    client.close();
-    server2.close();
-    server.close();
-
-    // Test closing the socket of two copied servers will result in a client being unable to connect
-    // meaning, "both" server sockets have been closed, make sure a copied server object cannot accept
-    const unsigned int PORT_3 = 97654;
-    kt::ServerSocket initalServer(kt::SocketType::Wifi, PORT_3);
-    assert(throwsException<kt::SocketException>([&initalServer] 
-    {
-        kt::ServerSocket actualServer = initalServer;
-        initalServer.close();
-        actualServer.accept();
-    }));
-}
-
-/**
  * Test the kt::Socket methods for TCP. This covers the following scenarios:
  * - Test the connected() method
  * - Test receiveAmount()

@@ -26,6 +26,3 @@ add_test(
         Name ${PROJECT_NAME}
         COMMAND ${PROJECT_NAME}
 )
-
-#include(GoogleTest)
-#gtest_discover_tests(tests)

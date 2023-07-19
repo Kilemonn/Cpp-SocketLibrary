@@ -331,7 +331,7 @@ namespace kt
 	 * 
 	 * @return The character read.
 	 */
-	char Socket::get() const
+	char Socket::get()
 	{
 		return this->receiveAmount(1)[0];
 	}
