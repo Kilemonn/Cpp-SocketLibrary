@@ -414,7 +414,7 @@ namespace kt
 	 * 
 	 * @return A std::string of the specified size with the respective character read in. 
 	 */
-	std::string Socket::receiveAmount(const unsigned int amountToReceive) const
+	std::string Socket::receiveAmount(const unsigned int amountToReceive)
 	{
 		if (amountToReceive == 0 || !this->ready())
 		{
@@ -467,7 +467,7 @@ namespace kt
 	 * 
 	 * @throw SocketException - if the delimiter is '\0'.
 	 */
-	std::string Socket::receiveToDelimiter(const char delimiter) const
+	std::string Socket::receiveToDelimiter(const char delimiter)
 	{
 		if (delimiter == '\0')
 		{
@@ -528,7 +528,7 @@ namespace kt
 	 * **NOTE:** This method can take a long time to execute. If you know the desired size and/or a delimiter, the other methods may be more fitting. 
 	 * This method may take some time for the receiver to retreive the whole message due to the inability to flush streams when using sockets.
 	 */
-	std::string Socket::receiveAll(const unsigned long timeout) const
+	std::string Socket::receiveAll(const unsigned long timeout)
 	{
 		std::string result;
 		result.reserve(1024);

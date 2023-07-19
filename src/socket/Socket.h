@@ -61,10 +61,10 @@ namespace kt
 			std::optional<std::string> getLastRecievedAddress() const;
 			std::string getAddress() const;
 
-			char get() const;
-			std::string receiveAmount(const unsigned int) const;
-			std::string receiveToDelimiter(const char) const;
-			std::string receiveAll(const unsigned long = 1000) const;
+			char get();
+			std::string receiveAmount(const unsigned int);
+			std::string receiveToDelimiter(const char);
+			std::string receiveAll(const unsigned long = 1000);
 
 			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int = 5);
 			static std::string getLocalMACAddress();
