@@ -7,6 +7,9 @@
 #include <stdexcept>
 #include <functional>
 
+#ifndef _TEST_UTIL__
+#define _TEST_UTIL__
+
 /**
  * A helper function used to ensure that an exception is thrown by the passed in function and
  * also ensures the exception's type is what is specified in the template argument.
@@ -57,3 +60,5 @@ void testFunction(const std::function<void()>& function)
     function();
     std::cout << "PASS" << std::endl;
 }
+
+#endif // _TEST_UTIL__

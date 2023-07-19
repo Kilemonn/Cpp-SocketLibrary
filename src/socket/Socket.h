@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <optional>
 
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
@@ -57,7 +58,7 @@ namespace kt
 			bool isBound() const;
 			kt::SocketProtocol getProtocol() const;
 			kt::SocketType getType() const;
-			std::string getLastRecievedAddress() const;
+			std::optional<std::string> getLastRecievedAddress() const;
 			std::string getAddress() const;
 
 			char get() const;

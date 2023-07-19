@@ -11,6 +11,7 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <optional>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -45,6 +46,7 @@ namespace kt
 		this->protocol = protocol;
 		this->serverAddress = { 0 };
 		this->socketDescriptor = 0;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
 		this->bluetoothAddress = { 0 };
 
@@ -89,6 +91,7 @@ namespace kt
 		this->protocol = protocol;
 		this->socketDescriptor = socketDescriptor;
 		this->type = type;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 	}
 
 	/**
@@ -103,6 +106,7 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
 		this->serverAddress = socket.serverAddress;
 		this->bluetoothAddress = socket.bluetoothAddress;
@@ -122,9 +126,11 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
 		this->serverAddress = socket.serverAddress;
 		this->bluetoothAddress = socket.bluetoothAddress;
+		
 
 		return *this;
 	}
@@ -360,15 +366,17 @@ namespace kt
 	 * 
 	 * @return when using *kt::SocketProtocol::UDP* the address of the last device who sent the data that was most recently read. Always returns an empty string for kt::SocketProtocol::TCP kt::Sockets.
 	 */
-	std::string Socket::getLastRecievedAddress() const
+	std::optional<std::string> Socket::getLastRecievedAddress() const
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			char ip[20];
 			strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
-			return std::string(ip);
+			std::string asString(ip);
+			// Since we zero out the address, we need to check its not default initialised
+			return asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
 		}
-		return "";
+		return std::nullopt;
 	}
 
 	/**
