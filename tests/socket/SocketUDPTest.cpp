@@ -55,17 +55,17 @@ namespace kt
     }
 
     /*
-     * Ensure that multiple calls to Socket.bind() fails if another socket is already bound to that port.
+     * Ensure that multiple calls to Socket.bindUdpSocket() fails if another socket is already bound to that port.
      */
     TEST_F(SocketUDPTest, UDPBindAndBound_MultipleCalls)
     {
         ASSERT_FALSE(socket.isBound());
-        socket.bind();
+        socket.bindUdpSocket();
         ASSERT_TRUE(socket.isBound());
 
         kt::Socket newServer(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         ASSERT_FALSE(newServer.isBound());
-        EXPECT_THROW(newServer.bind(), BindingException);
+        EXPECT_THROW(newServer.bindUdpSocket(), BindingException);
     }
 
     /*
@@ -73,7 +73,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPSendAndReady)
     {
-        socket.bind();
+        socket.bindUdpSocket();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
@@ -90,7 +90,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount)
     {
-        socket.bind();
+        socket.bindUdpSocket();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "test";
@@ -110,7 +110,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount_NotEnoughRead)
     {
-        socket.bind();
+        socket.bindUdpSocket();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "test";
@@ -129,7 +129,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount_TooMuchRead)
     {
-        socket.bind();
+        socket.bindUdpSocket();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "test";
@@ -148,7 +148,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPGetAndLastReceivedAddress)
     {
-        socket.bind();
+        socket.bindUdpSocket();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         std::string testString = "t";
@@ -171,7 +171,7 @@ namespace kt
     {
         GTEST_SKIP();
 
-        socket.bind();
+        socket.bindUdpSocket();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
@@ -191,7 +191,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveToDelimiter)
     {
-        socket.bind();
+        socket.bindUdpSocket();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 

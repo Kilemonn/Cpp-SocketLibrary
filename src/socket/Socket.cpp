@@ -11,6 +11,7 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <optional>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -45,6 +46,7 @@ namespace kt
 		this->protocol = protocol;
 		this->serverAddress = { 0 };
 		this->socketDescriptor = 0;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
 		this->bluetoothAddress = { 0 };
 
@@ -89,6 +91,7 @@ namespace kt
 		this->protocol = protocol;
 		this->socketDescriptor = socketDescriptor;
 		this->type = type;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 	}
 
 	/**
@@ -103,6 +106,7 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
 		this->serverAddress = socket.serverAddress;
 		this->bluetoothAddress = socket.bluetoothAddress;
@@ -122,6 +126,7 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
 		this->serverAddress = socket.serverAddress;
 		this->bluetoothAddress = socket.bluetoothAddress;
@@ -331,7 +336,7 @@ namespace kt
 	 * 
 	 * @return The character read.
 	 */
-	char Socket::get() const
+	char Socket::get()
 	{
 		return this->receiveAmount(1)[0];
 	}
@@ -366,15 +371,16 @@ namespace kt
 	 * 
 	 * @return when using *kt::SocketProtocol::UDP* the address of the last device who sent the data that was most recently read. Always returns an empty string for kt::SocketProtocol::TCP kt::Sockets.
 	 */
-	std::string Socket::getLastRecievedAddress() const
+	std::optional<std::string> Socket::getLastRecievedAddress() const
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			char ip[20];
 			strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
-			return std::string(ip);
+			std::string address(ip);
+			return address == "0.0.0.0" ? std::nullopt : std::optional<std::string>{address};
 		}
-		return "";
+		return std::nullopt;
 	}
 
 	/**
@@ -412,7 +418,7 @@ namespace kt
 	 * 
 	 * @return A std::string of the specified size with the respective character read in. 
 	 */
-	std::string Socket::receiveAmount(const unsigned int amountToReceive) const
+	std::string Socket::receiveAmount(const unsigned int amountToReceive)
 	{
 		if (amountToReceive == 0 || !this->ready())
 		{
@@ -465,7 +471,7 @@ namespace kt
 	 * 
 	 * @throw SocketException - if the delimiter is '\0'.
 	 */
-	std::string Socket::receiveToDelimiter(const char delimiter) const
+	std::string Socket::receiveToDelimiter(const char delimiter)
 	{
 		if (delimiter == '\0')
 		{
@@ -526,7 +532,7 @@ namespace kt
 	 * **NOTE:** This method can take a long time to execute. If you know the desired size and/or a delimiter, the other methods may be more fitting. 
 	 * This method may take some time for the receiver to retreive the whole message due to the inability to flush streams when using sockets.
 	 */
-	std::string Socket::receiveAll(const unsigned long timeout) const
+	std::string Socket::receiveAll(const unsigned long timeout)
 	{
 		std::string result;
 		result.reserve(1024);
@@ -552,6 +558,26 @@ namespace kt
 		result.shrink_to_fit();
 		return result;
 	}
+
+	/**
+	 * Get the underlying max buffer size used to limit the amount of bytes received per `receiveToDelimiter()` call for UDP Sockets.
+	 *
+	 * @return underlying receiving buffer limit, default is 10240
+	 */
+    unsigned int Socket::getUdpMaxBufferSize() const
+    {
+        return this->udpMaxBufferSize;
+    }
+
+    /**
+     * Set the underlying max buffer size used to limit the amount of bytes received per `receiveToDelimiter()` call for UDP Sockets.
+     *
+     * @param newLimit the new limit to set
+     */
+    void Socket::setUdpMaxBufferSize(const unsigned int& newLimit)
+    {
+        this->udpMaxBufferSize = newLimit;
+    }
 
 	/**
 	 * **In progress**
@@ -609,7 +635,7 @@ namespace kt
 		return devices;
     }
 
-	std::string Socket::getLocalMACAddress()
+	std::optional<std::string> Socket::getLocalMACAddress()
 	{
 		int id;
 		bdaddr_t btaddr;
@@ -618,41 +644,21 @@ namespace kt
 		// Get id of local device
 		if ((id = hci_get_route(nullptr)) < 0)
 		{
-			return "";
+			return std::nullopt;
 		}
 	
 		// Get local bluetooth address
 		if (hci_devba(id, &btaddr) < 0)
 		{
-			return "";
+			return std::nullopt;
 		}
 	
 		// Convert address to string
 		if (ba2str(&btaddr, localMACAddress) < 0)
 		{
-			return "";
+			return std::nullopt;
 		}
 		
-		return std::string(localMACAddress);
+		return std::optional<std::string>{std::string(localMACAddress)};
 	}
-
-	/**
-	 * Get the underlying max buffer size used to limit the amount of bytes received per `receiveToDelimiter()` call for UDP Sockets.
-	 *
-	 * @return underlying receiving buffer limit, default is 10240
-	 */
-    unsigned int Socket::getUdpMaxBufferSize() const
-    {
-        return this->udpMaxBufferSize;
-    }
-
-    /**
-     * Set the underlying max buffer size used to limit the amount of bytes received per `receiveToDelimiter()` call for UDP Sockets.
-     *
-     * @param newLimit the new limit to set
-     */
-    void Socket::setUdpMaxBufferSize(const unsigned int& newLimit)
-    {
-        this->udpMaxBufferSize = newLimit;
-    }
 } // End namespace kt
