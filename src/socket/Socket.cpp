@@ -232,18 +232,24 @@ namespace kt
 	{
 		if (!message.empty())
 		{
-			if (this->protocol == kt::SocketProtocol::TCP)
-			{
-				return ::send(this->socketDescriptor, message.c_str(), message.size(), flag) != -1;
-			}
-			else if (this->protocol == kt::SocketProtocol::UDP)
-			{
-				struct sockaddr_in address = this->getSendAddress();
-				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&address, sizeof(address)) != -1;
-			}
+            return this->send(message.c_str(), message.size(), flag);
 		}
 		return false;
 	}
+
+	bool Socket::send(const char* bytes, unsigned int size, int flag)
+    {
+        if (this->protocol == kt::SocketProtocol::TCP)
+        {
+            return ::send(this->socketDescriptor, bytes, size, flag) != -1;
+        }
+        else if (this->protocol == kt::SocketProtocol::UDP)
+        {
+            struct sockaddr_in address = this->getSendAddress();
+            return ::sendto(this->socketDescriptor, bytes, size, flag, (const struct sockaddr *)&address, sizeof(address)) != -1;
+        }
+        return false;
+    }
 
 	int Socket::pollSocket(const unsigned long timeout) const
 	{
