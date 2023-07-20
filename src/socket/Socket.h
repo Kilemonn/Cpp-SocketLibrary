@@ -7,6 +7,7 @@
 #include <vector>
 #include <utility>
 #include <optional>
+#include <array>
 
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
@@ -54,6 +55,16 @@ namespace kt
 			bool connected(const unsigned long = 1000) const;
 			bool send(const std::string&, int = 0);
             bool send(const char*, unsigned int, int = 0);
+
+			template<typename T>
+			bool sendObject(T, int = 0);
+            template<typename T>
+            std::optional<T> receiveObject();
+
+			template<typename T>
+			std::optional<std::array<unsigned char, sizeof(T)>> toBytes(const T&);
+			template<typename T>
+			std::optional<T&> fromBytes(const std::array<unsigned char, sizeof(T)>&, T&);
 
 			unsigned int getPort() const;
 			bool isBound() const;

@@ -12,6 +12,10 @@
 #include <sstream>
 #include <iomanip>
 #include <optional>
+#include <array>
+#include <memory>
+#include <type_traits>
+#include <iostream>
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -578,6 +582,60 @@ namespace kt
     {
         this->udpMaxBufferSize = newLimit;
     }
+
+	template<typename T>
+	bool Socket::sendObject(T object, int flag)
+	{
+		std::optional<std::array<unsigned char, sizeof(T)>> bytes = toBytes(object);
+		if (bytes == std::nullopt)
+		{
+			return false;
+		}
+
+		return this->send(std::string(std::begin(bytes.value()), std::end(bytes.value())), bytes.value().size(), flag);
+	}
+	
+	template<typename T>
+	std::optional<T> Socket::receiveObject()
+	{
+		std::string bytes = receiveAll();
+
+		std::array<unsigned char, sizeof(bytes)> byteArray;
+		std::copy(std::begin(bytes), std::end(bytes), std::begin(byteArray));
+		T object;
+		return fromBytes(byteArray, object);
+	}
+
+	template<typename T>
+	std::optional<std::array<unsigned char, sizeof(T)>> toBytes(const T& object)
+	{
+		if (!std::is_trivially_copyable<T>::value)
+		{
+			return std::nullopt;
+		}
+
+		std::array<unsigned char, sizeof(T)> bytes;
+
+		unsigned char* start = reinterpret_cast<const unsigned char*>(std::addressof(object));
+		unsigned char* end = start + sizeof(T);
+		std::copy(start, end, std::begin(bytes));
+
+		return std::optional<std::array<unsigned char, sizeof(T)>>{bytes};
+	}
+
+	template<typename T>
+	std::optional<T&> fromBytes(const std::array<unsigned char, sizeof(T)>& bytes, T& object)
+	{
+		if (!std::is_trivially_copyable<T>::value)
+		{
+			return std::nullopt;
+		}
+
+		unsigned char* beginning = reinterpret_cast<unsigned char*>(std::addressof(object));
+		std::copy(std::begin(bytes), std::end(bytes), beginning);
+
+		return std::optional<T&>{object};
+	}
 
 	/**
 	 * **In progress**
