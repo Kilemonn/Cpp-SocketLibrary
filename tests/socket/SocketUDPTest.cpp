@@ -25,7 +25,7 @@ namespace kt
         }
     };
 
-    /**
+    /*
      * Test the kt::Socket constructors and exception handling for UDP. This covers the following scenarios:
      * - Constructing a socket and ensuring its default values are set correctly
      */
@@ -40,7 +40,7 @@ namespace kt
         ASSERT_EQ(std::nullopt, socket.getLastRecievedAddress());
     }
 
-    /**
+    /*
      * Ensure that we cannot receive any messages when we are not bound.
      */
     TEST_F(SocketUDPTest, UDPBind_NotCalled)
@@ -54,7 +54,7 @@ namespace kt
         ASSERT_FALSE(socket.ready());
     }
 
-    /**
+    /*
      * Ensure that multiple calls to Socket.bind() fails if another socket is already bound to that port.
      */
     TEST_F(SocketUDPTest, UDPBindAndBound_MultipleCalls)
@@ -68,7 +68,7 @@ namespace kt
         EXPECT_THROW(newServer.bind(), BindingException);
     }
 
-    /**
+    /*
      * Test Socket.send(std::string) to ensure that the server socket receives data.
      */
     TEST_F(SocketUDPTest, UDPSendAndReady)
@@ -85,7 +85,7 @@ namespace kt
         client.close();
     }
 
-    /**
+    /*
      * Call receiveAmount to make sure the correct amount is read.
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount)
@@ -104,7 +104,7 @@ namespace kt
         client.close();
     }
 
-    /**
+    /*
      * Ensure that receiveAmount reads the specified amount even when more is available in the buffer.
      * Also confirm that the remaining data is lost if not read.
      */
@@ -124,7 +124,7 @@ namespace kt
         client.close();
     }
 
-    /**
+    /*
      * Ensure that the receiveAmount read the correct amount when less data is provided than expected.
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount_TooMuchRead)
@@ -143,7 +143,7 @@ namespace kt
         client.close();
     }
 
-    /**
+    /*
      * Ensure that the last received address is set accordingly after data is read.
      */
     TEST_F(SocketUDPTest, UDPGetAndLastReceivedAddress)
@@ -164,7 +164,7 @@ namespace kt
         client.close();
     }
 
-    /**
+    /*
      * Ensure that receiveAll reads all the remaining data that was sent by the client.
      */
     TEST_F(SocketUDPTest, UDPReceiveAll)
@@ -186,7 +186,7 @@ namespace kt
         client.close();
     }
 
-    /**
+    /*
      * Ensure receive to delimiter receives until the delimiter. 
      */
     TEST_F(SocketUDPTest, UDPReceiveToDelimiter)
@@ -197,11 +197,11 @@ namespace kt
 
         const std::string testString = "testString";
         const char delimiter = '~';
-        ASSERT_TRUE(client.send(testString + delimiter));
+        ASSERT_TRUE(client.send(testString + delimiter + testString));
         
         ASSERT_TRUE(socket.ready());
         std::string response = socket.receiveToDelimiter(delimiter);
-        ASSERT_FALSE(socket.ready());
+        ASSERT_FALSE(socket.ready()); // Extract parts of the message are lost
         ASSERT_EQ(response, testString);
 
         client.close();

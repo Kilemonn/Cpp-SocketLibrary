@@ -8,7 +8,9 @@ project(${PROJECT_NAME})
 
 set(SOURCE
         serversocket/ServerSocketTest.cpp
+        socket/SocketTCPTest.cpp
         socket/SocketUDPTest.cpp
+        socket/SocketBluetoothTest.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE})

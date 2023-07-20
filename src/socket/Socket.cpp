@@ -609,9 +609,9 @@ namespace kt
 	    ::close( tempSocket );
 
 		return devices;
-}
+	}
 
-	std::string Socket::getLocalMACAddress()
+	std::optional<std::string> Socket::getLocalMACAddress()
 	{
 		int id;
 		bdaddr_t btaddr;
@@ -620,22 +620,22 @@ namespace kt
 		// Get id of local device
 		if ((id = hci_get_route(nullptr)) < 0)
 		{
-			return "";
+			return std::nullopt;
 		}
 	
 		// Get local bluetooth address
 		if (hci_devba(id, &btaddr) < 0)
 		{
-			return "";
+			return std::nullopt;
 		}
 	
 		// Convert address to string
 		if (ba2str(&btaddr, localMACAddress) < 0)
 		{
-			return "";
+			return std::nullopt;
 		}
 		
-		return std::string(localMACAddress);
+		return std::optional<std::string>{std::string(localMACAddress)};
 	}
 
 

@@ -21,7 +21,16 @@ namespace kt
         }
     };
 
-    /**
+    /*
+     * Ensure the defaults are set correctly.
+     */
+    TEST_F(ServerSocketTest, TestDefaultConstructor)
+    {
+        ASSERT_EQ(SocketType::Wifi, serverSocket.getType());
+        ASSERT_EQ(PORT_NUMBER, serverSocket.getPort());
+    }
+
+    /*
      * Ensure that we throw a binding exception if the port is already used.
      */
     TEST_F(ServerSocketTest, TestConstructors)
@@ -31,7 +40,7 @@ namespace kt
         }, BindingException);
     }
 
-    /**
+    /*
      * Ensure thatt if a copied serversocket is closed, that it closes the copied socket too since they shared the same underlying descriptor.
      */
     TEST_F(ServerSocketTest, TestCloseCopiedServerSocket)
@@ -41,7 +50,7 @@ namespace kt
         ASSERT_THROW(copiedServer.accept(), SocketException);
     }
 
-    /**
+    /*
      * Ensure the copy constructed server socket is able to connect to the client and receive messages.
      */
     TEST_F(ServerSocketTest, TestCopyConstructor)
