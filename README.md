@@ -2,11 +2,20 @@
 
 A ServerSocket and Socket library for Linux aiming to support both Wifi and Bluetooth communication.
 
-## Get Started
+## Getting Started
 
-1. **Optional Step** If you want to run this in the provided Docker container, ensure that Docker is installed and running then execute `docker build .`. Once this is done launch the image and connect to the container.
-2. Once in the docker container, or locally and in the base directory of the repo, run `make` and link the generated object files and headers accordingly.
-3. Some general tests can be run using `make check`. **Bluetooth test currently still in progress since I am unable to be the host and client from the same machine**
+### Dependencies
+
+The following dependencies are required:
+- `libbluetooth-dev`
+- `libglib2.0-dev`
+- `bluez`
+
+### Building the Library
+
+To build the library run: `cmake . -B build`
+Then change to the `build` folder, `cd build`.
+Then you can run `make` to build the library.
 
 ## Usage Examples
 
