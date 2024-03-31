@@ -43,15 +43,7 @@ namespace kt
             throw SocketException("Failed to create ServerSocket with 'None' SocketType.");
         }
 
-        // Randomly allocate port and construct socket
-        if (this->port == 0)
-        {
-            this->randomlyAllocatePort(connectionBacklogSize);
-        }
-        else
-        {
-            this->constructSocket(connectionBacklogSize);
-        }
+        this->constructSocket(connectionBacklogSize);
     }
 
     /**
@@ -113,7 +105,7 @@ namespace kt
 
         localAddress.rc_family = AF_BLUETOOTH;
         localAddress.rc_bdaddr = ((bdaddr_t) {{0, 0, 0, 0, 0, 0}});
-        localAddress.rc_channel = static_cast<uint8_t>(port);
+        localAddress.rc_channel = static_cast<uint8_t>(this->port);
         
         if (bind(this->socketDescriptor, (struct sockaddr *)&localAddress, sizeof(localAddress)) == -1)
         {
@@ -140,12 +132,24 @@ namespace kt
         }
 
         this->serverAddress.sin_family = AF_INET;
-        this->serverAddress.sin_addr.s_addr = htons(INADDR_ANY);
+        this->serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
         this->serverAddress.sin_port = htons(this->port);
 
-        if (bind(this->socketDescriptor, (struct sockaddr*) &this->serverAddress, sizeof(this->serverAddress)) == -1) 
+        if (bind(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) == -1) 
         {
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+        }
+
+        if (this->port == 0)
+        {
+            int res = getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &this->socketSize);
+            if (res != 0)
+            {
+                this->close();
+                throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + std::string(std::strerror(errno)));
+            }
+
+            this->port = ntohs(this->serverAddress.sin_port);
         }
 
         if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
@@ -153,55 +157,6 @@ namespace kt
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
         }
-    }
-
-    /**
-     * 
-     * 
-     * 
-     */
-    void ServerSocket::randomlyAllocatePort(const unsigned int &connectionBacklogSize)
-    {
-        std::random_device rd;
-        // Random wifi port range inside the 'dynamic' port range (49152 - 65535)
-        const unsigned int WIFI_LOWER_BOUND = 49152;
-        const unsigned int WIFI_UPPER_BOUND = 65535;
-        // Random bluetooth ports from 1-30
-        const unsigned int BLUETOOTH_LOWER_BOUND = 1;
-        const unsigned int BLUETOOTH_UPPER_BOUND = 30;
-        
-        unsigned int upperBound = 0;
-        unsigned int lowerBound = 0;
-
-        if (this->type == kt::SocketType::Wifi)
-        {
-            lowerBound = WIFI_LOWER_BOUND;
-            upperBound = WIFI_UPPER_BOUND;
-        }
-        else if (this->type == kt::SocketType::Bluetooth)
-        {
-            lowerBound = BLUETOOTH_LOWER_BOUND;
-            upperBound = BLUETOOTH_UPPER_BOUND;
-        }
-        
-        std::uniform_int_distribution<> randDist(lowerBound, upperBound);
-
-        // Only try to allocate the port 50 times, if it still fails then throw
-        for (unsigned int i = 0; i < 50; i++)
-        {
-            try
-            {
-                this->port = randDist(rd);
-                this->constructSocket(connectionBacklogSize);
-                return;
-            }
-            catch (BindingException& be)
-            {
-                // Nothing to do
-            }
-        }
-
-        throw BindingException("Failed to randomly allocate port for ServerSocket after 50 attempts.");
     }
 
     void ServerSocket::setDiscoverable()

@@ -6,16 +6,23 @@ A ServerSocket and Socket library for Linux aiming to support both Wifi and Blue
 
 ### Dependencies
 
-The following dependencies are required:
+- [CMake](https://cmake.org/download/) and `make`
+
+The following linux dependencies are required:
 - `libbluetooth-dev`
 - `libglib2.0-dev`
 - `bluez`
 
-### Building the Library
+### Building the Library and Tests
 
-To build the library run: `cmake . -B build`
-Then change to the `build` folder, `cd build`.
-Then you can run `make` to build the library.
+1. To build the library run: `cmake . -B build` in the root directory of the repository (`CppSocketLibrary/`).
+2. Then move into the new `build` folder: `cd build`.
+3. Then you can run `make` to build the library.
+
+### Running Tests
+
+1. Refer to the above to make sure the library and tests are built.
+2. Then you can run `make check`.
 
 ## Usage Examples
 

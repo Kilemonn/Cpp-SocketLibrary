@@ -169,6 +169,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAll)
     {
+        // Skipping this for now
         GTEST_SKIP();
 
         socket.bind();

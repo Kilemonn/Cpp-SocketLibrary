@@ -24,7 +24,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 # Enable unit testing
 enable_testing()
 
-add_test(
-        Name ${PROJECT_NAME}
-        COMMAND ${PROJECT_NAME}
-)
+add_test(${PROJECT_NAME} ${PROJECT_NAME})
+
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${PROJECT_NAME})

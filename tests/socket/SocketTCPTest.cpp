@@ -8,7 +8,6 @@
 #include "../../src/socketexceptions/BindingException.hpp"
 
 const std::string LOCALHOST = "127.0.0.1";
-const int PORT_NUMBER = 12345;
 
 namespace kt
 {
@@ -19,7 +18,7 @@ namespace kt
         Socket socket;
 
     protected:
-        SocketTCPTest() : serverSocket(SocketType::Wifi, PORT_NUMBER), socket(LOCALHOST, PORT_NUMBER, SocketType::Wifi, SocketProtocol::TCP) { }
+        SocketTCPTest() : serverSocket(SocketType::Wifi, 0), socket(LOCALHOST, serverSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP) { }
         void TearDown() override
         {
             socket.close();
@@ -47,7 +46,7 @@ namespace kt
     TEST_F(SocketTCPTest, TCPConstructor_NoProtocol)
     {
         ASSERT_THROW({
-            Socket failedSocket(LOCALHOST, PORT_NUMBER, SocketType::Wifi);
+            Socket failedSocket(LOCALHOST, serverSocket.getPort(), SocketType::Wifi);
         }, SocketException);
     }
 
@@ -57,7 +56,7 @@ namespace kt
     TEST_F(SocketTCPTest, TCPConstructor_NoHostname)
     {
         ASSERT_THROW({
-            Socket failedSocket("", PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+            Socket failedSocket("", serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
         }, SocketException);
     }
     
@@ -70,7 +69,7 @@ namespace kt
         socket.close();
 
         ASSERT_THROW({
-            Socket failedSocket(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+            Socket failedSocket(LOCALHOST, serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
         }, SocketException);
     }
 
@@ -80,7 +79,7 @@ namespace kt
     TEST_F(SocketTCPTest, TCPConstructor_IncorrectPort)
     {
         ASSERT_THROW({
-            Socket failedSocket(LOCALHOST, PORT_NUMBER + 1, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+            Socket failedSocket(LOCALHOST, serverSocket.getPort() + 1, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
         }, SocketException);
     }
     
@@ -107,8 +106,8 @@ namespace kt
     TEST_F(SocketTCPTest, TCPConnected)
     {
         Socket server = serverSocket.accept();
-        assert(socket.connected());
-        assert(server.connected());
+        ASSERT_TRUE(socket.connected());
+        ASSERT_TRUE(server.connected());
 
         server.close();
     }
@@ -122,6 +121,8 @@ namespace kt
         ASSERT_TRUE(server.ready());
         std::string response = server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
+
+        server.close();
     }
 
     TEST_F(SocketTCPTest, TCPReceiveAll)
@@ -133,6 +134,8 @@ namespace kt
         ASSERT_TRUE(server.ready());
         std::string response = server.receiveAll();
         ASSERT_EQ(response, testString + testString + testString);
+
+        server.close();
     }
 
     TEST_F(SocketTCPTest, TCPReceiveToDelimiter)
@@ -146,6 +149,8 @@ namespace kt
         std::string response = socket.receiveToDelimiter(delimiter);
         ASSERT_TRUE(socket.ready());
         ASSERT_EQ(response, testString + testString);
+
+        server.close();
     }
 
     TEST_F(SocketTCPTest, TCPReceiveToDelimiter_InvalidDelimiter)
@@ -175,6 +180,8 @@ namespace kt
         response = socket.get();
         ASSERT_EQ(response, 't');
         ASSERT_FALSE(socket.ready());
+
+        server.close();
     }
 
     TEST_F(SocketTCPTest, TCPClose)
