@@ -2,6 +2,8 @@
 #ifndef _SERVER_SOCKET_H__
 #define _SERVER_SOCKET_H__
 
+#include <optional>
+
 #include "../socket/Socket.h"
 
 #include "../enums/SocketProtocol.cpp"

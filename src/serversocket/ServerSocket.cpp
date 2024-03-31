@@ -142,8 +142,7 @@ namespace kt
 
         if (this->port == 0)
         {
-            int res = getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &this->socketSize);
-            if (res != 0)
+            if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &this->socketSize) != 0)
             {
                 this->close();
                 throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + std::string(std::strerror(errno)));
@@ -212,7 +211,6 @@ namespace kt
             FD_SET((unsigned int)this->socketDescriptor, &sready);
 
             int res = select(this->socketDescriptor + 1, &sready, nullptr, nullptr, &timeOutVal);
-
             if (res == -1)
             {
                 throw kt::SocketException("Failed to poll as socket is no longer valid.");
@@ -235,8 +233,6 @@ namespace kt
         {
         	char remoteAddress[1024] = {0};
 	        ba2str(&remoteDevice.rc_bdaddr, remoteAddress);
-
-	        std::cout << "Accepted connection from " << remoteAddress << std::endl;
         }
 
         struct sockaddr_in address;

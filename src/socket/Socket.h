@@ -1,5 +1,3 @@
-
-
 #ifndef _SOCKET_H__
 #define _SOCKET_H__
 
@@ -61,7 +59,7 @@ namespace kt
 			std::optional<std::string> getLastRecievedAddress() const;
 			std::string getAddress() const;
 
-			char get();
+			std::optional<char> get();
 			std::string receiveAmount(const unsigned int);
 			std::string receiveToDelimiter(const char);
 			std::string receiveAll(const unsigned long = 1000);

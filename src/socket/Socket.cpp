@@ -331,9 +331,14 @@ namespace kt
 	 * 
 	 * @return The character read.
 	 */
-	char Socket::get()
+	std::optional<char> Socket::get()
 	{
-		return this->receiveAmount(1)[0];
+		std::string received = this->receiveAmount(1);
+		if (received.empty())
+		{
+			return std::nullopt;
+		}
+		return received[0];
 	}
 
 	/**
@@ -484,15 +489,15 @@ namespace kt
 
 		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-			char character;
+			std::optional<char> character;
 			do
 			{
 				character = this->get();
-				if (character != delimiter)
+				if (character.has_value() && *character != delimiter)
 				{
-					data += character;
+					data += *character;
 				}
-			} while (character != delimiter && this->ready());
+			} while (character.has_value() && *character != delimiter && this->ready());
 
 			return data;
 		}

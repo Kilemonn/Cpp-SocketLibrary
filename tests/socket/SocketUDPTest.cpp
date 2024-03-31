@@ -155,7 +155,7 @@ namespace kt
         ASSERT_TRUE(client.send(testString));
 
         ASSERT_TRUE(socket.ready());
-        std::string received = std::string(1, socket.get());
+        std::string received = std::string(1, *socket.get());
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(testString, received);
 

@@ -165,20 +165,20 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_TRUE(server.send(testString));
         ASSERT_TRUE(socket.ready());
-        char response = socket.get();
-        ASSERT_EQ(response, 't');
+        std::optional<char> response = socket.get();
+        ASSERT_EQ(*response, 't');
 
         ASSERT_TRUE(socket.ready());
         response = socket.get();
-        ASSERT_EQ(response, 'e');
+        ASSERT_EQ(*response, 'e');
 
         ASSERT_TRUE(socket.ready());
         response = socket.get();
-        ASSERT_EQ(response, 's');
+        ASSERT_EQ(*response, 's');
 
         ASSERT_TRUE(socket.ready());
         response = socket.get();
-        ASSERT_EQ(response, 't');
+        ASSERT_EQ(*response, 't');
         ASSERT_FALSE(socket.ready());
 
         server.close();
