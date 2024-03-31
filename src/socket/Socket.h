@@ -9,12 +9,27 @@
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
 
+#ifdef _WIN32
+
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
+
+#define _WIN32_WINNT 0x501
+
+#include <WinSock2.h>
+#include <ws2bth.h>
+
+#elif __linux__
+
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
+
+#endif
 
 namespace kt
 {
@@ -26,10 +41,20 @@ namespace kt
 			kt::SocketProtocol protocol = kt::SocketProtocol::None;
 			kt::SocketType type = SocketType::None;
 			bool bound = false;
-			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
+			struct sockaddr clientAddress; // For UDP, stores the client address of the last message received
 			int socketDescriptor = 0;
+
+#ifdef _WIN32
+			struct addrinfo* serverAddress;
+			struct addrinfo hints;
+			//SOCKADDR_BTH bluetoothAddress;
+
+#elif __linux__
 			struct sockaddr_in serverAddress; // For Wifi
 			struct sockaddr_rc bluetoothAddress; // For Bluetooth
+
+#endif
+
 			const unsigned int MAX_BUFFER_SIZE = 10240;
 
 			void constructBluetoothSocket();
