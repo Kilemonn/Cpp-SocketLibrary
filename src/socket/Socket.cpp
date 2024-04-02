@@ -129,8 +129,8 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
-		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
+		this->clientAddress = socket.clientAddress;
 		this->serverAddress = socket.serverAddress;
 #ifdef __linux__
 		this->bluetoothAddress = socket.bluetoothAddress;
@@ -153,8 +153,8 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
-		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
 
+		this->clientAddress = socket.clientAddress;
 		this->serverAddress = socket.serverAddress;
 #ifdef __linux__
 		this->bluetoothAddress = socket.bluetoothAddress;
@@ -516,8 +516,9 @@ namespace kt
 			return "";
 		}
 		const unsigned int bufferSize = amountToReceive + 1;
-		std::unique_ptr<char[]>data = std::make_unique<char[]>(bufferSize);
-		memset(&data, 0, bufferSize);
+		std::string data;
+		data.resize(bufferSize);
+
 		unsigned int counter = 0;
 		int flag;
 		std::string result;
@@ -527,13 +528,15 @@ namespace kt
 		{
 			do
 			{
-				flag = recv(this->socketDescriptor, data.get(), static_cast<int>(amountToReceive - counter), 0);
+				flag = recv(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive - counter), 0);
 				
 				if (flag < 1)
 				{
 					return result;
 				}
-				result += std::string(data.get());
+				// Need to substring to remove null terminating byte
+				result += data.substr(0, data.size() - 1);
+				data.clear();
 				counter += flag;
 			} while (counter < amountToReceive && this->ready());
 		}
@@ -541,13 +544,14 @@ namespace kt
 		{
 			// UDP is odd, and will consume the entire datagram after a single read even if not all bytes are read
 			socklen_t addressLength = sizeof(this->clientAddress);
-			flag = recvfrom(this->socketDescriptor, data.get(), static_cast<int>(amountToReceive), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 
 			if (flag < 1)
 			{
 				return result;
 			}
-			result += std::string(data.get());
+			// Need to substring to remove null terminating byte
+			result += data.substr(0, data.size() - 1);
 		}
 		return result;
 	}
@@ -592,18 +596,19 @@ namespace kt
 		}
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			std::unique_ptr<char[]> temp = std::make_unique<char[]>(this->MAX_BUFFER_SIZE + 1);
-			memset(&temp, 0, sizeof(temp));
+			std::string temp;
+			temp.reserve(this->MAX_BUFFER_SIZE + 1);
+
 			socklen_t addressLength = sizeof(this->clientAddress);
 			
-			flag = recvfrom(this->socketDescriptor, temp.get(), static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 
 			if (flag < 1)
 			{
 				return data;
 			}
-
-			data += std::string(temp.get());
+			// Need to substring to remove null terminating byte
+			data += temp.substr(0, temp.size() - 1);
 			size_t delimiterIndex = data.find_first_of(delimiter);
 			if (delimiterIndex != std::string::npos)
 			{
