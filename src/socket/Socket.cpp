@@ -22,6 +22,7 @@
 #define _WIN32_WINNT 0x501
 
 #include <winsock2.h>
+#include <winerror.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
@@ -207,66 +208,61 @@ namespace kt
 
 	void Socket::constructWifiSocket()
 	{
+		const int socketFamily = AF_INET;
+		const int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
+		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
+		
 #ifdef _WIN32
 		WSADATA wsaData;
 		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
 		{
 			throw SocketException("WSAStartup Failed. " + std::to_string(res));
 		}
-
-		memset(&this->hints, 0, sizeof(this->hints));
-		this->hints.ai_family = AF_INET;
-		this->hints.ai_socktype = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
-		this->hints.ai_protocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
-
-		if (getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0)
-		{
-			throw SocketException("Unable to retrieving host address: " + std::string(std::strerror(errno)));
-		}
-
-		this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
+		
+		this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
 		if (this->socketDescriptor == 0)
 		{
-			throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
-		}
-
-		if (this->protocol == kt::SocketProtocol::TCP)
-		{
-			if (connect(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == -1)
-			{
-				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
-			}
+			throw SocketException("Error establishing Wifi socket: " + this->getErrorCode());
 		}
 
 #elif __linux__
-		int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
-	    this->socketDescriptor = socket(AF_INET, socketProtocol, 0);
-
+		this->socketDescriptor = socket(socketFamily, socketType, 0);
 	    if (this->socketDescriptor == -1)
 	    {
-	    	throw SocketException("Error establishing Wifi socket: " + std::string(std::strerror(errno)));
+	    	throw SocketException("Error establishing Wifi socket: " + this->getErrorCode());
 	    }
 
+#endif
 		struct hostent* server = gethostbyname(this->hostname.c_str());
-		if (server != nullptr)
+		if (!this->hostname.empty() && server != nullptr)
 		{
 			memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 			this->serverAddress.sin_family = AF_INET;
-			bcopy((char *) server->h_addr, (char *) &this->serverAddress.sin_addr.s_addr, server->h_length);
+			memcpy((char*)&this->serverAddress.sin_addr.s_addr, (char*)server->h_addr, server->h_length);
 			this->serverAddress.sin_port = htons(this->port);
 		}
 		else
 		{
-			throw SocketException("Unable to resolve IP of destination address with hostname: " + this->hostname + ".");
+			throw SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "].");
 		}
 
 		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-			if (connect(this->socketDescriptor, (struct sockaddr *)&this->serverAddress, sizeof(this->serverAddress)) == -1)
+			if (int res = connect(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, sizeof(this->serverAddress)); res == -1)
 			{
-				throw SocketException("Error connecting to Wifi server: " + std::string(std::strerror(errno)));
+				this->close();
+				throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + this->getErrorCode());
 			}
 		}
+	}
+
+	std::string Socket::getErrorCode() const
+	{
+#ifdef _WIN32
+		return std::to_string(WSAGetLastError());
+
+#elif __linux__
+		return std::string(std::strerror(errno));
 
 #endif
 	}
@@ -278,7 +274,6 @@ namespace kt
 	void Socket::close()
 	{
 #ifdef _WIN32
-		freeaddrinfo(this->serverAddress);
 		closesocket(this->socketDescriptor);
 
 #elif __linux__
@@ -375,6 +370,7 @@ namespace kt
 
 		// Need this->socketDescriptor + 1 here
 		int res = select(this->socketDescriptor + 1, &sReady, nullptr, nullptr, &timeOutVal);
+#ifdef __linux__
 		if (res == 0)
 		{
 			if (timeOutVal.tv_usec == 0)
@@ -386,6 +382,7 @@ namespace kt
 				return 1;
 			}
 		}
+#endif
 		return res;
 	}
 

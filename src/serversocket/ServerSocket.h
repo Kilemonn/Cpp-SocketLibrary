@@ -51,6 +51,7 @@ namespace kt
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
+
 			std::string getErrorCode() const;
 
 		public:

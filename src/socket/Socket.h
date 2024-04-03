@@ -41,19 +41,16 @@ namespace kt
 			kt::SocketProtocol protocol = kt::SocketProtocol::None;
 			kt::SocketType type = SocketType::None;
 			bool bound = false;
+			struct sockaddr_in serverAddress; // For Wifi
+			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
 
 #ifdef _WIN32
 			SOCKET socketDescriptor = 0;
-			struct addrinfo* serverAddress;
-			struct addrinfo hints;
-			struct addrinfo* clientAddress; // For UDP, stores the client address of the last message received
 			//SOCKADDR_BTH bluetoothAddress;
 
 #elif __linux__
 			int socketDescriptor = 0;
-			struct sockaddr_in serverAddress; // For Wifi
 			struct sockaddr_rc bluetoothAddress; // For Bluetooth
-			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
 
 #endif
 
@@ -63,6 +60,8 @@ namespace kt
 			void constructWifiSocket();
 			struct sockaddr_in getSendAddress();
 			int pollSocket(const unsigned long = 1000) const;
+
+			std::string getErrorCode() const;
 
 		public:
 			Socket() = default;

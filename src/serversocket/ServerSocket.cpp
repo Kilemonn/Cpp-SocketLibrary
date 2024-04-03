@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <guiddef.h>
 #include <ws2bth.h>
+#include <winerror.h>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -143,8 +144,6 @@ namespace kt
 
 #elif __linux__
         struct sockaddr_rc localAddress = {0};
-        this->socketSize = sizeof(localAddress);
-
         this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
         if (this->socketDescriptor == -1)
@@ -221,7 +220,7 @@ namespace kt
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + this->getErrorCode());
         }
 
-        int socketSize = sizeof(this->serverAddress);
+        socklen_t socketSize = sizeof(this->serverAddress);
         if (this->port == 0)
         {
             if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &socketSize) != 0)
@@ -246,7 +245,7 @@ namespace kt
         return std::to_string(WSAGetLastError());
 
 #elif __linux__
-        return std::string(std::strerror(errno);
+        return std::string(std::strerror(errno));
 
 #endif
     }
@@ -325,7 +324,8 @@ namespace kt
 
 #elif __linux__
         struct sockaddr_rc remoteDevice = { 0 };
-        int temp = ::accept(this->socketDescriptor, (struct sockaddr *) &remoteDevice, &this->socketSize);
+        socklen_t socketSize = sizeof(remoteDevice);
+        int temp = ::accept(this->socketDescriptor, (struct sockaddr *) &remoteDevice, &socketSize);
         if (temp == -1)
         {
             throw SocketException("Failed to accept connection. Socket is in an invalid state.");
@@ -339,7 +339,7 @@ namespace kt
 #endif
 
         struct sockaddr_in address;
-		socklen_t addr_size = sizeof(struct sockaddr_in);
+		socklen_t addr_size = sizeof(address);
 		int res = getpeername(temp, (struct sockaddr *)&address, &addr_size);
 
         std::string hostname;
