@@ -535,7 +535,7 @@ namespace kt
 					return result;
 				}
 				// Need to substring to remove null terminating byte
-				result += data.substr(0, data.size() - 1);
+				result += data.substr(0, flag);
 				data.clear();
 				counter += flag;
 			} while (counter < amountToReceive && this->ready());
@@ -551,7 +551,7 @@ namespace kt
 				return result;
 			}
 			// Need to substring to remove null terminating byte
-			result += data.substr(0, data.size() - 1);
+			result += data.substr(0, flag);
 		}
 		return result;
 	}
@@ -608,7 +608,7 @@ namespace kt
 				return data;
 			}
 			// Need to substring to remove null terminating byte
-			data += temp.substr(0, temp.size() - 1);
+			data += temp.substr(0, flag);
 			size_t delimiterIndex = data.find_first_of(delimiter);
 			if (delimiterIndex != std::string::npos)
 			{
