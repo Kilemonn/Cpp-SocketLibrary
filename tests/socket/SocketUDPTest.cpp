@@ -131,6 +131,7 @@ namespace kt
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "test";
+        ASSERT_FALSE(socket.ready());
         ASSERT_TRUE(client.send(testString));
 
         ASSERT_TRUE(socket.ready());

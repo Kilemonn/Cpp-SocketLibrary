@@ -543,9 +543,10 @@ namespace kt
 				{
 					return result;
 				}
-
+				
 				// Need to substring to remove null terminating byte
 				result += data.substr(0, flag);
+				
 				data.clear();
 				counter += flag;
 			} while (counter < amountToReceive && this->ready());
@@ -557,7 +558,10 @@ namespace kt
 			int flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 			if (flag < 1)
 			{
-				return result;
+				// This is for Windows, in some scenarios Windows will return a -1 flag but the buffer is populated properly
+				// The code it is returning is 10040 this is indicating that the provided buffer is too small for the incoming
+				// message, there is probably some settings we can tweak, however I think this is okay to return for now.
+				return data;
 			}
 
 			// Need to substring to remove null terminating byte
