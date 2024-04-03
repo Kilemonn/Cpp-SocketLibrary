@@ -28,6 +28,8 @@
 #include <guiddef.h>
 #include <ws2bth.h>
 
+#pragma comment(lib, "ws2_32.lib")
+
 #elif __linux__
 
 #include <sys/socket.h>
