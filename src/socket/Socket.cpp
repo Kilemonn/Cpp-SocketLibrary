@@ -613,7 +613,7 @@ namespace kt
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			std::string temp;
-			temp.reserve(this->MAX_BUFFER_SIZE);
+			temp.resize(this->MAX_BUFFER_SIZE);
 			socklen_t addressLength = sizeof(this->clientAddress);
 			
 			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
@@ -621,6 +621,7 @@ namespace kt
 			{
 				return data;
 			}
+
 			// Need to substring to remove null terminating byte
 			data += temp.substr(0, flag);
 			size_t delimiterIndex = data.find_first_of(delimiter);
