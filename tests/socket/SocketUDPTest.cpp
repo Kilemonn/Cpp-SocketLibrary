@@ -69,6 +69,22 @@ namespace kt
     }
 
     /*
+     * Ensure that multiple calls to Socket.bind() fails if another socket is already bound to that port.
+     */
+    TEST_F(SocketUDPTest, UDPBind_WithoutSpecifiedPort)
+    {
+        ASSERT_FALSE(socket.isBound());
+
+        kt::Socket newServer(LOCALHOST, 0, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        ASSERT_FALSE(newServer.isBound());
+        newServer.bind();
+        ASSERT_TRUE(newServer.isBound());
+        ASSERT_NE(0, newServer.getPort()); // Make sure we have looked up and resolved the port number upon successful binding
+
+        newServer.close();
+    }
+
+    /*
      * Test Socket.send(std::string) to ensure that the server socket receives data.
      */
     TEST_F(SocketUDPTest, UDPSendAndReady)
@@ -165,24 +181,21 @@ namespace kt
     }
 
     /*
-     * Ensure that receiveAll reads all the remaining data that was sent by the client.
+     * Throw in ReceiveAll for UDP, since ReceiveAmount should be used instead.
      */
     TEST_F(SocketUDPTest, UDPReceiveAll)
     {
-        // Skipping this for now
-        GTEST_SKIP();
-
         socket.bind();
 
         Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-
         const std::string testString = "testString";
         ASSERT_TRUE(client.send(testString));
         
         ASSERT_TRUE(socket.ready());
-        std::string response = socket.receiveAll();
-        ASSERT_FALSE(socket.ready());
-        ASSERT_EQ(testString, response);
+        ASSERT_THROW({
+            std::string response = socket.receiveAll();
+            ASSERT_FALSE(socket.ready());
+        }, SocketException);
 
         client.close();
     }
@@ -202,7 +215,7 @@ namespace kt
         
         ASSERT_TRUE(socket.ready());
         std::string response = socket.receiveToDelimiter(delimiter);
-        ASSERT_FALSE(socket.ready()); // Extract parts of the message are lost
+        ASSERT_FALSE(socket.ready()); // Parts of the message past the delimiter will be lost in UDP
         ASSERT_EQ(response, testString);
 
         client.close();

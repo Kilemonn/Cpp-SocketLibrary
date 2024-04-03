@@ -305,6 +305,23 @@ namespace kt
 			{
 				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
 			}
+
+			if (this->port == 0)
+			{
+#ifdef _WIN32
+			// TODO
+#elif __linux__
+				socklen_t socketSize = sizeof(this->serverAddress);
+				if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &socketSize) != 0)
+				{
+					this->close();
+					throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + std::string(std::strerror(errno)));
+				}
+
+				this->port = ntohs(this->serverAddress.sin_port);
+			}
+#endif
+
 			return this->bound;
 		}
 		return false;
@@ -515,25 +532,25 @@ namespace kt
 		{
 			return "";
 		}
-		const unsigned int bufferSize = amountToReceive + 1;
-		std::string data;
-		data.resize(bufferSize);
 
-		unsigned int counter = 0;
-		int flag;
+		std::string data;
+		data.resize(amountToReceive);
+
 		std::string result;
-		result.reserve(bufferSize - 1);
+		result.reserve(amountToReceive);
 
 		if (this->protocol == kt::SocketProtocol::TCP)
 		{
+			unsigned int counter = 0;
+
 			do
 			{
-				flag = recv(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive - counter), 0);
-				
+				int flag = recv(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive - counter), 0);
 				if (flag < 1)
 				{
 					return result;
 				}
+
 				// Need to substring to remove null terminating byte
 				result += data.substr(0, flag);
 				data.clear();
@@ -544,12 +561,12 @@ namespace kt
 		{
 			// UDP is odd, and will consume the entire datagram after a single read even if not all bytes are read
 			socklen_t addressLength = sizeof(this->clientAddress);
-			flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
-
+			int flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 			if (flag < 1)
 			{
 				return result;
 			}
+
 			// Need to substring to remove null terminating byte
 			result += data.substr(0, flag);
 		}
@@ -573,7 +590,6 @@ namespace kt
 		}
 
 		std::string data;
-		int flag;
 
 		if (!this->ready())
 		{
@@ -597,12 +613,10 @@ namespace kt
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			std::string temp;
-			temp.reserve(this->MAX_BUFFER_SIZE + 1);
-
+			temp.reserve(this->MAX_BUFFER_SIZE);
 			socklen_t addressLength = sizeof(this->clientAddress);
 			
-			flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
-
+			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
 			if (flag < 1)
 			{
 				return data;
@@ -629,6 +643,11 @@ namespace kt
 	 */
 	std::string Socket::receiveAll(const unsigned long timeout)
 	{
+		if (this->protocol == SocketProtocol::UDP)
+		{
+			throw SocketException("Socket::receiveAll(unsigned long) is not supported for UDP socket configuration. Please use Socket::receiveAmount(unsigned int) instead.");
+		}
+
 		std::string result;
 		result.reserve(1024);
 		bool hitEOF = false;
