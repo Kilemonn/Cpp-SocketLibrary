@@ -79,6 +79,7 @@ namespace kt
         this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
+
 #ifdef __linux__
         this->socketSize = socket.socketSize;
 
@@ -98,6 +99,7 @@ namespace kt
         this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
+
 #ifdef __linux__
         this->socketSize = socket.socketSize;
 
@@ -182,6 +184,12 @@ namespace kt
     void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
 #ifdef _WIN32
+        WSADATA wsaData;
+        if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
+        {
+            throw SocketException("WSAStartup Failed: " + std::to_string(res));
+        }
+
         memset(&this->hints, 0, sizeof(this->hints));
 
         this->hints.ai_family = AF_INET;
@@ -348,9 +356,7 @@ namespace kt
         unsigned int portNum = 0;
 		if (res == 0)
 		{ 
-			char ip[20];
-    		strncpy(ip, inet_ntoa(address.sin_addr), 20);
-			hostname = std::string(ip);
+			hostname = std::string(inet_ntoa(address.sin_addr));
             portNum = htons(address.sin_port);
 		}
 
