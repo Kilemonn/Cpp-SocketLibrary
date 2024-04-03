@@ -208,6 +208,12 @@ namespace kt
 	void Socket::constructWifiSocket()
 	{
 #ifdef _WIN32
+		WSADATA wsaData;
+		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
+		{
+			throw SocketException("WSAStartup Failed. " + std::to_string(res));
+		}
+
 		memset(&this->hints, 0, sizeof(this->hints));
 		this->hints.ai_family = AF_INET;
 		this->hints.ai_socktype = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
@@ -692,6 +698,40 @@ namespace kt
 #ifdef _WIN32
 		throw SocketException("Socket::scanDevices(int) is not supported on Windows.");
 
+		/*WSADATA wsaData;
+		int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (res != 0)
+		{
+			throw SocketException("WSAStartup Failed: " + std::to_string(res));
+		}*/
+
+		/*WSAQUERYSET wsaQuery;
+		HANDLE hLoopUp;
+		LPWSAQUERYSET pQuerySet = nullptr;
+		SOCKADDR_BTH tempAddress;
+		DWORD dwSize = 5000 * sizeof(unsigned char);
+		memset(&wsaQuery, 0, sizeof(WSAQUERYSET));
+		wsaQuery.dwSize = sizeof(WSAQUERYSET);
+		wsaQuery.dwNameSpace = NS_BTH;
+		wsaQuery.lpcsaBuffer = nullptr;
+
+		int res = WSALookupServiceBegin(&wsaQuery, LUP_CONTAINERS, &hLoopUp);
+		if (res == -1)
+		{
+			throw SocketException("Unable to search for devices. Could not begin search.");
+		}
+
+		memset(&pQuerySet, 0, sizeof(WSAQUERYSET));
+		pQuerySet->dwSize = sizeof(WSAQUERYSET);
+		pQuerySet->dwNameSpace = NS_BTH;
+		pQuerySet->lpBlob = nullptr;
+
+		while (WSALookupServiceNext(hLoopUp, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, pQuerySet) == 0)
+		{
+			tempAddress = ((SOCKADDR_BTH*) pQuerySet->lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
+			// std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
+		}*/
+
 #elif __linux__
 
 		std::vector<std::pair<std::string, std::string> > devices;
@@ -744,6 +784,31 @@ namespace kt
 	{
 #ifdef _WIN32
 		throw SocketException("Socket::getLocalMACAddress() is not supported on Windows.");
+
+		// Up to 20 Interfaces
+		/*IP_ADAPTER_INFO AdapterInfo[20];
+		DWORD dwBufLen = sizeof(AdapterInfo);
+		DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
+		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
+
+		while (std::string(pAdapterInfo->Description).find("Bluetooth") == std::string::npos)
+		{
+			pAdapterInfo = pAdapterInfo->Next;
+		}
+
+		std::stringstream ss;
+		for (int i = 0; i < 6; i++)
+		{
+			ss << std::hex << std::setfill('0');
+			ss << std::setw(2) << static_cast<unsigned>(pAdapterInfo->Address[i]);
+
+			if (i != 5)
+			{
+				ss << ":";
+			}
+		}
+
+		return ss.str();*/
 
 #elif __linux__
 		int id;
