@@ -310,6 +310,7 @@ namespace kt
 			{
 #ifdef _WIN32
 			// TODO
+
 #elif __linux__
 				socklen_t socketSize = sizeof(this->serverAddress);
 				if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &socketSize) != 0)
@@ -319,8 +320,9 @@ namespace kt
 				}
 
 				this->port = ntohs(this->serverAddress.sin_port);
-			}
+			
 #endif
+			}
 
 			return this->bound;
 		}
