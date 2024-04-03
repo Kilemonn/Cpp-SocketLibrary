@@ -1,6 +1,6 @@
 # Cpp-SocketLibrary
 
-A ServerSocket and Socket library for Linux aiming to support both Wifi and Bluetooth communication.
+A ServerSocket and Socket library for Windows and Linux aiming to support both Wifi and Bluetooth communication.
 
 ## Getting Started
 
@@ -8,21 +8,24 @@ A ServerSocket and Socket library for Linux aiming to support both Wifi and Blue
 
 - [CMake](https://cmake.org/download/) and `make`
 
-The following linux dependencies are required:
+The following **linux** dependencies are required:
 - `libbluetooth-dev`
 - `libglib2.0-dev`
 - `bluez`
 
-### Building the Library and Tests
+### Building the Library and Running the Tests - Linux
 
-1. To build the library run: `cmake . -B build` in the root directory of the repository (`CppSocketLibrary/`).
+1. To build the library, firstly run cmake: `cmake . -B build` in the root directory of the repository (`CppSocketLibrary/`).
 2. Then move into the new `build` folder: `cd build`.
 3. Then you can run `make` to build the library.
+4. Then you can run `make check`.
 
-### Running Tests
+### Building the Library and Running the Tests - Windows
 
-1. Refer to the above to make sure the library and tests are built.
-2. Then you can run `make check`.
+1. To build the library, firstly run cmake: `cmake . -B build` in the root directory of the repository (`CppSocketLibrary/`).
+2. This will create a `.sln` file which can be opened in `Visual Studio`.
+3. Once opened (and with the appropriate windows service packs installed - `MSVC v143 - VS 2022 C++ x64/x86 Spectre-mitigated libs (v14.29-16.11)`)
+4. You can then build and run the `CppSocketLibraryTest` project and it will rebuild the library and run the appropriate tests.
 
 ## Usage Examples
 
