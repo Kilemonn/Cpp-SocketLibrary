@@ -2,15 +2,32 @@
 #ifndef _SERVER_SOCKET_H__
 #define _SERVER_SOCKET_H__
 
+#include <optional>
+
 #include "../socket/Socket.h"
 
 #include "../enums/SocketProtocol.cpp"
 #include "../enums/SocketType.cpp"
 
+#ifdef _WIN32
+
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
+
+#define _WIN32_WINNT 0x501
+
+#include <WinSock2.h>
+#include <ws2bth.h>
+
+#elif __linux__
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+
+#endif
 
 namespace kt
 {
@@ -19,15 +36,23 @@ namespace kt
 		private:
 			unsigned int port;
 			kt::SocketType type = SocketType::None;
-			int socketDescriptor = 0;
 			struct sockaddr_in serverAddress;
-	    	socklen_t socketSize;
+			
+#ifdef _WIN32
+			SOCKET socketDescriptor = 0;
+			// SOCKADDR_BTH bluetoothAddress;
+
+#elif __linux__
+			int socketDescriptor = 0;
+			
+#endif
 
 			void setDiscoverable();
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
-			void randomlyAllocatePort(const unsigned int&);
+
+			std::string getErrorCode() const;
 
 		public:
 			ServerSocket() = default;

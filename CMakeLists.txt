@@ -24,13 +24,16 @@ set(SOURCE
 # Project Configuration - Adding as a lib
 add_library(${PROJECT_NAME} STATIC ${SOURCE} ${HEADERS})
 
-# Add libs
-add_subdirectory(googletest)
+if(CMAKE_HOST_WIN32)
 
-include_directories(/usr/include/glib-2.0)
-include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include)
+endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE bluetooth)
-target_link_libraries(${PROJECT_NAME} PRIVATE glib-2.0)
+if(CMAKE_HOST_UNIX)
+    include_directories(/usr/include/glib-2.0)
+    include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include)
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE bluetooth)
+    target_link_libraries(${PROJECT_NAME} PRIVATE glib-2.0)
+endif()
 
 add_subdirectory(tests)
