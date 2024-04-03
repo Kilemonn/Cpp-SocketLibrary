@@ -36,23 +36,22 @@ namespace kt
 		private:
 			unsigned int port;
 			kt::SocketType type = SocketType::None;
-			int socketDescriptor = 0;
-
+			struct sockaddr_in serverAddress;
+			
 #ifdef _WIN32
-			struct addrinfo* serverAddress;
-			struct addrinfo hints;
+			SOCKET socketDescriptor = 0;
 			// SOCKADDR_BTH bluetoothAddress;
 
 #elif __linux__
-			struct sockaddr_in serverAddress;
-	    	socklen_t socketSize;
-
+			int socketDescriptor = 0;
+			
 #endif
 
 			void setDiscoverable();
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
+			std::string getErrorCode() const;
 
 		public:
 			ServerSocket() = default;

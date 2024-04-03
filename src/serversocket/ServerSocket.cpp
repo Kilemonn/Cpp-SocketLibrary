@@ -8,6 +8,7 @@
 #include "../enums/SocketType.cpp"
 
 #include <iostream>
+#include <cstdlib>
 #include <random>
 #include <ctime>
 #include <cerrno>
@@ -79,11 +80,6 @@ namespace kt
         this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
-
-#ifdef __linux__
-        this->socketSize = socket.socketSize;
-
-#endif
     }
 
     /**
@@ -99,11 +95,6 @@ namespace kt
         this->type = socket.type;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
-
-#ifdef __linux__
-        this->socketSize = socket.socketSize;
-
-#endif
 
         return *this;
     }
@@ -189,64 +180,54 @@ namespace kt
         {
             throw SocketException("WSAStartup Failed: " + std::to_string(res));
         }
+        struct addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
 
-        memset(&this->hints, 0, sizeof(this->hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+        hints.ai_flags = AI_PASSIVE;
 
-        this->hints.ai_family = AF_INET;
-        this->hints.ai_socktype = SOCK_STREAM;
-        this->hints.ai_protocol = IPPROTO_TCP;
-        this->hints.ai_flags = AI_PASSIVE;
+        this->serverAddress.sin_family = AF_INET;
+        this->serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+        this->serverAddress.sin_port = htons(this->port);
 
-        if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0)
+        /*if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &this->hints, &this->serverAddress) != 0)
         {
             throw SocketException("Unable to retrieving Wifi serversocket host address. (Self)");
-        }
+        }*/
         
-        this->socketDescriptor = socket(this->serverAddress->ai_family, this->serverAddress->ai_socktype, this->serverAddress->ai_protocol);
-        if (this->socketDescriptor == 0)
+        this->socketDescriptor = socket(hints.ai_family, hints.ai_socktype, hints.ai_protocol);
+        if (this->socketDescriptor == INVALID_SOCKET)
         {
-            throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
-        }
-
-        if (bind(this->socketDescriptor, this->serverAddress->ai_addr, (int)this->serverAddress->ai_addrlen) == -1)
-        {
-            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
-        }
-
-        if (this->port == 0)
-        {
-            // TODO: Set port to resolve port by the OS
-        }
-
-        if (listen(this->socketDescriptor, static_cast<int>(connectionBacklogSize)) == -1)
-        {
-            this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
+            throw SocketException("Error establishing wifi server socket: " + this->getErrorCode());
         }
 
 #elif __linux__
-        this->socketSize = sizeof(serverAddress);
         this->socketDescriptor = socket(AF_INET, SOCK_STREAM, 0);
         if (this->socketDescriptor == -1) 
         {
-            throw SocketException("Error establishing wifi server socket: " + std::string(std::strerror(errno)));
+            throw SocketException("Error establishing wifi server socket: " + this->getErrorCode());
         }
 
         this->serverAddress.sin_family = AF_INET;
         this->serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
         this->serverAddress.sin_port = htons(this->port);
 
+#endif
+
         if (bind(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) == -1) 
         {
-            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + this->getErrorCode());
         }
 
+        int socketSize = sizeof(this->serverAddress);
         if (this->port == 0)
         {
-            if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &this->socketSize) != 0)
+            if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &socketSize) != 0)
             {
                 this->close();
-                throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + std::string(std::strerror(errno)));
+                throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + this->getErrorCode());
             }
 
             this->port = ntohs(this->serverAddress.sin_port);
@@ -255,8 +236,17 @@ namespace kt
         if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
             this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
+            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + this->getErrorCode());
         }
+    }
+
+    std::string ServerSocket::getErrorCode() const
+    {
+#ifdef _WIN32
+        return std::to_string(WSAGetLastError());
+
+#elif __linux__
+        return std::string(std::strerror(errno);
 
 #endif
     }
@@ -327,7 +317,7 @@ namespace kt
         }
 
 #ifdef _WIN32
-        int temp = ::accept(this->socketDescriptor, nullptr, nullptr);
+        SOCKET temp = ::accept(this->socketDescriptor, nullptr, nullptr);
         if (temp == -1)
         {
             throw SocketException("Failed to accept connection. Socket is in an invalid state.");
@@ -371,7 +361,6 @@ namespace kt
     void ServerSocket::close()
     {
 #ifdef _WIN32
-        freeaddrinfo(this->serverAddress);
         closesocket(this->socketDescriptor);
 
 #elif __linux__
