@@ -311,10 +311,6 @@ namespace kt
 
 			if (this->port == 0)
 			{
-#ifdef _WIN32
-			// TODO
-
-#elif __linux__
 				socklen_t socketSize = sizeof(this->serverAddress);
 				if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &socketSize) != 0)
 				{
@@ -323,8 +319,6 @@ namespace kt
 				}
 
 				this->port = ntohs(this->serverAddress.sin_port);
-			
-#endif
 			}
 
 			return this->bound;
@@ -483,15 +477,7 @@ namespace kt
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			char ip[20];
-			memset(&ip, 0, 20);
-#ifdef _WIN32
-			// TODO
-
-#elif __linux__
-			strcpy(ip, inet_ntoa(this->clientAddress.sin_addr));
-#endif
-			std::string asString(ip);
+			std::string asString(inet_ntoa(this->clientAddress.sin_addr));
 			// Since we zero out the address, we need to check its not default initialised
 			return asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
 		}

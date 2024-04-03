@@ -75,11 +75,12 @@ namespace kt
     {
         ASSERT_FALSE(socket.isBound());
 
-        kt::Socket newServer(LOCALHOST, 0, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        unsigned int port = 0;
+        kt::Socket newServer(LOCALHOST, port, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         ASSERT_FALSE(newServer.isBound());
         newServer.bind();
         ASSERT_TRUE(newServer.isBound());
-        ASSERT_NE(0, newServer.getPort()); // Make sure we have looked up and resolved the port number upon successful binding
+        ASSERT_NE(port, newServer.getPort()); // Make sure we have looked up and resolved the port number upon successful binding
 
         newServer.close();
     }
