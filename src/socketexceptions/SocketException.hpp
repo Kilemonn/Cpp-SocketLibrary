@@ -1,6 +1,6 @@
 
-#ifndef _SOCKET_ERROR_HPP__
-#define _SOCKET_ERROR_HPP__
+#ifndef _SOCKET_EXCEPTION_HPP__
+#define _SOCKET_EXCEPTION_HPP__
 
 #include <iostream>
 #include <stdexcept>
@@ -14,4 +14,4 @@ namespace kt
 	};
 }
 
-#endif // _SOCKET_ERROR_HPP__
+#endif // _SOCKET_EXCEPTION_HPP__

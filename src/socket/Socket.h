@@ -29,6 +29,9 @@
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
 
+// Typedef to match the windows typedef since they are different underlying types
+typedef int SOCKET;
+
 #endif
 
 namespace kt
@@ -41,16 +44,15 @@ namespace kt
 			kt::SocketProtocol protocol = kt::SocketProtocol::None;
 			kt::SocketType type = SocketType::None;
 			bool bound = false;
-			struct sockaddr_in serverAddress; // For Wifi
-			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
+			sockaddr serverAddress; // For Wifi
+			sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
+			SOCKET socketDescriptor = 0;
 
 #ifdef _WIN32
-			SOCKET socketDescriptor = 0;
 			//SOCKADDR_BTH bluetoothAddress;
 
 #elif __linux__
-			int socketDescriptor = 0;
-			struct sockaddr_rc bluetoothAddress; // For Bluetooth
+			sockaddr_rc bluetoothAddress; // For Bluetooth
 
 #endif
 
@@ -58,15 +60,13 @@ namespace kt
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
-			struct sockaddr_in getSendAddress();
+			sockaddr_in getSendAddress();
 			int pollSocket(const unsigned long = 1000) const;
-
-			std::string getErrorCode() const;
 
 		public:
 			Socket() = default;
 			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
-			Socket(const int&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
+			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
 
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);

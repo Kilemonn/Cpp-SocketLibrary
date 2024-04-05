@@ -1,6 +1,6 @@
 
-#ifndef _BINDING_ERROR_HPP__
-#define _BINDING_ERROR_HPP__
+#ifndef _BINDING_EXCEPTION_HPP__
+#define _BINDING_EXCEPTION_HPP__
 
 #include <iostream>
 #include <stdexcept>
@@ -16,4 +16,4 @@ namespace kt
 	};
 }
 
-#endif // _BINDING_ERROR_HPP__
+#endif // _BINDING_EXCEPTION_HPP__

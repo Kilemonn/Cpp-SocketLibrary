@@ -12,6 +12,7 @@ set(HEADERS
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
         src/socketexceptions/TimeoutException.hpp
+        src/socketexceptions/SocketError.h
 )
 
 set(SOURCE
@@ -19,6 +20,7 @@ set(SOURCE
         src/enums/SocketType.cpp
         src/serversocket/ServerSocket.cpp
         src/socket/Socket.cpp
+        src/socketexceptions/SocketError.cpp
 )
 
 # Project Configuration - Adding as a lib

@@ -1,6 +1,6 @@
 
-#ifndef _TIMEOUT_ERROR_HPP__
-#define _TIMEOUT_ERROR_HPP__
+#ifndef _TIMEOUT_EXCEPTION_HPP__
+#define _TIMEOUT_EXCEPTION_HPP__
 
 #include <iostream>
 #include <stdexcept>
@@ -16,4 +16,4 @@ namespace kt
 	};
 }
 
-#endif // _TIMEOUT_ERROR_HPP__
+#endif // _TIMEOUT_EXCEPTION_HPP__

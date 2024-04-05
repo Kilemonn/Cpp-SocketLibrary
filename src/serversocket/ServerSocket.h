@@ -27,6 +27,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+// Typedef to match the windows typedef since they are different underlying types
+typedef int SOCKET;
+
 #endif
 
 namespace kt
@@ -36,23 +39,13 @@ namespace kt
 		private:
 			unsigned int port;
 			kt::SocketType type = SocketType::None;
-			struct sockaddr_in serverAddress;
-			
-#ifdef _WIN32
+			sockaddr_in serverAddress;
 			SOCKET socketDescriptor = 0;
-			// SOCKADDR_BTH bluetoothAddress;
-
-#elif __linux__
-			int socketDescriptor = 0;
-			
-#endif
 
 			void setDiscoverable();
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
-
-			std::string getErrorCode() const;
 
 		public:
 			ServerSocket() = default;

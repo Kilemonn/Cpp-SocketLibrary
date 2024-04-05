@@ -189,5 +189,31 @@ namespace kt
         socket.close();
         ASSERT_FALSE(socket.connected());
     }
+
+    TEST_F(SocketTCPTest, IPV6Address)
+    {
+        // 0000:0000:0000:0000:0000:0000:0000:0001
+        // 0:0:0:0:0:0:0:1
+        // ::1
+        const std::string ipv6 = "0:0:0:0:0:0:0:1"; // "0000:0000:0000:0000:0000:0000:0000:0001";
+        Socket ipv6Socket(ipv6, serverSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+
+        // Accept the connection from the constructor
+        Socket server = serverSocket.accept();
+        ASSERT_TRUE(server.connected());
+
+        // Accept ipv6 connnection
+        Socket ipv6Server = serverSocket.accept();
+        ASSERT_TRUE(ipv6Server.connected());
+
+        const std::string testString = "Test";
+        ASSERT_TRUE(ipv6Socket.send(testString));
+        const std::string response = ipv6Server.receiveAmount(testString.size());
+        ASSERT_EQ(response, testString);
+
+        server.close();
+        ipv6Server.close();
+        ipv6Socket.close();
+    }
     
 }
