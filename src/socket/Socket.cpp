@@ -210,7 +210,6 @@ namespace kt
 
 	void Socket::constructWifiSocket()
 	{
-		int socketFamily = AF_UNSPEC; // Using unspecified socket family to allow for IPV4 AND IPV6
 		const int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
 		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
 		
@@ -223,53 +222,49 @@ namespace kt
 
 #endif
 
-		addrinfo* info = nullptr;
+		addrinfo* resolvedAddresses = nullptr;
 		addrinfo hints{};
+		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = socketType;
 		hints.ai_protocol = socketProtocol;
-		int res = getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &hints, &info);
-		if (res == 0 && !this->hostname.empty() && info != nullptr)
+		int res = getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &hints, &resolvedAddresses);
+		if (res != 0 || this->hostname.empty() || resolvedAddresses == nullptr)
 		{
-			socketFamily = info->ai_addr->sa_family;
-			memset(&this->serverAddress, 0, sizeof(this->serverAddress));
-			if (socketFamily == AF_INET)
+			if (resolvedAddresses != nullptr)
 			{
-				sockaddr_in* addr = (sockaddr_in*)&this->serverAddress;
-				std::memcpy(&this->serverAddress, info->ai_addr, info->ai_addrlen);
-				addr->sin_port = htons(this->port);
-			}
-			else if (socketFamily == AF_INET6)
-			{
-				sockaddr_in6* addr = (sockaddr_in6*)&this->serverAddress;
-				std::memcpy(&this->serverAddress, info->ai_addr, info->ai_addrlen);
-				addr->sin6_port = htons(this->port);
-			}
-			
-			freeaddrinfo(info);
-		}
-		else
-		{
-			if (info != nullptr)
-			{
-				freeaddrinfo(info);
+				freeaddrinfo(resolvedAddresses);
 			}
 
 			throw SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "]. Look up response code: [" + std::to_string(res) + "].");
 		}
-		
-		this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
-		if (isInvalidSocket(this->socketDescriptor))
-		{
-			throw SocketException("Error establishing Wifi socket: " + getErrorCode());
-		}
 
+		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
+		// we will return, otherwise we will throw is we are unable to connect to any.
 		if (this->protocol == kt::SocketProtocol::TCP)
 		{
-			if (int res = connect(this->socketDescriptor, &this->serverAddress, sizeof(this->serverAddress)); res == -1)
-			{
+			for (addrinfo* addr = resolvedAddresses; addr != nullptr; addr = addr->ai_next) 
+			{	
+				this->socketDescriptor = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+				if (!isInvalidSocket(this->socketDescriptor))
+				{
+					int connectionResult = connect(this->socketDescriptor, addr->ai_addr, addr->ai_addrlen);
+					if (connectionResult == 0)
+					{
+						std::memcpy(&this->serverAddress, addr->ai_addr, addr->ai_addrlen);
+						freeaddrinfo(resolvedAddresses);
+						// Return once we successfully connect to one
+						return;
+					}
+				}
 				this->close();
-				throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + getErrorCode());
+				this->socketDescriptor = -1;
 			}
+			freeaddrinfo(resolvedAddresses);
+			throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + getErrorCode());
+		}
+		else
+		{
+			freeaddrinfo(resolvedAddresses);
 		}
 	}
 
