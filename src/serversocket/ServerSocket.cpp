@@ -174,7 +174,7 @@ namespace kt
 
     void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
-        const int socketFamily = AF_INET;
+        const int socketFamily = AF_INET6;
         const int socketType = SOCK_STREAM;
         const int socketProtocol = IPPROTO_TCP;
 
@@ -186,9 +186,11 @@ namespace kt
         }
 #endif
 
-        this->serverAddress.sin_family = socketFamily;
-        this->serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-        this->serverAddress.sin_port = htons(this->port);
+        memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
+        this->serverAddress.sin6_family = socketFamily;
+        // TODO?
+        // this->serverAddress.sin6_addr.u = htonl(INADDR_ANY);
+        this->serverAddress.sin6_port = htons(this->port);
 
         this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
         if (isInvalidSocket(this->socketDescriptor))
@@ -196,8 +198,21 @@ namespace kt
             throw SocketException("Error establishing wifi server socket: " + getErrorCode());
         }
 
+        const int enableOption = 1;
+        if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
+        {
+            throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
+        }
+
+        const int disableOption = 1;
+        if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+        {
+            throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+        }
+
         if (bind(this->socketDescriptor, (sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) == -1) 
         {
+            this->close();
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
         }
 
@@ -210,7 +225,7 @@ namespace kt
                 throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
             }
 
-            this->port = ntohs(this->serverAddress.sin_port);
+            this->port = ntohs(this->serverAddress.sin6_port);
         }
 
         if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
@@ -268,7 +283,7 @@ namespace kt
         {
             fd_set sready;
             timeval timeOutVal;
-            memset((char *)&timeOutVal, 0, sizeof(timeOutVal));
+            memset((char *)&timeOutVal, '\0', sizeof(timeOutVal));
             timeOutVal.tv_usec = static_cast<int>(timeout);
 
             FD_ZERO(&sready);

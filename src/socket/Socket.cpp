@@ -70,7 +70,7 @@ namespace kt
 		this->protocol = protocol;
 		this->serverAddress = { 0 };
 		this->socketDescriptor = 0;
-		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
+		memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
 
 #ifdef __linux__
 		this->bluetoothAddress = { 0 };
@@ -118,8 +118,8 @@ namespace kt
 		this->protocol = protocol;
 		this->socketDescriptor = socketDescriptor;
 		this->type = type;
-		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
-		memset(&this->serverAddress, 0, sizeof(this->serverAddress));
+		memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
+		memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
 	}
 
 	/**
@@ -298,7 +298,7 @@ namespace kt
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			// Clear client address
-			memset(&this->clientAddress, 0, sizeof(this->clientAddress));
+			memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
 
 			sockaddr_in localAddress{};
 			localAddress.sin_family = AF_INET;
@@ -307,7 +307,7 @@ namespace kt
 			this->bound = ::bind(this->socketDescriptor, (sockaddr*) &localAddress, sizeof(localAddress)) != -1;
 			if (!this->bound)
 			{
-				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
 			}
 
 			if (this->port == 0)
@@ -316,7 +316,7 @@ namespace kt
 				if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress, &socketSize) != 0)
 				{
 					this->close();
-					throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + std::string(std::strerror(errno)));
+					throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
 				}
 
 				this->port = ntohs(((sockaddr_in*)&this->serverAddress)->sin_port);
@@ -357,7 +357,7 @@ namespace kt
 		fd_set sReady;
 		timeval timeOutVal;
 
-		memset((char*) &timeOutVal, 0, sizeof(timeOutVal));
+		memset((char*) &timeOutVal, '\0', sizeof(timeOutVal));
 		timeOutVal.tv_usec = static_cast<long>(timeout);
 
 		FD_ZERO(&sReady);
@@ -497,7 +497,7 @@ namespace kt
 	sockaddr_in Socket::getSendAddress()
 	{
 		sockaddr_in newAddress;
-		memset(&newAddress, 0, sizeof(newAddress));
+		memset(&newAddress, '\0', sizeof(newAddress));
 
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
@@ -751,7 +751,7 @@ namespace kt
 	    for (int i = 0; i < numberOfResponses; i++) 
 	    {
 	        ba2str( &(ii + i)->bdaddr, deviceAddress);
-			memset(&deviceName, 0, sizeof(deviceName));
+			memset(&deviceName, '\0', sizeof(deviceName));
 	        if (hci_read_remote_name(tempSocket, &(ii+i)->bdaddr, sizeof(deviceName), deviceName, 0) < 0)
 	        {
 	        	strcpy(deviceName, "[unknown]");

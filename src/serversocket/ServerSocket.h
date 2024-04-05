@@ -19,6 +19,7 @@
 
 #include <WinSock2.h>
 #include <ws2bth.h>
+#include <ws2tcpip.h>
 
 #elif __linux__
 
@@ -39,7 +40,7 @@ namespace kt
 		private:
 			unsigned int port;
 			kt::SocketType type = SocketType::None;
-			sockaddr_in serverAddress;
+			sockaddr_in6 serverAddress;
 			SOCKET socketDescriptor = 0;
 
 			void setDiscoverable();
