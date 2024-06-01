@@ -36,7 +36,7 @@ The following **linux** dependencies are required:
 kt::ServerSocket server(kt::SocketType::Wifi, 56756);
 
 // Create new TCP socket
-kt::Socket client("127.0.0.1", 56756, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+kt::Socket client("localhost", 56756, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
 // Accept connection to server
 kt::Socket serverSocket = server.accept();
@@ -55,12 +55,12 @@ server.close();
 - UDP Example:
 
 ```cpp
-kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+kt::Socket serverSocket("localhost", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 // Which ever socket is acting as the "server" needs to bind, only a single process can be bound 
 // to a specific port at a time
 serverSocket.bind();
 
-kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+kt::Socket client("localhost", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
 const std::string testString = "UDP Test";
 const char delimiter = '~';

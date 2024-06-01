@@ -7,7 +7,7 @@
 #include "../../src/serversocket/ServerSocket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
 
-const std::string LOCALHOST = "127.0.0.1";
+const std::string LOCALHOST = "localhost"; //"127.0.0.1";
 
 namespace kt
 {

@@ -57,7 +57,7 @@ namespace kt
     {
         ServerSocket server2(serverSocket);
 
-        Socket client("127.0.0.1", serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+        Socket client("localhost", serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
         Socket serverClient = server2.accept();
         const std::string testString = "test";

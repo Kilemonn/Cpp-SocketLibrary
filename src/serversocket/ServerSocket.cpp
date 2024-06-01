@@ -185,35 +185,53 @@ namespace kt
             throw SocketException("WSAStartup Failed: " + std::to_string(res));
         }
 #endif
+        /*addrinfo hints;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = socketFamily;
+        hints.ai_socktype = socketType;
+        hints.ai_protocol = socketProtocol;
+        hints.ai_flags = AI_PASSIVE;*/
 
-        memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
+        memset(&this->serverAddress, 0, sizeof(this->serverAddress));
         this->serverAddress.sin6_family = socketFamily;
-        // TODO?
-        // this->serverAddress.sin6_addr.u = htonl(INADDR_ANY);
+        this->serverAddress.sin6_addr = in6addr_loopback;
         this->serverAddress.sin6_port = htons(this->port);
 
         this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
         if (isInvalidSocket(this->socketDescriptor))
         {
+            //freeaddrinfo(resolvedAddresses);
             throw SocketException("Error establishing wifi server socket: " + getErrorCode());
+        }
+        else
+        {
+            std::cout << "Created socket is good..." << std::endl;
         }
 
         const int enableOption = 1;
         if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
         {
+            //freeaddrinfo(resolvedAddresses);
             throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
         }
 
-        const int disableOption = 1;
+        const int disableOption = 0;
         if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
         {
+            //freeaddrinfo(resolvedAddresses);
             throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
         }
 
-        if (bind(this->socketDescriptor, (sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) == -1) 
+        // std::memcpy(&this->serverAddress, addr->ai_addr, sizeof(addr->ai_addrlen));
+        if (bind(this->socketDescriptor, (sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) == -1)
         {
+            //freeaddrinfo(resolvedAddresses);
             this->close();
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
+        }
+        else
+        {
+            std::cout << "Bind is good..." << std::endl;
         }
 
         socklen_t socketSize = sizeof(this->serverAddress);
@@ -221,6 +239,7 @@ namespace kt
         {
             if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress, &socketSize) != 0)
             {
+                //freeaddrinfo(resolvedAddresses);
                 this->close();
                 throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
             }
@@ -228,12 +247,39 @@ namespace kt
             this->port = ntohs(this->serverAddress.sin6_port);
         }
 
-        if(listen(this->socketDescriptor, connectionBacklogSize) == -1)
+        if (listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
+            //freeaddrinfo(resolvedAddresses);
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + getErrorCode());
         }
+        else
+        {
+            std::cout << "Listen successful" << std::endl;
+            // freeaddrinfo(resolvedAddresses);
+            return;
+        }
+
+        /*addrinfo* resolvedAddresses = nullptr;
+        int res = getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hints, &resolvedAddresses);
+        if (res != 0)
+        {
+            throw SocketException("Failed to setup socket server: " + getErrorCode());
+        }
+
+        addrinfo* addr = resolvedAddresses;
+
+        while (addr != nullptr)
+        {
+            
+            
+            addr = addr->ai_next;
+            std::cout << "Moving to next address" << std::endl;
+        }
+        std::cout << "Iterated through all addresses" << std::endl;
+        freeaddrinfo(resolvedAddresses);*/
     }
+
 
     void ServerSocket::setDiscoverable()
     {

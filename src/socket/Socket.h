@@ -19,6 +19,7 @@
 
 #include <WinSock2.h>
 #include <ws2bth.h>
+#include <ws2tcpip.h>
 
 #elif __linux__
 
@@ -45,7 +46,7 @@ namespace kt
 			kt::SocketType type = SocketType::None;
 			bool bound = false;
 			sockaddr serverAddress; // For Wifi
-			sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
+			sockaddr_in6 clientAddress; // For UDP, stores the client address of the last message received
 			SOCKET socketDescriptor = 0;
 
 #ifdef _WIN32
@@ -60,7 +61,7 @@ namespace kt
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
-			sockaddr_in getSendAddress();
+			sockaddr_in getSendAddress() const;
 			int pollSocket(const unsigned long = 1000) const;
 
 		public:

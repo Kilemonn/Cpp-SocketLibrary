@@ -7,7 +7,7 @@
 #include "../../src/socket/Socket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
 
-const std::string LOCALHOST = "127.0.0.1";
+const std::string LOCALHOST = "localhost";
 const int PORT_NUMBER = 12345;
 
 namespace kt

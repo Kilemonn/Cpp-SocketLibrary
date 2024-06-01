@@ -214,7 +214,7 @@ namespace kt
 		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
 		
 #ifdef _WIN32
-		WSADATA wsaData;
+		WSADATA wsaData{};
 		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
 		{
 			throw SocketException("WSAStartup Failed. " + std::to_string(res));
@@ -244,18 +244,28 @@ namespace kt
 		{
 			for (addrinfo* addr = resolvedAddresses; addr != nullptr; addr = addr->ai_next) 
 			{	
+				std::cout << "Processing address client: " << addr->ai_family << " " << ((sockaddr_in6*)addr->ai_addr)->sin6_port << " " << std::endl;
 				this->socketDescriptor = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 				if (!isInvalidSocket(this->socketDescriptor))
 				{
 					int connectionResult = connect(this->socketDescriptor, addr->ai_addr, addr->ai_addrlen);
 					if (connectionResult == 0)
 					{
+						memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 						std::memcpy(&this->serverAddress, addr->ai_addr, addr->ai_addrlen);
 						freeaddrinfo(resolvedAddresses);
 						// Return once we successfully connect to one
 						return;
 					}
+					else
+					{
+						std::cout << "connectionResult: " << connectionResult << std::endl;
+					}
 				}
+#ifdef _WIN32
+				int errorCode = WSAGetLastError();
+				std::cout << "ERROR CODE: " << errorCode << " Port: " << addr->ai_addr->sa_family << std::endl;
+#endif
 				this->close();
 				this->socketDescriptor = -1;
 			}
@@ -300,10 +310,22 @@ namespace kt
 			// Clear client address
 			memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
 
-			sockaddr_in localAddress{};
-			localAddress.sin_family = AF_INET;
-			localAddress.sin_port = htons(this->port);
-			localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+			/*const int enableOption = 1;
+			if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
+			{
+				throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
+			}*/
+
+			/*const int disableOption = 0;
+			if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+			{
+				throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+			}*/
+
+			sockaddr_in6 localAddress{};
+			localAddress.sin6_family = AF_INET6;
+			localAddress.sin6_port = htons(this->port);
+			localAddress.sin6_addr = in6addr_loopback;
 			this->bound = ::bind(this->socketDescriptor, (sockaddr*) &localAddress, sizeof(localAddress)) != -1;
 			if (!this->bound)
 			{
@@ -319,7 +341,7 @@ namespace kt
 					throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
 				}
 
-				this->port = ntohs(((sockaddr_in*)&this->serverAddress)->sin_port);
+				this->port = ntohs(((sockaddr_in6*)&this->serverAddress)->sin6_port);
 			}
 
 			return this->bound;
@@ -354,8 +376,8 @@ namespace kt
 
 	int Socket::pollSocket(const unsigned long timeout) const
 	{
-		fd_set sReady;
-		timeval timeOutVal;
+		fd_set sReady{};
+		timeval timeOutVal{};
 
 		memset((char*) &timeOutVal, '\0', sizeof(timeOutVal));
 		timeOutVal.tv_usec = static_cast<long>(timeout);
@@ -478,8 +500,8 @@ namespace kt
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			// inet_ntop(); - For IPV6 resolution
-			std::string asString(inet_ntoa(this->clientAddress.sin_addr));
+			// inet_ntop(); - For IPV6 resolution TODO:
+			std::string asString; // inet_ntop(this->clientAddress.sin6_addr);
 			// Since we zero out the address, we need to check its not default initialised
 			return asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
 		}
@@ -494,7 +516,7 @@ namespace kt
 		return this->hostname;
 	}
 
-	sockaddr_in Socket::getSendAddress()
+	sockaddr_in Socket::getSendAddress() const
 	{
 		sockaddr_in newAddress;
 		memset(&newAddress, '\0', sizeof(newAddress));
