@@ -197,12 +197,15 @@ namespace kt
             throw SocketException("Error establishing wifi server socket: " + getErrorCode());
         }
 
+#ifdef __linux__
         const int enableOption = 1;
         if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
         {
             throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
         }
+#endif
 
+#ifdef _WIN32
         if (this->protocolVersion == InternetProtocolVersion::IPV6)
         {
             const int disableOption = 0;
@@ -211,8 +214,9 @@ namespace kt
                 throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
             }
         }
+#endif
 
-        if (bind(this->socketDescriptor, (sockaddr*)&this->serverAddress.address, socketSize) == -1)
+        if (bind(this->socketDescriptor, &this->serverAddress.address, socketSize) == -1)
         {
             this->close();
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
@@ -256,7 +260,7 @@ namespace kt
     void ServerSocket::initialisePortNumber()
     {
         socklen_t socketSize = sizeof(this->serverAddress);
-        if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress.address, &socketSize) != 0)
+        if (getsockname(this->socketDescriptor, &this->serverAddress.address, &socketSize) != 0)
         {
             this->close();
             throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
