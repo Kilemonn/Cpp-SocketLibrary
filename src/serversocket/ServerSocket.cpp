@@ -4,8 +4,8 @@
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
 #include "../socketexceptions/TimeoutException.hpp"
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
+#include "../enums/SocketProtocol.h"
+#include "../enums/SocketType.h"
 #include "../socketexceptions/SocketError.h"
 
 #include <iostream>
@@ -58,10 +58,11 @@ namespace kt
      * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
      * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
      */
-    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize)
+    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize, const InternetProtocolVersion protocolVersion)
     {
         this->port = port;
         this->type = type;
+        this->protocolVersion = protocolVersion;
 
         if (this->type == kt::SocketType::None)
         {
@@ -174,7 +175,7 @@ namespace kt
 
     void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
-        const int socketFamily = AF_INET6;
+        const int socketFamily = this->protocolVersion == InternetProtocolVersion::IPV6 ? AF_INET6 : AF_INET;
         const int socketType = SOCK_STREAM;
         const int socketProtocol = IPPROTO_TCP;
 

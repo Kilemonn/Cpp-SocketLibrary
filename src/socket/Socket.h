@@ -6,8 +6,8 @@
 #include <utility>
 #include <optional>
 
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
+#include "../enums/SocketProtocol.h"
+#include "../enums/SocketType.h"
 
 #ifdef _WIN32
 

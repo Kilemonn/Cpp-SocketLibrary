@@ -2,8 +2,8 @@
 #include "Socket.h"
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
+#include "../enums/SocketProtocol.h"
+#include "../enums/SocketType.h"
 #include "../socketexceptions/SocketError.h"
 
 #include <iostream>
@@ -71,6 +71,8 @@ namespace kt
 		this->serverAddress = { 0 };
 		this->socketDescriptor = 0;
 		memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
+
+		std::cout << "Server socket created at port: " << this->port << std::endl;
 
 #ifdef __linux__
 		this->bluetoothAddress = { 0 };

@@ -6,8 +6,9 @@
 
 #include "../socket/Socket.h"
 
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
+#include "../enums/SocketProtocol.h"
+#include "../enums/SocketType.h"
+#include "../enums/InternetProtocolVersion.h"
 
 #ifdef _WIN32
 
@@ -39,7 +40,8 @@ namespace kt
 	{
 		private:
 			unsigned int port;
-			kt::SocketType type = SocketType::None;
+			SocketType type = SocketType::None;
+			InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4;
 			sockaddr_in6 serverAddress;
 			SOCKET socketDescriptor = 0;
 
@@ -50,11 +52,11 @@ namespace kt
 
 		public:
 			ServerSocket() = default;
-			ServerSocket(const kt::SocketType, const unsigned int& = 0, const unsigned int& = 20);
+			ServerSocket(const SocketType, const unsigned int& = 0, const unsigned int& = 20, const InternetProtocolVersion = InternetProtocolVersion::IPV4);
 			ServerSocket(const ServerSocket&);
 			ServerSocket& operator=(const ServerSocket&);
 
-			kt::SocketType getType() const;
+			SocketType getType() const;
 			unsigned int getPort() const;
 
 			Socket accept(const unsigned int& = 0);
