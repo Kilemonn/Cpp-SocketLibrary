@@ -4,6 +4,8 @@
 
 #include <optional>
 
+#include "../address/Address.h"
+
 #include "../socket/Socket.h"
 
 #include "../enums/SocketProtocol.h"
@@ -42,7 +44,7 @@ namespace kt
 			unsigned int port;
 			SocketType type = SocketType::None;
 			InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4;
-			sockaddr serverAddress;
+			kt::SocketAddress serverAddress = {};
 			SOCKET socketDescriptor = 0;
 
 			void setDiscoverable();
@@ -50,7 +52,7 @@ namespace kt
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
 			void initialisePortNumber();
-			void initialiseServerAddress(const int&);
+			size_t initialiseServerAddress(const int&);
 
 		public:
 			ServerSocket() = default;

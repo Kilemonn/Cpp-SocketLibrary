@@ -9,6 +9,7 @@ project(${PROJECT_NAME} VERSION 1.0)
 set(HEADERS
         src/serversocket/ServerSocket.h
         src/socket/Socket.h
+        src/address/Address.h
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
         src/socketexceptions/TimeoutException.hpp

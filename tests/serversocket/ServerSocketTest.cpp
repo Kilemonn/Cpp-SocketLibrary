@@ -27,6 +27,7 @@ namespace kt
     TEST_F(ServerSocketTest, TestDefaultConstructor)
     {
         ASSERT_EQ(SocketType::Wifi, serverSocket.getType());
+        ASSERT_EQ(InternetProtocolVersion::IPV4, serverSocket.getInternetProtocolVersion());
         ASSERT_EQ(PORT_NUMBER, serverSocket.getPort());
     }
 
@@ -57,7 +58,7 @@ namespace kt
     {
         ServerSocket server2(serverSocket);
 
-        Socket client("localhost", serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+        Socket client("127.0.0.1", serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
         Socket serverClient = server2.accept();
         const std::string testString = "test";
@@ -69,6 +70,26 @@ namespace kt
         serverClient.close();
         client.close();
         server2.close();
+    }
+
+    /*
+     * Ensure the server socket can be created using IPV6 and can accept a connection.
+     */
+    TEST_F(ServerSocketTest, TestServerSocketIPV6)
+    {
+        ServerSocket ipv6Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
+
+        Socket client("0:0:0:0:0:0:0:1", ipv6Server.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+        Socket serverClient = ipv6Server.accept();
+
+        const std::string testString = "test";
+        ASSERT_TRUE(client.send(testString));
+        const std::string responseString = serverClient.receiveAmount(testString.size());
+        ASSERT_EQ(responseString, testString);
+
+        serverClient.close();
+        client.close();
+        ipv6Server.close();
     }
 }
 

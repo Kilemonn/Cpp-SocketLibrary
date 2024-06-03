@@ -189,7 +189,7 @@ namespace kt
         }
 #endif
 
-        initialiseServerAddress(socketFamily);
+        size_t socketSize = initialiseServerAddress(socketFamily);
 
         this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
         if (isInvalidSocket(this->socketDescriptor))
@@ -212,7 +212,7 @@ namespace kt
             }
         }
 
-        if (bind(this->socketDescriptor, (sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) == -1)
+        if (bind(this->socketDescriptor, (sockaddr*)&this->serverAddress.address, socketSize) == -1)
         {
             this->close();
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
@@ -230,30 +230,33 @@ namespace kt
         }
     }
 
-    void ServerSocket::initialiseServerAddress(const int& socketFamily)
+    size_t ServerSocket::initialiseServerAddress(const int& socketFamily)
     {
+        addrinfo hint = {};
+        const std::string hostname = this->protocolVersion == InternetProtocolVersion::IPV6 ? "0:0:0:0:0:0:0:1" : "127.0.0.1";
         memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 
-        if (this->protocolVersion == InternetProtocolVersion::IPV6)
+        hint.ai_flags = AI_PASSIVE;
+        hint.ai_family = socketFamily;
+        hint.ai_socktype = SOCK_STREAM;
+        hint.ai_protocol = IPPROTO_TCP;
+
+        addrinfo *addresses;
+        if (getaddrinfo(hostname.c_str(), std::to_string(this->port).c_str(), &hint, &addresses) != 0)
         {
-            sockaddr_in6* addr = (sockaddr_in6*)&this->serverAddress;
-            addr->sin6_family = socketFamily;
-            addr->sin6_addr = in6addr_loopback;
-            addr->sin6_port = htons(this->port);
+            freeaddrinfo(addresses);
+            throw SocketException("Failed to retrieve address info of local hostname: [" + hostname + "]. " + getErrorCode());
         }
-        else
-        {
-            sockaddr_in* addr = (sockaddr_in*)&this->serverAddress;
-            addr->sin_family = socketFamily;
-            addr->sin_addr.s_addr = htonl(INADDR_ANY);
-            addr->sin_port = htons(this->port);
-        }
+
+        std::memcpy(&this->serverAddress, addresses->ai_addr, addresses->ai_addrlen);
+        freeaddrinfo(addresses);
+        return addresses->ai_addrlen;
     }
 
     void ServerSocket::initialisePortNumber()
     {
         socklen_t socketSize = sizeof(this->serverAddress);
-        if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress, &socketSize) != 0)
+        if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress.address, &socketSize) != 0)
         {
             this->close();
             throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
@@ -261,11 +264,11 @@ namespace kt
 
         if (this->protocolVersion == InternetProtocolVersion::IPV6)
         {
-            this->port = ntohs(((sockaddr_in6*)&this->serverAddress)->sin6_port);
+            this->port = ntohs(this->serverAddress.ipv6.sin6_port);
         }
         else
         {
-            this->port = ntohs(((sockaddr_in*)&this->serverAddress)->sin_port);
+            this->port = ntohs(this->serverAddress.ipv4.sin_port);
         }
     }
 
