@@ -42,13 +42,15 @@ namespace kt
 			unsigned int port;
 			SocketType type = SocketType::None;
 			InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4;
-			sockaddr_in6 serverAddress;
+			sockaddr serverAddress;
 			SOCKET socketDescriptor = 0;
 
 			void setDiscoverable();
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
+			void initialisePortNumber();
+			void initialiseServerAddress(const int&);
 
 		public:
 			ServerSocket() = default;
@@ -57,6 +59,7 @@ namespace kt
 			ServerSocket& operator=(const ServerSocket&);
 
 			SocketType getType() const;
+			InternetProtocolVersion getInternetProtocolVersion() const;
 			unsigned int getPort() const;
 
 			Socket accept(const unsigned int& = 0);

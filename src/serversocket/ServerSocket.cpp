@@ -81,6 +81,7 @@ namespace kt
     {
         this->port = socket.port;
         this->type = socket.type;
+        this->protocolVersion = socket.protocolVersion;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
     }
@@ -96,6 +97,7 @@ namespace kt
     {
         this->port = socket.port;
         this->type = socket.type;
+        this->protocolVersion = socket.protocolVersion;
         this->socketDescriptor = socket.socketDescriptor;
         this->serverAddress = socket.serverAddress;
 
@@ -186,99 +188,85 @@ namespace kt
             throw SocketException("WSAStartup Failed: " + std::to_string(res));
         }
 #endif
-        /*addrinfo hints;
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = socketFamily;
-        hints.ai_socktype = socketType;
-        hints.ai_protocol = socketProtocol;
-        hints.ai_flags = AI_PASSIVE;*/
 
-        memset(&this->serverAddress, 0, sizeof(this->serverAddress));
-        this->serverAddress.sin6_family = socketFamily;
-        this->serverAddress.sin6_addr = in6addr_loopback;
-        this->serverAddress.sin6_port = htons(this->port);
+        initialiseServerAddress(socketFamily);
 
         this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
         if (isInvalidSocket(this->socketDescriptor))
         {
-            //freeaddrinfo(resolvedAddresses);
             throw SocketException("Error establishing wifi server socket: " + getErrorCode());
-        }
-        else
-        {
-            std::cout << "Created socket is good..." << std::endl;
         }
 
         const int enableOption = 1;
         if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
         {
-            //freeaddrinfo(resolvedAddresses);
             throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
         }
 
-        const int disableOption = 0;
-        if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+        if (this->protocolVersion == InternetProtocolVersion::IPV6)
         {
-            //freeaddrinfo(resolvedAddresses);
-            throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+            const int disableOption = 0;
+            if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+            {
+                throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+            }
         }
 
-        // std::memcpy(&this->serverAddress, addr->ai_addr, sizeof(addr->ai_addrlen));
         if (bind(this->socketDescriptor, (sockaddr*)&this->serverAddress, sizeof(this->serverAddress)) == -1)
         {
-            //freeaddrinfo(resolvedAddresses);
             this->close();
             throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
         }
-        else
-        {
-            std::cout << "Bind is good..." << std::endl;
-        }
 
-        socklen_t socketSize = sizeof(this->serverAddress);
         if (this->port == 0)
         {
-            if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress, &socketSize) != 0)
-            {
-                //freeaddrinfo(resolvedAddresses);
-                this->close();
-                throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
-            }
-
-            this->port = ntohs(this->serverAddress.sin6_port);
+            this->initialisePortNumber();
         }
 
         if (listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
-            //freeaddrinfo(resolvedAddresses);
             this->close();
             throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + getErrorCode());
         }
+    }
+
+    void ServerSocket::initialiseServerAddress(const int& socketFamily)
+    {
+        memset(&this->serverAddress, 0, sizeof(this->serverAddress));
+
+        if (this->protocolVersion == InternetProtocolVersion::IPV6)
+        {
+            sockaddr_in6* addr = (sockaddr_in6*)&this->serverAddress;
+            addr->sin6_family = socketFamily;
+            addr->sin6_addr = in6addr_loopback;
+            addr->sin6_port = htons(this->port);
+        }
         else
         {
-            std::cout << "Listen successful" << std::endl;
-            // freeaddrinfo(resolvedAddresses);
-            return;
+            sockaddr_in* addr = (sockaddr_in*)&this->serverAddress;
+            addr->sin_family = socketFamily;
+            addr->sin_addr.s_addr = htonl(INADDR_ANY);
+            addr->sin_port = htons(this->port);
         }
+    }
 
-        /*addrinfo* resolvedAddresses = nullptr;
-        int res = getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hints, &resolvedAddresses);
-        if (res != 0)
+    void ServerSocket::initialisePortNumber()
+    {
+        socklen_t socketSize = sizeof(this->serverAddress);
+        if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress, &socketSize) != 0)
         {
-            throw SocketException("Failed to setup socket server: " + getErrorCode());
+            this->close();
+            throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
         }
 
-        addrinfo* addr = resolvedAddresses;
-
-        while (addr != nullptr)
+        if (this->protocolVersion == InternetProtocolVersion::IPV6)
         {
-            
-            
-            addr = addr->ai_next;
-            std::cout << "Moving to next address" << std::endl;
+            this->port = ntohs(((sockaddr_in6*)&this->serverAddress)->sin6_port);
         }
-        std::cout << "Iterated through all addresses" << std::endl;
-        freeaddrinfo(resolvedAddresses);*/
+        else
+        {
+            this->port = ntohs(((sockaddr_in*)&this->serverAddress)->sin_port);
+        }
     }
 
 
@@ -300,7 +288,7 @@ namespace kt
     }
 
     /**
-     * @return the *kt::SocketType* for this *kt::Socket*.
+     * @return the *kt::SocketType* for this *kt::ServerSocket*.
      */
     kt::SocketType ServerSocket::getType() const
     {
@@ -314,6 +302,14 @@ namespace kt
     unsigned int ServerSocket::getPort() const
     {
         return this->port;
+    }
+
+    /**
+     * @return the *kt::InternetProtocolVersion* for this *kt::ServerSocket*.
+     */
+    InternetProtocolVersion ServerSocket::getInternetProtocolVersion() const
+    {
+        return this->protocolVersion;
     }
 
     /**

@@ -46,7 +46,7 @@ namespace kt
 			kt::SocketType type = SocketType::None;
 			bool bound = false;
 			sockaddr serverAddress; // For Wifi
-			sockaddr_in6 clientAddress; // For UDP, stores the client address of the last message received
+			sockaddr clientAddress; // For UDP, stores the client address of the last message received
 			SOCKET socketDescriptor = 0;
 
 #ifdef _WIN32
