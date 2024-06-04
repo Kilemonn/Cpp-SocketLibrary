@@ -323,7 +323,7 @@ namespace kt
      * Used to accept a connection on the specific port. 
      * Upon accepting a new connection it will return a Socket object used to communicate with the receiver.
      * 
-     * @param timeout - indicates how long the socket should be polled for before assuming there is no response. Default is 0 (unlimited).
+     * @param timeout - indicates how long (in microseconds) the socket should be polled for before assuming there is no response. Default is 0 (unlimited).
      * 
      * @returns kt::Socket object of the receiver who has just connected to the kt::ServerSocket.
      */

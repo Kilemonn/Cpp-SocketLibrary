@@ -1,8 +1,11 @@
 
+#include <chrono>
+
 #include <gtest/gtest.h>
 
 #include "../../src/serversocket/ServerSocket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
+#include "../../src/socketexceptions/TimeoutException.hpp"
 
 const int PORT_NUMBER = 87682;
 
@@ -75,7 +78,7 @@ namespace kt
     /*
      * Ensure the server socket can be created using IPV6 and can accept a connection.
      */
-    TEST_F(ServerSocketTest, TestServerSocketIPV6)
+    TEST_F(ServerSocketTest, TestServerSocketAsIPV6)
     {
         ServerSocket ipv6Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
 
@@ -91,5 +94,36 @@ namespace kt
         client.close();
         ipv6Server.close();
     }
-}
 
+    /*
+     * Ensure the server socket cannot be connected to by a client using IPV4.
+     */
+    TEST_F(ServerSocketTest, TestServerSocketAsIPV4ServerAndIPV4Client)
+    {
+        ASSERT_EQ(InternetProtocolVersion::IPV4, serverSocket.getInternetProtocolVersion());
+
+        // Attempt to connect to a local server using a IPV6 address (which is not being hosted)
+        EXPECT_THROW({
+            Socket client("0:0:0:0:0:0:0:1", serverSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+        }, SocketException);
+        
+        // Make sure theres no incoming connections
+        EXPECT_THROW({
+            serverSocket.accept(1000);
+        }, TimeoutException);
+    }
+
+    /**
+     * Ensure that calls to ServerSocket.accept() with a provided timeout waits for atleast the provided timeout before throwing a TimeoutException.
+    */
+    TEST_F(ServerSocketTest, TestServerSocketAcceptTimeout)
+    {
+        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+        EXPECT_THROW({
+            Socket serverClient = serverSocket.accept(1 * 1000000);
+        }, TimeoutException);
+
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        ASSERT_GE(1, std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
+    }
+}
