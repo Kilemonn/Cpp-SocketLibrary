@@ -197,7 +197,7 @@ namespace kt
         // 0000:0000:0000:0000:0000:0000:0000:0001
         // 0:0:0:0:0:0:0:1
         // ::1
-        Socket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+        Socket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP, InternetProtocolVersion::IPV6);
 
         // Accept ipv6 connnection
         Socket ipv6Server = ipv6ServerSocket.accept();

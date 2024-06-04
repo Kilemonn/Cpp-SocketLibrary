@@ -82,7 +82,7 @@ namespace kt
     {
         ServerSocket ipv6Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
 
-        Socket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+        Socket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort(), SocketType::Wifi, SocketProtocol::TCP, InternetProtocolVersion::IPV6);
         Socket serverClient = ipv6Server.accept();
 
         const std::string testString = "test";

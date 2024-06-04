@@ -214,8 +214,11 @@ namespace kt
 
 	void Socket::constructWifiSocket()
 	{
+		const int socketFamily = this->protocolVersion == InternetProtocolVersion::IPV6 ? AF_INET6 : AF_INET;
 		const int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
 		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
+
+		memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 		
 #ifdef _WIN32
 		WSADATA wsaData{};
@@ -228,7 +231,7 @@ namespace kt
 
 		addrinfo* resolvedAddresses = nullptr;
 		addrinfo hints{};
-		hints.ai_family = AF_UNSPEC;
+		hints.ai_family = socketFamily;
 		hints.ai_socktype = socketType;
 		hints.ai_protocol = socketProtocol;
 		int res = getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &hints, &resolvedAddresses);
@@ -239,7 +242,7 @@ namespace kt
 				freeaddrinfo(resolvedAddresses);
 			}
 
-			throw SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "]. Look up response code: [" + std::to_string(res) + "].");
+			throw SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "]. Look up response code: [" + std::to_string(res) + "]. " + getErrorCode());
 		}
 
 		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
@@ -248,14 +251,12 @@ namespace kt
 		{
 			for (addrinfo* addr = resolvedAddresses; addr != nullptr; addr = addr->ai_next) 
 			{	
-				std::cout << "Processing address client: " << addr->ai_family << " " << ((sockaddr_in6*)addr->ai_addr)->sin6_port << " " << std::endl;
 				this->socketDescriptor = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 				if (!isInvalidSocket(this->socketDescriptor))
 				{
 					int connectionResult = connect(this->socketDescriptor, addr->ai_addr, addr->ai_addrlen);
 					if (connectionResult == 0)
 					{
-						memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 						std::memcpy(&this->serverAddress, addr->ai_addr, addr->ai_addrlen);
 						freeaddrinfo(resolvedAddresses);
 						// Return once we successfully connect to one
@@ -278,6 +279,8 @@ namespace kt
 		}
 		else
 		{
+			this->socketDescriptor = socket(resolvedAddresses->ai_family, resolvedAddresses->ai_socktype, resolvedAddresses->ai_protocol);
+			std::memcpy(&this->serverAddress, resolvedAddresses->ai_addr, resolvedAddresses->ai_addrlen);
 			freeaddrinfo(resolvedAddresses);
 		}
 	}
@@ -313,32 +316,28 @@ namespace kt
 		{
 			// Clear client address
 			memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
-
-			/*const int enableOption = 1;
-			if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
-			{
-				throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
-			}*/
-
-			/*const int disableOption = 0;
-			if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
-			{
-				throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
-			}*/
-
-			addrinfo hint = {};
+			
 			const std::string hostname = this->protocolVersion == InternetProtocolVersion::IPV6 ? "0:0:0:0:0:0:0:1" : "127.0.0.1";
-
 			const int socketFamily = this->protocolVersion == InternetProtocolVersion::IPV6 ? AF_INET6 : AF_INET;
 			const int socketType = SOCK_DGRAM;
 			const int socketProtocol = IPPROTO_UDP;
 			
+			addrinfo hint = {};
 			hint.ai_flags = AI_PASSIVE;
 			hint.ai_family = socketFamily;
 			hint.ai_socktype = socketType;
 			hint.ai_protocol = socketProtocol;
 
-        	this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
+#ifdef _WIN32
+			if (this->protocolVersion == InternetProtocolVersion::IPV6)
+			{
+				const int disableOption = 0;
+				if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+				{
+					throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+				}
+			}
+#endif
 
 			addrinfo *addresses;
 			if (getaddrinfo(hostname.c_str(), std::to_string(this->port).c_str(), &hint, &addresses) != 0)
@@ -353,8 +352,6 @@ namespace kt
 			{
 				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
 			}
-
-			std::cout << "Bound address, getting port" << std::endl;
 
 			if (this->port == 0)
 			{
@@ -404,7 +401,9 @@ namespace kt
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
 				SocketAddress address = this->getSendAddress();
-				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
+				int result = ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, &address.address, sizeof(address.address));
+				std::cout << "sendto(), result = " << result << " error: " << getErrorCode() << std::endl;
+				return result != -1;
 			}
 		}
 		return false;
@@ -570,10 +569,12 @@ namespace kt
 		{
 			if (this->isBound())
 			{
+				std::cout << "Returning client address in getSendAddress() " << std::endl;
 				memcpy(&newAddress, &this->clientAddress, sizeof(this->clientAddress));
 			}
 			else
 			{
+				std::cout << "Returning server address in getSendAddress() " << std::endl;
 				memcpy(&newAddress, &this->serverAddress, sizeof(this->serverAddress));
 			}
 		}
