@@ -192,18 +192,15 @@ namespace kt
 
     TEST_F(SocketTCPTest, IPV6Address)
     {
+        ServerSocket ipv6ServerSocket(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
+
         // 0000:0000:0000:0000:0000:0000:0000:0001
         // 0:0:0:0:0:0:0:1
         // ::1
-        const std::string ipv6 = "0:0:0:0:0:0:0:1"; // "0000:0000:0000:0000:0000:0000:0000:0001";
-        Socket ipv6Socket(ipv6, serverSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
-
-        // Accept the connection from the constructor
-        Socket server = serverSocket.accept();
-        ASSERT_TRUE(server.connected());
+        Socket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
 
         // Accept ipv6 connnection
-        Socket ipv6Server = serverSocket.accept();
+        Socket ipv6Server = ipv6ServerSocket.accept();
         ASSERT_TRUE(ipv6Server.connected());
 
         const std::string testString = "Test";
@@ -211,9 +208,9 @@ namespace kt
         const std::string response = ipv6Server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
 
-        server.close();
         ipv6Server.close();
         ipv6Socket.close();
+        ipv6ServerSocket.close();
     }
     
 }
