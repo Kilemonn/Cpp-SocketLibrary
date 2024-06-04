@@ -20,7 +20,7 @@
 	#define WIN32_LEAN_AND_MEAN
 #endif
 
-#define _WIN32_WINNT 0x501
+#define _WIN32_WINNT 0x0600
 
 #include <winsock2.h>
 #include <winerror.h>
@@ -29,7 +29,6 @@
 #include <windows.h>
 #include <guiddef.h>
 #include <ws2bth.h>
-#include <WS2tcpip.h>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -262,15 +261,8 @@ namespace kt
 						// Return once we successfully connect to one
 						return;
 					}
-					else
-					{
-						std::cout << "connectionResult: " << connectionResult << std::endl;
-					}
 				}
-#ifdef _WIN32
-				int errorCode = WSAGetLastError();
-				std::cout << "ERROR CODE: " << errorCode << " Port: " << addr->ai_addr->sa_family << std::endl;
-#endif
+
 				this->close();
 				this->socketDescriptor = -1;
 			}
@@ -401,9 +393,7 @@ namespace kt
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
 				SocketAddress address = this->getSendAddress();
-				int result = ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, &address.address, sizeof(address.address));
-				std::cout << "sendto(), result = " << result << " error: " << getErrorCode() << std::endl;
-				return result != -1;
+				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
 			}
 		}
 		return false;
@@ -544,11 +534,28 @@ namespace kt
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			// inet_ntop(); - For IPV6 resolution TODO:
-			std::string asString; // inet_ntop(this->clientAddress.sin6_addr);
+			std::string asString;
+			if (this->protocolVersion == InternetProtocolVersion::IPV6)
+			{
+				asString.reserve(INET6_ADDRSTRLEN + 1);
+				if (inet_ntop(AF_INET6, &clientAddress.ipv6.sin6_addr, &asString[0], INET6_ADDRSTRLEN) == nullptr)
+				{
+					return std::nullopt;
+				}
+			}
+			else
+			{
+				asString.reserve(INET_ADDRSTRLEN + 1);
+				if (inet_ntop(AF_INET, &clientAddress.ipv4.sin_addr, &asString[0], INET_ADDRSTRLEN) == nullptr)
+				{
+					return std::nullopt;
+				}
+			}
+			std::cout << "Resolved address has length: " << asString.size() << " and value: " << asString << std::endl;
 			// Since we zero out the address, we need to check its not default initialised
-			return asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
+			return !asString.empty() && asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
 		}
+		
 		return std::nullopt;
 	}
 
@@ -569,12 +576,10 @@ namespace kt
 		{
 			if (this->isBound())
 			{
-				std::cout << "Returning client address in getSendAddress() " << std::endl;
 				memcpy(&newAddress, &this->clientAddress, sizeof(this->clientAddress));
 			}
 			else
 			{
-				std::cout << "Returning server address in getSendAddress() " << std::endl;
 				memcpy(&newAddress, &this->serverAddress, sizeof(this->serverAddress));
 			}
 		}

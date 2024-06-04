@@ -168,7 +168,8 @@ namespace kt
     {
         socket.bind();
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        const std::string address = "127.0.0.1";
+        Socket client(address, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         std::string testString = "t";
         ASSERT_TRUE(client.send(testString));
 
@@ -177,7 +178,32 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(testString, received);
 
-        ASSERT_EQ(LOCALHOST, socket.getLastRecievedAddress());
+        ASSERT_EQ(address, socket.getLastRecievedAddress());
+
+        client.close();
+    }
+
+    /*
+     * Ensure that the last received address is set accordingly after data is read using IPV6.
+     */
+    TEST_F(SocketUDPTest, UDPGetAndLastReceivedAddress_IPV6)
+    {
+        socket.close();
+
+        const std::string address = "::1";
+        socket = Socket(address, 0, SocketType::Wifi, SocketProtocol::UDP, InternetProtocolVersion::IPV6);
+        socket.bind();
+
+        Socket client(address, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP, InternetProtocolVersion::IPV6);
+        std::string testString = "t";
+        ASSERT_TRUE(client.send(testString));
+
+        ASSERT_TRUE(socket.ready());
+        std::string received = std::string(1, *socket.get());
+        ASSERT_FALSE(socket.ready());
+        ASSERT_EQ(testString, received);
+
+        ASSERT_EQ(address, socket.getLastRecievedAddress());
 
         client.close();
     }
