@@ -8,6 +8,8 @@
 
 #include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
+#include "../enums/InternetProtocolVersion.h"
+#include "../address/Address.h"
 
 #ifdef _WIN32
 
@@ -42,11 +44,12 @@ namespace kt
 		private:
 			std::string hostname;
 			unsigned int port;
-			kt::SocketProtocol protocol = kt::SocketProtocol::None;
-			kt::SocketType type = SocketType::None;
+			SocketProtocol protocol = SocketProtocol::None;
+			SocketType type = SocketType::None;
+			InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4;
 			bool bound = false;
-			sockaddr serverAddress = {}; // For Wifi
-			sockaddr clientAddress = {}; // For UDP, stores the client address of the last message received
+			SocketAddress serverAddress = {}; // For Wifi
+			SocketAddress clientAddress = {}; // For UDP, stores the client address of the last message received
 			SOCKET socketDescriptor = 0;
 
 #ifdef _WIN32
@@ -61,13 +64,14 @@ namespace kt
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
-			sockaddr_in getSendAddress() const;
+			SocketAddress getSendAddress() const;
 			int pollSocket(const unsigned long = 1000) const;
+			void initialiseListeningPortNumber();
 
 		public:
 			Socket() = default;
-			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
-			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
+			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None, const kt::InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4); // Create Wi-Fi/Bluetooth Socket
+			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&, const kt::InternetProtocolVersion protocolVersion);
 
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);
@@ -83,6 +87,7 @@ namespace kt
 			bool isBound() const;
 			kt::SocketProtocol getProtocol() const;
 			kt::SocketType getType() const;
+			InternetProtocolVersion getInternetProtocolVersion() const;
 			std::optional<std::string> getLastRecievedAddress() const;
 			std::string getAddress() const;
 

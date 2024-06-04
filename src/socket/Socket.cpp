@@ -62,17 +62,16 @@ namespace kt
 	 * @throw SocketException - If the Socket is unable to be instanciated or connect to server.
 	 * @throw BindingException - If the Socket is unable to bind to the port specified.
 	 */
-	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
+	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol, const kt::InternetProtocolVersion protocolVersion)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->type = type;
 		this->protocol = protocol;
+		this->protocolVersion = protocolVersion;
 		this->serverAddress = { 0 };
 		this->socketDescriptor = 0;
 		memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
-
-		std::cout << "Server socket created at port: " << this->port << std::endl;
 
 #ifdef __linux__
 		this->bluetoothAddress = { 0 };
@@ -113,13 +112,14 @@ namespace kt
 	 * @param hostname - the hostname of the socket to copy.
 	 * @param port - the port number of the socket to copy.
 	 */
-	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
+	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->protocol = protocol;
 		this->socketDescriptor = socketDescriptor;
 		this->type = type;
+		this->protocolVersion = protocolVersion;
 		memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
 		memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
 	}
@@ -136,6 +136,7 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		this->protocolVersion = socket.protocolVersion;
 
 		this->clientAddress = socket.clientAddress;
 		this->serverAddress = socket.serverAddress;
@@ -160,6 +161,7 @@ namespace kt
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		this->protocolVersion = socket.protocolVersion;
 
 		this->clientAddress = socket.clientAddress;
 		this->serverAddress = socket.serverAddress;
@@ -324,32 +326,64 @@ namespace kt
 				throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
 			}*/
 
-			sockaddr_in6 localAddress{};
-			localAddress.sin6_family = AF_INET6;
-			localAddress.sin6_port = htons(this->port);
-			localAddress.sin6_addr = in6addr_loopback;
-			this->bound = ::bind(this->socketDescriptor, (sockaddr*) &localAddress, sizeof(localAddress)) != -1;
+			addrinfo hint = {};
+			const std::string hostname = this->protocolVersion == InternetProtocolVersion::IPV6 ? "0:0:0:0:0:0:0:1" : "127.0.0.1";
+
+			const int socketFamily = this->protocolVersion == InternetProtocolVersion::IPV6 ? AF_INET6 : AF_INET;
+			const int socketType = SOCK_DGRAM;
+			const int socketProtocol = IPPROTO_UDP;
+			
+			hint.ai_flags = AI_PASSIVE;
+			hint.ai_family = socketFamily;
+			hint.ai_socktype = socketType;
+			hint.ai_protocol = socketProtocol;
+
+        	this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
+
+			addrinfo *addresses;
+			if (getaddrinfo(hostname.c_str(), std::to_string(this->port).c_str(), &hint, &addresses) != 0)
+			{
+				freeaddrinfo(addresses);
+				throw SocketException("Failed to retrieve address info of local hostname: [" + hostname + "]. " + getErrorCode());
+			}
+
+			this->bound = ::bind(this->socketDescriptor, addresses->ai_addr, addresses->ai_addrlen) != -1;
+			freeaddrinfo(addresses);
 			if (!this->bound)
 			{
 				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
 			}
 
+			std::cout << "Bound address, getting port" << std::endl;
+
 			if (this->port == 0)
 			{
-				socklen_t socketSize = sizeof(this->serverAddress);
-				if (getsockname(this->socketDescriptor, (sockaddr*)&this->serverAddress, &socketSize) != 0)
-				{
-					this->close();
-					throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
-				}
-
-				this->port = ntohs(((sockaddr_in6*)&this->serverAddress)->sin6_port);
+				this->initialiseListeningPortNumber();
 			}
 
 			return this->bound;
 		}
 		return false;
 	}
+
+	void Socket::initialiseListeningPortNumber()
+    {
+        socklen_t socketSize = sizeof(this->serverAddress);
+        if (getsockname(this->socketDescriptor, &this->serverAddress.address, &socketSize) != 0)
+        {
+            this->close();
+            throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
+        }
+
+        if (this->protocolVersion == InternetProtocolVersion::IPV6)
+        {
+            this->port = ntohs(this->serverAddress.ipv6.sin6_port);
+        }
+        else
+        {
+            this->port = ntohs(this->serverAddress.ipv4.sin_port);
+        }
+    }
 
 	/**
 	 * Sends input std::string to the receiver via the configured socket.
@@ -369,8 +403,8 @@ namespace kt
 			}
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				sockaddr_in address = this->getSendAddress();
-				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (sockaddr*)&address, sizeof(address)) != -1;
+				SocketAddress address = this->getSendAddress();
+				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
 			}
 		}
 		return false;
@@ -402,6 +436,7 @@ namespace kt
 			}
 		}
 #endif
+
 		return res;
 	}
 
@@ -485,6 +520,14 @@ namespace kt
 	}
 
 	/**
+	 * @return the kt::InternetProtocolVersion for this kt::Socket.
+	*/
+    InternetProtocolVersion Socket::getInternetProtocolVersion() const
+    {
+        return this->protocolVersion;
+    }
+
+    /**
 	 * @return the kt::SocketProtocol configured for this kt::Socket.
 	 */
 	kt::SocketProtocol Socket::getProtocol() const
@@ -518,9 +561,9 @@ namespace kt
 		return this->hostname;
 	}
 
-	sockaddr_in Socket::getSendAddress() const
+	SocketAddress Socket::getSendAddress() const
 	{
-		sockaddr_in newAddress;
+		SocketAddress newAddress;
 		memset(&newAddress, '\0', sizeof(newAddress));
 
 		if (this->protocol == kt::SocketProtocol::UDP)
@@ -581,7 +624,7 @@ namespace kt
 		{
 			// UDP is odd, and will consume the entire datagram after a single read even if not all bytes are read
 			socklen_t addressLength = sizeof(this->clientAddress);
-			int flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, (sockaddr*)&this->clientAddress, &addressLength);
+			int flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, &this->clientAddress.address, &addressLength);
 			if (flag < 1)
 			{
 				// This is for Windows, in some scenarios Windows will return a -1 flag but the buffer is populated properly
@@ -639,7 +682,7 @@ namespace kt
 			temp.resize(this->MAX_BUFFER_SIZE);
 			socklen_t addressLength = sizeof(this->clientAddress);
 			
-			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, (sockaddr*)&this->clientAddress, &addressLength);
+			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, &this->clientAddress.address, &addressLength);
 			if (flag < 1)
 			{
 				return data;

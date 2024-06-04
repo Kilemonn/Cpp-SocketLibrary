@@ -385,7 +385,7 @@ namespace kt
             portNum = htons(address.sin_port);
 		}
 
-        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portNum);
+        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portNum, this->getInternetProtocolVersion());
     }
 
     /**
