@@ -535,27 +535,24 @@ namespace kt
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			std::string asString;
-			if (this->protocolVersion == InternetProtocolVersion::IPV6)
+			
+			const int addressSize = this->protocolVersion == InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
+			asString.resize(addressSize);
+			if (getnameinfo(&this->clientAddress.address, sizeof(this->clientAddress), &asString[0], addressSize, nullptr, 0, NI_NUMERICHOST) != 0)
 			{
-				asString.reserve(INET6_ADDRSTRLEN + 1);
-				if (inet_ntop(AF_INET6, &clientAddress.ipv6.sin6_addr, &asString[0], INET6_ADDRSTRLEN) == nullptr)
-				{
-					return std::nullopt;
-				}
+				return std::nullopt;
 			}
-			else
+			
+			// Removing trailing \0 bytes
+			size_t delimiterIndex = asString.find_first_of('\0');
+			if (delimiterIndex != std::string::npos) 
 			{
-				asString.reserve(INET_ADDRSTRLEN + 1);
-				if (inet_ntop(AF_INET, &clientAddress.ipv4.sin_addr, &asString[0], INET_ADDRSTRLEN) == nullptr)
-				{
-					return std::nullopt;
-				}
+				return asString.substr(0, delimiterIndex);
 			}
-			std::cout << "Resolved address has length: " << asString.size() << " and value: " << asString << std::endl;
 			// Since we zero out the address, we need to check its not default initialised
 			return !asString.empty() && asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
 		}
-		
+
 		return std::nullopt;
 	}
 
