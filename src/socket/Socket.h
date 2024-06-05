@@ -1,5 +1,4 @@
-#ifndef _SOCKET_H__
-#define _SOCKET_H__
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -101,5 +100,3 @@ namespace kt
 	};
 
 } // End namespace kt 
-
-#endif //_SOCKET_H__

@@ -1,6 +1,4 @@
-
-#ifndef _BINDING_EXCEPTION_HPP__
-#define _BINDING_EXCEPTION_HPP__
+#pragma once
 
 #include <iostream>
 #include <stdexcept>
@@ -15,5 +13,3 @@ namespace kt
 			BindingException(const std::string& s) : SocketException(s) {}
 	};
 }
-
-#endif // _BINDING_EXCEPTION_HPP__

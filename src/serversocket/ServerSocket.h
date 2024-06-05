@@ -1,6 +1,4 @@
-
-#ifndef _SERVER_SOCKET_H__
-#define _SERVER_SOCKET_H__
+#pragma once
 
 #include <optional>
 
@@ -69,5 +67,3 @@ namespace kt
 	};
 
 } // End namespace kt
-
-#endif // _SERVER_SOCKET_H__

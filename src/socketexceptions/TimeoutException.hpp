@@ -1,6 +1,4 @@
-
-#ifndef _TIMEOUT_EXCEPTION_HPP__
-#define _TIMEOUT_EXCEPTION_HPP__
+#pragma once
 
 #include <iostream>
 #include <stdexcept>
@@ -15,5 +13,3 @@ namespace kt
 			TimeoutException(const std::string &s) : SocketException(s) {}
 	};
 }
-
-#endif // _TIMEOUT_EXCEPTION_HPP__

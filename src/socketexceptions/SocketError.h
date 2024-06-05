@@ -1,5 +1,4 @@
-#ifndef _SOCKET_ERROR_HPP__
-#define _SOCKET_ERROR_HPP__
+#pragma once
 
 #include <string>
 
@@ -25,5 +24,3 @@ namespace kt
 
 	bool isInvalidSocket(SOCKET descriptor);
 } // End kt namespace
-
-#endif // _SOCKET_ERROR_HPP__
