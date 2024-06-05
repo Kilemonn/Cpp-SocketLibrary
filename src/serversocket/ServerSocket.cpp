@@ -177,7 +177,7 @@ namespace kt
 
     void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
-        const int socketFamily = this->protocolVersion == InternetProtocolVersion::IPV6 ? AF_INET6 : AF_INET;
+        const int socketFamily = static_cast<int>(this->protocolVersion);
         const int socketType = SOCK_STREAM;
         const int socketProtocol = IPPROTO_TCP;
 

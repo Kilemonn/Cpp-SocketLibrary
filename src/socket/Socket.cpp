@@ -213,7 +213,7 @@ namespace kt
 
 	void Socket::constructWifiSocket()
 	{
-		const int socketFamily = this->protocolVersion == InternetProtocolVersion::IPV6 ? AF_INET6 : AF_INET;
+		const int socketFamily = static_cast<int>(this->protocolVersion);
 		const int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
 		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
 
@@ -310,7 +310,7 @@ namespace kt
 			memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
 			
 			const std::string hostname = this->protocolVersion == InternetProtocolVersion::IPV6 ? "0:0:0:0:0:0:0:1" : "127.0.0.1";
-			const int socketFamily = this->protocolVersion == InternetProtocolVersion::IPV6 ? AF_INET6 : AF_INET;
+			const int socketFamily = static_cast<int>(this->protocolVersion);
 			const int socketType = SOCK_DGRAM;
 			const int socketProtocol = IPPROTO_UDP;
 			
