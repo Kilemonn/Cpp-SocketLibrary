@@ -52,6 +52,9 @@ namespace kt
 			void initialisePortNumber();
 			size_t initialiseServerAddress(const int&);
 
+			Socket acceptWifiConnection(const long& = 0);
+			Socket acceptBluetoothConnection(const long& = 0);
+
 		public:
 			ServerSocket() = default;
 			ServerSocket(const SocketType, const unsigned int& = 0, const unsigned int& = 20, const InternetProtocolVersion = InternetProtocolVersion::IPV4);
@@ -62,7 +65,7 @@ namespace kt
 			InternetProtocolVersion getInternetProtocolVersion() const;
 			unsigned int getPort() const;
 
-			Socket accept(const unsigned int& = 0);
+			Socket accept(const long& = 0);
 			void close();
 	};
 

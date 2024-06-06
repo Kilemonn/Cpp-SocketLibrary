@@ -64,7 +64,7 @@ namespace kt
 			void constructBluetoothSocket();
 			void constructWifiSocket();
 			SocketAddress getSendAddress() const;
-			int pollSocket(const unsigned long = 1000) const;
+			int pollSocket(const long& = 1000) const;
 			void initialiseListeningPortNumber();
 
 		public:
@@ -100,5 +100,6 @@ namespace kt
 	};
 
 	std::optional<std::string> resolveToAddress(const SocketAddress*, const InternetProtocolVersion);
+	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal = nullptr);
 
 } // End namespace kt 

@@ -69,9 +69,10 @@ namespace kt
 		this->type = type;
 		this->protocol = protocol;
 		this->protocolVersion = protocolVersion;
-		this->serverAddress = { 0 };
-		this->socketDescriptor = 0;
+		this->socketDescriptor = getInvalidSocketValue();
+
 		memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
+		memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
 
 #ifdef __linux__
 		this->bluetoothAddress = { 0 };
@@ -266,7 +267,7 @@ namespace kt
 				}
 
 				this->close();
-				this->socketDescriptor = -1;
+				this->socketDescriptor = getInvalidSocketValue();
 			}
 			freeaddrinfo(resolvedAddresses);
 			throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + getErrorCode());
@@ -316,7 +317,7 @@ namespace kt
 			const int socketType = SOCK_DGRAM;
 			const int socketProtocol = IPPROTO_UDP;
 			
-			addrinfo hint = {};
+			addrinfo hint{};
 			hint.ai_flags = AI_PASSIVE;
 			hint.ai_family = socketFamily;
 			hint.ai_socktype = socketType;
@@ -333,7 +334,7 @@ namespace kt
 			}
 #endif
 
-			addrinfo *addresses;
+			addrinfo *addresses = nullptr;
 			if (getaddrinfo(hostname.c_str(), std::to_string(this->port).c_str(), &hint, &addresses) != 0)
 			{
 				freeaddrinfo(addresses);
@@ -401,19 +402,10 @@ namespace kt
 		return false;
 	}
 
-	int Socket::pollSocket(const unsigned long timeout) const
+	int Socket::pollSocket(const long& timeout) const
 	{
-		fd_set sReady{};
 		timeval timeOutVal{};
-
-		memset((char*) &timeOutVal, '\0', sizeof(timeOutVal));
-		timeOutVal.tv_usec = static_cast<long>(timeout);
-
-		FD_ZERO(&sReady);
-		FD_SET(this->socketDescriptor, &sReady);
-
-		// Need this->socketDescriptor + 1 here
-		int res = select(this->socketDescriptor + 1, &sReady, nullptr, nullptr, &timeOutVal);
+		int res = kt::pollSocket(this->socketDescriptor, timeout, &timeOutVal);
 #ifdef __linux__
 		if (res == 0)
 		{
@@ -429,6 +421,27 @@ namespace kt
 #endif
 
 		return res;
+	}
+
+	/**
+	 * Poll the provided socket descriptor for the provided timeout in microseconds.
+	 */
+	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal)
+	{
+		fd_set sReady{};
+		timeval timeoutVal{};
+		if (timeOutVal == nullptr)
+		{
+			timeOutVal = &timeoutVal;
+		}
+		
+		timeOutVal->tv_usec = static_cast<long>(timeout);
+
+		FD_ZERO(&sReady);
+		FD_SET(socketDescriptor, &sReady);
+
+		// Need this->socketDescriptor + 1 here
+		return select(socketDescriptor + 1, &sReady, nullptr, nullptr, timeOutVal);
 	}
 
 	/**
@@ -577,8 +590,7 @@ namespace kt
 
 	SocketAddress Socket::getSendAddress() const
 	{
-		SocketAddress newAddress;
-		memset(&newAddress, '\0', sizeof(newAddress));
+		SocketAddress newAddress{};
 
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
@@ -671,7 +683,6 @@ namespace kt
 		}
 
 		std::string data;
-
 		if (!this->ready())
 		{
 			return data;
@@ -908,6 +919,5 @@ namespace kt
 		return std::optional<std::string>{std::string(localMACAddress)};
 #endif
 	}
-
 
 } // End namespace kt

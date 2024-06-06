@@ -60,6 +60,7 @@ namespace kt
      */
     ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize, const InternetProtocolVersion protocolVersion)
     {
+        this->socketDescriptor = getInvalidSocketValue();
         this->port = port;
         this->type = type;
         this->protocolVersion = protocolVersion;
@@ -182,7 +183,7 @@ namespace kt
         const int socketProtocol = IPPROTO_TCP;
 
 #ifdef _WIN32
-        WSADATA wsaData;
+        WSADATA wsaData{};
         if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
         {
             throw SocketException("WSAStartup Failed: " + std::to_string(res));
@@ -236,7 +237,7 @@ namespace kt
 
     size_t ServerSocket::initialiseServerAddress(const int& socketFamily)
     {
-        addrinfo hint = {};
+        addrinfo hint{};
         memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 
         hint.ai_flags = AI_PASSIVE;
@@ -244,7 +245,7 @@ namespace kt
         hint.ai_socktype = SOCK_STREAM;
         hint.ai_protocol = IPPROTO_TCP;
 
-        addrinfo *addresses;
+        addrinfo *addresses = nullptr;
         if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hint, &addresses) != 0)
         {
             freeaddrinfo(addresses);
@@ -326,19 +327,27 @@ namespace kt
      * 
      * @returns kt::Socket object of the receiver who has just connected to the kt::ServerSocket.
      */
-    Socket ServerSocket::accept(const unsigned int& timeout)
+    Socket ServerSocket::accept(const long& timeout)
     {
-        if (timeout != 0)
+        if (this->type == SocketType::Wifi)
         {
-            fd_set sready;
-            timeval timeOutVal;
-            memset((char *)&timeOutVal, '\0', sizeof(timeOutVal));
-            timeOutVal.tv_usec = static_cast<int>(timeout);
+            return this->acceptWifiConnection(timeout);
+        }
+        else if (this->type == SocketType::Bluetooth)
+        {
+            return this->acceptBluetoothConnection(timeout);
+        }
+        else
+        {
+            throw SocketException("Cannot accept connection with SocketType set as SocketType::None");
+        }  
+    }
 
-            FD_ZERO(&sready);
-            FD_SET((unsigned int)this->socketDescriptor, &sready);
-
-            int res = select(this->socketDescriptor + 1, &sready, nullptr, nullptr, &timeOutVal);
+    Socket ServerSocket::acceptWifiConnection(const long& timeout)
+    {
+        if (timeout > 0)
+        {
+            int res = kt::pollSocket(this->socketDescriptor, timeout);
             if (res == -1)
             {
                 throw kt::SocketException("Failed to poll as socket is no longer valid.");
@@ -357,7 +366,33 @@ namespace kt
             throw SocketException("Failed to accept connection. Socket is in an invalid state.");
         }
 
+        unsigned int portNum = this->getInternetProtocolVersion() == InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
+        std::optional<std::string> hostname = kt::resolveToAddress(&acceptedAddress, this->getInternetProtocolVersion());
+		if (!hostname.has_value())
+		{
+            throw SocketException("Unable to resolve accepted hostname from accepted socket.");
+		}
+
+        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname.value(), portNum, this->getInternetProtocolVersion());
+    }
+
+	Socket ServerSocket::acceptBluetoothConnection(const long& timeout)
+    {
+        if (timeout > 0)
+        {
+            int res = kt::pollSocket(this->socketDescriptor, timeout);
+            if (res == -1)
+            {
+                throw kt::SocketException("Failed to poll as socket is no longer valid.");
+            }
+            else if (res == 0)
+            {
+                throw kt::TimeoutException("No applicable connections could be accepted during the time period specified " + std::to_string(timeout) + " microseconds.");
+            }
+        }
+
 #ifdef __linux__
+        throw SocketException("Not yet implemented.");
         // Remove bluetooth related code
 
         // sockaddr_rc remoteDevice = { 0 };
@@ -374,23 +409,6 @@ namespace kt
 	    //     ba2str(&remoteDevice.rc_bdaddr, remoteAddress);
         // }
 #endif
-
-        SocketAddress address{};
-		socklen_t addr_size = sizeof(address);
-		int res = getpeername(temp, &address.address, &addr_size);
-        if (res != 0)
-		{ 
-			throw SocketException("Unable to resolve accepted address' peer name.");
-        }
-
-        unsigned int portNum = this->getInternetProtocolVersion() == InternetProtocolVersion::IPV6 ? htons(address.ipv6.sin6_port) : htons(address.ipv4.sin_port);
-        std::optional<std::string> hostname = kt::resolveToAddress(&acceptedAddress, this->getInternetProtocolVersion());
-		if (!hostname.has_value())
-		{
-            throw SocketException("Unable to resolve accepted hostname from accepted socket.");
-		}
-
-        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname.value(), portNum, this->getInternetProtocolVersion());
     }
 
     /**

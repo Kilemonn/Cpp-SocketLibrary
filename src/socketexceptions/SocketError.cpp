@@ -31,15 +31,21 @@ namespace kt
 #endif
 	}
 
-	bool isInvalidSocket(SOCKET descriptor)
+	SOCKET getInvalidSocketValue()
 	{
 #ifdef _WIN32
-		return descriptor == INVALID_SOCKET;
+		return INVALID_SOCKET;
 
 #elif __linux__
-		return descriptor == -1;
+		return -1;
 
 #endif
 	}
+
+	bool isInvalidSocket(SOCKET descriptor)
+	{
+		return descriptor == getInvalidSocketValue();
+	}
+
 } // End kt namespace
 

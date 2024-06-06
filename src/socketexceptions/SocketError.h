@@ -22,5 +22,7 @@ namespace kt
 {
 	std::string getErrorCode();
 
+	SOCKET getInvalidSocketValue();
+
 	bool isInvalidSocket(SOCKET descriptor);
 } // End kt namespace
