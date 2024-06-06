@@ -563,7 +563,6 @@ namespace kt
 		{
 			asString = asString.substr(0, delimiterIndex);
 		}
-		std::cout << "Resolved address: " << asString << std::endl;
 		// Since we zero out the address, we need to check its not default initialised
 		return !asString.empty() && asString != "0.0.0.0" && asString != "::" ? std::optional<std::string>{asString} : std::nullopt;
 	}
