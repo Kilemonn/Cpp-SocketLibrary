@@ -237,7 +237,6 @@ namespace kt
     size_t ServerSocket::initialiseServerAddress(const int& socketFamily)
     {
         addrinfo hint = {};
-        const std::string hostname = this->protocolVersion == InternetProtocolVersion::IPV6 ? "0:0:0:0:0:0:0:1" : "127.0.0.1";
         memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 
         hint.ai_flags = AI_PASSIVE;
@@ -246,10 +245,10 @@ namespace kt
         hint.ai_protocol = IPPROTO_TCP;
 
         addrinfo *addresses;
-        if (getaddrinfo(hostname.c_str(), std::to_string(this->port).c_str(), &hint, &addresses) != 0)
+        if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hint, &addresses) != 0)
         {
             freeaddrinfo(addresses);
-            throw SocketException("Failed to retrieve address info of local hostname: [" + hostname + "]. " + getErrorCode());
+            throw SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
         }
 
         std::memcpy(&this->serverAddress, addresses->ai_addr, addresses->ai_addrlen);
@@ -350,42 +349,48 @@ namespace kt
             }
         }
 
-#ifdef _WIN32
-        SOCKET temp = ::accept(this->socketDescriptor, nullptr, nullptr);
-        if (temp == -1)
+        SocketAddress acceptedAddress{};
+        socklen_t sockLen = sizeof(acceptedAddress);
+        SOCKET temp = ::accept(this->socketDescriptor, &acceptedAddress.address, &sockLen);
+        if (isInvalidSocket(temp))
         {
             throw SocketException("Failed to accept connection. Socket is in an invalid state.");
         }
 
-#elif __linux__
-        sockaddr_rc remoteDevice = { 0 };
-        socklen_t socketSize = sizeof(remoteDevice);
-        int temp = ::accept(this->socketDescriptor, (sockaddr *) &remoteDevice, &socketSize);
-        if (temp == -1)
-        {
-            throw SocketException("Failed to accept connection. Socket is in an invalid state.");
-        }
+#ifdef __linux__
+        // Remove bluetooth related code
+
+        // sockaddr_rc remoteDevice = { 0 };
+        // socklen_t socketSize = sizeof(remoteDevice);
+        // SOCKET temp = ::accept(this->socketDescriptor, (sockaddr *) &remoteDevice, &socketSize);
+        // if (temp == -1)
+        // {
+        //     throw SocketException("Failed to accept connection. Socket is in an invalid state.");
+        // }
         
-        if (this->type == kt::SocketType::Bluetooth)
-        {
-        	char remoteAddress[1024] = {0};
-	        ba2str(&remoteDevice.rc_bdaddr, remoteAddress);
-        }
+        // if (this->type == kt::SocketType::Bluetooth)
+        // {
+        // 	char remoteAddress[1024] = {0};
+	    //     ba2str(&remoteDevice.rc_bdaddr, remoteAddress);
+        // }
 #endif
 
-        sockaddr_in address{};
+        SocketAddress address{};
 		socklen_t addr_size = sizeof(address);
-		int res = getpeername(temp, (sockaddr*)&address, &addr_size);
-
-        std::string hostname;
-        unsigned int portNum = 0;
-		if (res == 0)
+		int res = getpeername(temp, &address.address, &addr_size);
+        if (res != 0)
 		{ 
-			hostname = std::string(inet_ntoa(address.sin_addr));
-            portNum = htons(address.sin_port);
+			throw SocketException("Unable to resolve accepted address' peer name.");
+        }
+
+        unsigned int portNum = this->getInternetProtocolVersion() == InternetProtocolVersion::IPV6 ? htons(address.ipv6.sin6_port) : htons(address.ipv4.sin_port);
+        std::optional<std::string> hostname = kt::resolveToAddress(&acceptedAddress, this->getInternetProtocolVersion());
+		if (!hostname.has_value())
+		{
+            throw SocketException("Unable to resolve accepted hostname from accepted socket.");
 		}
 
-        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname, portNum, this->getInternetProtocolVersion());
+        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname.value(), portNum, this->getInternetProtocolVersion());
     }
 
     /**

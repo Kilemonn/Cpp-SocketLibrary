@@ -57,6 +57,7 @@ namespace kt
 	 * @param port - The port number.
 	 * @param type - Determines whether this socket is a wifi or bluetooth socket. 
 	 * @param protocol - Indicates the protocol being used by this socket, for Wifi this value can be *kt::SocketProtocol::TCP* or *kt::SocketProtocol::UDP* Default value is *kt::SocketProtocol::None*.
+	 * @param protocolVersion - The protocol version that will be used by this socket, either IPV4 or IPV6. IPV4 is used by default.
 	 * 
 	 * @throw SocketException - If the Socket is unable to be instanciated or connect to server.
 	 * @throw BindingException - If the Socket is unable to bind to the port specified.
@@ -110,6 +111,7 @@ namespace kt
 	 * @param protocol - Indicates the protocol being used by this socket, for Wifi this value can be *kt::SocketProtocol::TCP* or *kt::SocketProtocol::UDP* Default value is *kt::SocketProtocol::None*.
 	 * @param hostname - the hostname of the socket to copy.
 	 * @param port - the port number of the socket to copy.
+	 * @param protocolVersion - the protocol version that the socket will use.
 	 */
 	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
 	{
@@ -534,26 +536,36 @@ namespace kt
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			std::string asString;
-			
-			const int addressSize = this->protocolVersion == InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
-			asString.resize(addressSize);
-			if (getnameinfo(&this->clientAddress.address, sizeof(this->clientAddress), &asString[0], addressSize, nullptr, 0, NI_NUMERICHOST) != 0)
-			{
-				return std::nullopt;
-			}
-			
-			// Removing trailing \0 bytes
-			size_t delimiterIndex = asString.find_first_of('\0');
-			if (delimiterIndex != std::string::npos) 
-			{
-				return asString.substr(0, delimiterIndex);
-			}
-			// Since we zero out the address, we need to check its not default initialised
-			return !asString.empty() && asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
+			return kt::resolveToAddress(&this->clientAddress, this->getInternetProtocolVersion());
 		}
 
 		return std::nullopt;
+	}
+
+	std::optional<std::string> resolveToAddress(const SocketAddress* address, const InternetProtocolVersion protocolVersion)
+	{
+		const size_t addressLength = protocolVersion == InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
+		std::string asString;
+		asString.resize(addressLength);
+
+		if (protocolVersion == InternetProtocolVersion::IPV6)
+		{
+			inet_ntop(static_cast<int>(protocolVersion), &address->ipv6.sin6_addr, &asString[0], addressLength);
+		}
+		else
+		{
+			inet_ntop(static_cast<int>(protocolVersion), &address->ipv4.sin_addr, &asString[0], addressLength);
+		}
+
+		// Removing trailing \0 bytes
+		const size_t delimiterIndex = asString.find_first_of('\0');
+		if (delimiterIndex != std::string::npos) 
+		{
+			asString = asString.substr(0, delimiterIndex);
+		}
+		std::cout << "Resolved address: " << asString << std::endl;
+		// Since we zero out the address, we need to check its not default initialised
+		return !asString.empty() && asString != "0.0.0.0" && asString != "::" ? std::optional<std::string>{asString} : std::nullopt;
 	}
 
 	/**
@@ -626,6 +638,7 @@ namespace kt
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			// UDP is odd, and will consume the entire datagram after a single read even if not all bytes are read
+			memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
 			socklen_t addressLength = sizeof(this->clientAddress);
 			int flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, &this->clientAddress.address, &addressLength);
 			if (flag < 1)
@@ -683,6 +696,7 @@ namespace kt
 		{
 			std::string temp;
 			temp.resize(this->MAX_BUFFER_SIZE);
+			memset(&this->clientAddress, '\0', sizeof(this->clientAddress));
 			socklen_t addressLength = sizeof(this->clientAddress);
 			
 			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, &this->clientAddress.address, &addressLength);

@@ -99,4 +99,6 @@ namespace kt
 			static std::optional<std::string> getLocalMACAddress();
 	};
 
+	std::optional<std::string> resolveToAddress(const SocketAddress*, const InternetProtocolVersion);
+
 } // End namespace kt 
