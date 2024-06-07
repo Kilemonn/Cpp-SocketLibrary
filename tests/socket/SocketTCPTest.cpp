@@ -193,7 +193,6 @@ namespace kt
     TEST_F(SocketTCPTest, IPV6Address)
     {
         ServerSocket ipv6ServerSocket(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
-        
         Socket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
 
         // Accept ipv6 connnection

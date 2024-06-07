@@ -45,6 +45,7 @@
 #include <netpacket/packet.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <poll.h>
 
 #endif
 
@@ -131,7 +132,7 @@ namespace kt
 	Socket::Socket(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
-		this->updSendSocket = socket.updSendSocket;
+		this->udpSendSocket = socket.udpSendSocket;
 		this->hostname = socket.hostname;
 		this->protocol = socket.protocol;
 		this->port = socket.port;
@@ -157,7 +158,7 @@ namespace kt
 	Socket& Socket::operator=(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
-		this->updSendSocket = socket.updSendSocket;
+		this->udpSendSocket = socket.udpSendSocket;
 		this->hostname = socket.hostname;
 		this->protocol = socket.protocol;
 		this->port = socket.port;
@@ -269,11 +270,11 @@ namespace kt
 				this->socketDescriptor = getInvalidSocketValue();
 			}
 			freeaddrinfo(resolvedAddresses);
-			throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + getErrorCode());
+			throw SocketException("Error connecting to host with hostname: " + hostname + ". Error code: [" + std::to_string(res) + "] " + getErrorCode());
 		}
 		else
 		{
-			this->updSendSocket = socket(resolvedAddresses->ai_family, resolvedAddresses->ai_socktype, resolvedAddresses->ai_protocol);
+			this->udpSendSocket = socket(resolvedAddresses->ai_family, resolvedAddresses->ai_socktype, resolvedAddresses->ai_protocol);
 			this->protocolVersion = static_cast<InternetProtocolVersion>(resolvedAddresses->ai_family);
 			std::memcpy(&this->serverAddress, resolvedAddresses->ai_addr, resolvedAddresses->ai_addrlen);
 			freeaddrinfo(resolvedAddresses);
@@ -288,11 +289,11 @@ namespace kt
 	{
 #ifdef _WIN32
 		closesocket(this->socketDescriptor);
-		closesocket(this->updSendSocket);
+		closesocket(this->udpSendSocket);
 
 #elif __linux__
 		::close(this->socketDescriptor);
-		::close(this->updSendSocket);
+		::close(this->udpSendSocket);
 #endif
 
 		this->bound = false;
@@ -398,52 +399,52 @@ namespace kt
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
 				SocketAddress address = this->getSendAddress();
-				return ::sendto(this->updSendSocket, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
+				return ::sendto(this->udpSendSocket, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
 			}
 		}
 		return false;
 	}
 
-	int Socket::pollSocket(SOCKET socket, const long& timeout) const
+	int Socket::pollSocket(SOCKET socket, const short& events, const int& timeout) const
 	{
-		timeval timeOutVal{};
-		int res = kt::pollSocket(socket, timeout, &timeOutVal);
-#ifdef __linux__
-		if (res == 0)
-		{
-			if (timeOutVal.tv_usec == 0)
-			{
-				return 0;
-			}
-			else
-			{
-				return 1;
-			}
-		}
-#endif
-
-		return res;
+		return kt::pollSocket(socket, events, timeout);
 	}
 
 	/**
-	 * Poll the provided socket descriptor for the provided timeout in microseconds.
+	 * Poll the provided socket descriptor for the provided timeout in milliseconds.
 	 */
-	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal)
+	int pollSocket(const SOCKET& socketDescriptor, const short& events, const int& timeout)
 	{
-		fd_set sReady{};
-		timeval timeoutVal{};
-		if (timeOutVal == nullptr)
-		{
-			timeOutVal = &timeoutVal;
-		}
+		pollfd pollFds[1];
+		pollFds[0].fd = socketDescriptor;
+		pollFds[0].events = events;
+
+		int eventsOccurred = 0;
+
+#ifdef _WIN32
+		eventsOccurred = WSAPoll(pollFds, 1, timeout);
+#elif __linux__
+		eventsOccurred = poll(pollFds, 1, timeout);
+#endif
 		
-		timeOutVal->tv_usec = static_cast<long>(timeout);
-
-		FD_ZERO(&sReady);
-		FD_SET(socketDescriptor, &sReady);
-
-		// Need this->socketDescriptor + 1 here
-		return select(socketDescriptor + 1, &sReady, nullptr, nullptr, timeOutVal);
+		if (eventsOccurred == 0)
+		{
+			// No events occurred
+			return eventsOccurred;
+		}
+		else
+		{
+			int inputEventOccurred = pollFds[0].revents & events;
+			if (inputEventOccurred)
+			{
+				return 1;
+			}
+			else
+			{
+				// Another event we weren't expected occurred
+				return 0;
+			}
+		}
 	}
 
 	/**
@@ -453,9 +454,9 @@ namespace kt
 	 * 
 	 * @return true if there is data to read otherwise false.
 	 */
-	bool Socket::ready(const unsigned long timeout) const
+	bool Socket::ready(const int timeout) const
 	{
-		int result = this->pollSocket(this->socketDescriptor, timeout);
+		int result = this->pollSocket(this->socketDescriptor, POLLIN, timeout);
 		// 0 indicates that there is no data
 		return result > 0;
 	}
@@ -467,9 +468,9 @@ namespace kt
 	 * 
 	 * @return true if the stream is open otherwise false.
 	 * 
-	 * **NOTE:** This method is still in BETA, and cannot detect if the connection has been closed by the remote device.
+	 * This method cannot detect if the connection has been closed by the remote.
 	 */
-	bool Socket::connected(const unsigned long timeout) const
+	bool Socket::connected(const int timeout) const
 	{
 		// UDP is connectionless
 		if (this->protocol == kt::SocketProtocol::UDP)
@@ -477,10 +478,8 @@ namespace kt
 			return false;
 		}
 
-		int result = this->pollSocket(this->socketDescriptor, timeout);
-
-		// -1 indicates that the connection is not available
-		return result != -1;
+		int result = this->pollSocket(this->socketDescriptor, POLLERR | POLLHUP | POLLNVAL, timeout);
+		return result != 1;
 	}
 
 	/**
@@ -748,14 +747,14 @@ namespace kt
 		result.reserve(1024);
 		bool hitEOF = false;
 
-		if (!this->ready())
+		if (!this->ready(timeout))
 		{
 			return "";
 		}
 
 		while (this->ready(timeout) && !hitEOF)
 		{
-			std::string res = receiveAmount(this->pollSocket(timeout));
+			std::string res = receiveAmount(this->pollSocket(this->socketDescriptor, POLLIN, timeout));
 			if (!res.empty() && res[0] == '\0')
 			{
 				hitEOF = true;

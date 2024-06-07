@@ -43,6 +43,7 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 #include <unistd.h>
+#include <poll.h>
 
 #endif
 
@@ -346,7 +347,7 @@ namespace kt
     {
         if (timeout > 0)
         {
-            int res = kt::pollSocket(this->socketDescriptor, timeout);
+            int res = kt::pollSocket(this->socketDescriptor, POLLIN, timeout);
             if (res == -1)
             {
                 throw kt::SocketException("Failed to poll as socket is no longer valid.");
@@ -379,7 +380,8 @@ namespace kt
     {
         if (timeout > 0)
         {
-            int res = kt::pollSocket(this->socketDescriptor, timeout);
+            // Check this poll is working for bluetooth
+            int res = kt::pollSocket(this->socketDescriptor, POLLIN, timeout);
             if (res == -1)
             {
                 throw kt::SocketException("Failed to poll as socket is no longer valid.");
