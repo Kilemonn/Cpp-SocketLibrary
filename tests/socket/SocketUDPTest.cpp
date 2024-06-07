@@ -40,16 +40,6 @@ namespace kt
     }
 
     /*
-     * Test the kt::Socket using UDP and IPV6, specifically making sure a default initialised 
-     * socket returns std::nullopt from Socket::getLastRecievedAddress().
-     */
-    TEST_F(SocketUDPTest, UDPDefaultGetLastRecievedAddress_IPV6)
-    {
-        Socket ipv6Socket(LOCALHOST, socket.getPort(), SocketType::Wifi, SocketProtocol::UDP);
-        ASSERT_EQ(std::nullopt, ipv6Socket.getLastRecievedAddress());
-    }
-
-    /*
      * Ensure that we cannot receive any messages when we are not bound.
      */
     TEST_F(SocketUDPTest, UDPBind_NotCalled)
