@@ -1,13 +1,15 @@
-#ifndef _SOCKET_H__
-#define _SOCKET_H__
+#pragma once
 
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <optional>
 
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
+#include "../enums/SocketProtocol.h"
+#include "../enums/SocketType.h"
+#include "../enums/InternetProtocolVersion.h"
+#include "../address/Address.h"
+#include "../socketexceptions/SocketError.h"
 
 #ifdef _WIN32
 
@@ -15,10 +17,11 @@
 	#define WIN32_LEAN_AND_MEAN
 #endif
 
-#define _WIN32_WINNT 0x501
+#define _WIN32_WINNT 0x0600
 
 #include <WinSock2.h>
 #include <ws2bth.h>
+#include <ws2tcpip.h>
 
 #elif __linux__
 
@@ -29,6 +32,9 @@
 #include <bluetooth/rfcomm.h>
 #include <bluetooth/hci.h>
 
+// Typedef to match the windows typedef since they are different underlying types
+typedef int SOCKET;
+
 #endif
 
 namespace kt
@@ -38,19 +44,20 @@ namespace kt
 		private:
 			std::string hostname;
 			unsigned int port;
-			kt::SocketProtocol protocol = kt::SocketProtocol::None;
-			kt::SocketType type = SocketType::None;
+			SocketProtocol protocol = SocketProtocol::None;
+			SocketType type = SocketType::None;
+			InternetProtocolVersion protocolVersion = InternetProtocolVersion::Any;
 			bool bound = false;
-			struct sockaddr_in serverAddress; // For Wifi
-			struct sockaddr_in clientAddress; // For UDP, stores the client address of the last message received
+			SocketAddress serverAddress = {}; // For Wifi
+			SocketAddress receiveAddress = {}; // For UDP, stores the client address of the last message received
+			SOCKET udpSendSocket = getInvalidSocketValue();
+			SOCKET socketDescriptor = getInvalidSocketValue();
 
 #ifdef _WIN32
-			SOCKET socketDescriptor = 0;
 			//SOCKADDR_BTH bluetoothAddress;
 
 #elif __linux__
-			int socketDescriptor = 0;
-			struct sockaddr_rc bluetoothAddress; // For Bluetooth
+			sockaddr_rc bluetoothAddress; // For Bluetooth
 
 #endif
 
@@ -58,20 +65,19 @@ namespace kt
 
 			void constructBluetoothSocket();
 			void constructWifiSocket();
-			struct sockaddr_in getSendAddress();
-			int pollSocket(const unsigned long = 1000) const;
-
-			std::string getErrorCode() const;
+			SocketAddress getSendAddress() const;
+			int pollSocket(SOCKET socket, const long& = 1000) const;
+			void initialiseListeningPortNumber();
 
 		public:
 			Socket() = default;
 			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
-			Socket(const int&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&);
+			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&, const kt::InternetProtocolVersion);
 
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);
 			
-			bool bind();
+			bool bind(const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			void close();
 			
 			bool ready(const unsigned long = 1000) const;
@@ -82,6 +88,7 @@ namespace kt
 			bool isBound() const;
 			kt::SocketProtocol getProtocol() const;
 			kt::SocketType getType() const;
+			InternetProtocolVersion getInternetProtocolVersion() const;
 			std::optional<std::string> getLastRecievedAddress() const;
 			std::string getAddress() const;
 
@@ -94,6 +101,7 @@ namespace kt
 			static std::optional<std::string> getLocalMACAddress();
 	};
 
-} // End namespace kt 
+	std::optional<std::string> resolveToAddress(const SocketAddress*, const InternetProtocolVersion);
+	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal = nullptr);
 
-#endif //_SOCKET_H__
+} // End namespace kt 

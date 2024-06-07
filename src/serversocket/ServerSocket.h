@@ -1,13 +1,14 @@
-
-#ifndef _SERVER_SOCKET_H__
-#define _SERVER_SOCKET_H__
+#pragma once
 
 #include <optional>
 
+#include "../address/Address.h"
+
 #include "../socket/Socket.h"
 
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
+#include "../enums/SocketProtocol.h"
+#include "../enums/SocketType.h"
+#include "../enums/InternetProtocolVersion.h"
 
 #ifdef _WIN32
 
@@ -15,10 +16,11 @@
 	#define WIN32_LEAN_AND_MEAN
 #endif
 
-#define _WIN32_WINNT 0x501
+#define _WIN32_WINNT 0x0600
 
 #include <WinSock2.h>
 #include <ws2bth.h>
+#include <ws2tcpip.h>
 
 #elif __linux__
 
@@ -26,6 +28,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+
+// Typedef to match the windows typedef since they are different underlying types
+typedef int SOCKET;
 
 #endif
 
@@ -35,38 +40,33 @@ namespace kt
 	{
 		private:
 			unsigned int port;
-			kt::SocketType type = SocketType::None;
-			struct sockaddr_in serverAddress;
-			
-#ifdef _WIN32
-			SOCKET socketDescriptor = 0;
-			// SOCKADDR_BTH bluetoothAddress;
-
-#elif __linux__
-			int socketDescriptor = 0;
-			
-#endif
+			SocketType type = SocketType::None;
+			InternetProtocolVersion protocolVersion = InternetProtocolVersion::Any;
+			kt::SocketAddress serverAddress = {};
+			SOCKET socketDescriptor = getInvalidSocketValue();
 
 			void setDiscoverable();
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
+			void initialisePortNumber();
+			size_t initialiseServerAddress();
 
-			std::string getErrorCode() const;
+			Socket acceptWifiConnection(const long& = 0);
+			Socket acceptBluetoothConnection(const long& = 0);
 
 		public:
 			ServerSocket() = default;
-			ServerSocket(const kt::SocketType, const unsigned int& = 0, const unsigned int& = 20);
+			ServerSocket(const SocketType, const unsigned int& = 0, const unsigned int& = 20, const InternetProtocolVersion = InternetProtocolVersion::Any);
 			ServerSocket(const ServerSocket&);
 			ServerSocket& operator=(const ServerSocket&);
 
-			kt::SocketType getType() const;
+			SocketType getType() const;
+			InternetProtocolVersion getInternetProtocolVersion() const;
 			unsigned int getPort() const;
 
-			Socket accept(const unsigned int& = 0);
+			Socket accept(const long& = 0);
 			void close();
 	};
 
 } // End namespace kt
-
-#endif // _SERVER_SOCKET_H__

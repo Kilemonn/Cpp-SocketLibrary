@@ -39,6 +39,9 @@ TestBluetooth
 # vsCode
 .vscode/
 
+# Visual studio
+.vs/
+
 # Intellij
 .idea/
 

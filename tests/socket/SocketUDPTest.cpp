@@ -7,8 +7,7 @@
 #include "../../src/socket/Socket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
 
-const std::string LOCALHOST = "127.0.0.1";
-const int PORT_NUMBER = 12345;
+const std::string LOCALHOST = "localhost";
 
 namespace kt
 {
@@ -18,7 +17,7 @@ namespace kt
         Socket socket;
 
     protected:
-        SocketUDPTest() : socket(LOCALHOST, PORT_NUMBER, SocketType::Wifi, SocketProtocol::UDP) { }
+        SocketUDPTest() : socket(LOCALHOST, 0, SocketType::Wifi, SocketProtocol::UDP) { }
         void TearDown() override
         {
             this->socket.close();
@@ -47,7 +46,7 @@ namespace kt
     {
         ASSERT_FALSE(socket.isBound());
 
-        kt::Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        kt::Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
         ASSERT_FALSE(socket.ready());
         client.send("test");
@@ -60,10 +59,10 @@ namespace kt
     TEST_F(SocketUDPTest, UDPBindAndBound_MultipleCalls)
     {
         ASSERT_FALSE(socket.isBound());
-        socket.bind();
+        ASSERT_TRUE(socket.bind());
         ASSERT_TRUE(socket.isBound());
 
-        kt::Socket newServer(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        kt::Socket newServer(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         ASSERT_FALSE(newServer.isBound());
         EXPECT_THROW(newServer.bind(), BindingException);
     }
@@ -90,9 +89,9 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPSendAndReady)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind());
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
         ASSERT_FALSE(socket.ready());
         const std::string testString = "test";
@@ -107,9 +106,9 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind());
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "test";
         ASSERT_TRUE(client.send(testString));
 
@@ -127,9 +126,9 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount_NotEnoughRead)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind());
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "test";
         ASSERT_FALSE(socket.ready());
         ASSERT_TRUE(client.send(testString));
@@ -147,9 +146,9 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAmount_TooMuchRead)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind());
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "test";
         ASSERT_TRUE(client.send(testString));
 
@@ -166,9 +165,10 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPGetAndLastReceivedAddress)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind(InternetProtocolVersion::IPV4));
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        const std::string address = "127.0.0.1";
+        Socket client(address, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         std::string testString = "t";
         ASSERT_TRUE(client.send(testString));
 
@@ -177,7 +177,29 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(testString, received);
 
-        ASSERT_EQ(LOCALHOST, socket.getLastRecievedAddress());
+        ASSERT_EQ(address, socket.getLastRecievedAddress());
+
+        client.close();
+    }
+
+    /*
+     * Ensure that the last received address is set accordingly after data is read using IPV6.
+     */
+    TEST_F(SocketUDPTest, UDPGetAndLastReceivedAddress_IPV6)
+    {
+        ASSERT_TRUE(socket.bind(InternetProtocolVersion::IPV6));
+
+        const std::string address = "::1";
+        Socket client(address, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        std::string testString = "t";
+        ASSERT_TRUE(client.send(testString));
+
+        ASSERT_TRUE(socket.ready());
+        std::string received = std::string(1, *socket.get());
+        ASSERT_FALSE(socket.ready());
+        ASSERT_EQ(testString, received);
+
+        ASSERT_EQ(address, socket.getLastRecievedAddress());
 
         client.close();
     }
@@ -187,9 +209,9 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveAll)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind());
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
         const std::string testString = "testString";
         ASSERT_TRUE(client.send(testString));
         
@@ -207,9 +229,9 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPReceiveToDelimiter)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind());
 
-        Socket client(LOCALHOST, PORT_NUMBER, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
         const std::string testString = "testString";
         const char delimiter = '~';

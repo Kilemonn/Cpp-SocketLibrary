@@ -2,8 +2,9 @@
 #include "Socket.h"
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
-#include "../enums/SocketProtocol.cpp"
-#include "../enums/SocketType.cpp"
+#include "../enums/SocketProtocol.h"
+#include "../enums/SocketType.h"
+#include "../socketexceptions/SocketError.h"
 
 #include <iostream>
 #include <vector>
@@ -19,7 +20,7 @@
 	#define WIN32_LEAN_AND_MEAN
 #endif
 
-#define _WIN32_WINNT 0x501
+#define _WIN32_WINNT 0x0600
 
 #include <winsock2.h>
 #include <winerror.h>
@@ -66,9 +67,9 @@ namespace kt
 		this->port = port;
 		this->type = type;
 		this->protocol = protocol;
-		this->serverAddress = { 0 };
-		this->socketDescriptor = 0;
-		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
+
+		memset(&this->receiveAddress, '\0', sizeof(this->receiveAddress));
+		memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
 
 #ifdef __linux__
 		this->bluetoothAddress = { 0 };
@@ -108,16 +109,18 @@ namespace kt
 	 * @param protocol - Indicates the protocol being used by this socket, for Wifi this value can be *kt::SocketProtocol::TCP* or *kt::SocketProtocol::UDP* Default value is *kt::SocketProtocol::None*.
 	 * @param hostname - the hostname of the socket to copy.
 	 * @param port - the port number of the socket to copy.
+	 * @param protocolVersion - the protocol version that the socket will use.
 	 */
-	Socket::Socket(const int& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port)
+	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->protocol = protocol;
 		this->socketDescriptor = socketDescriptor;
 		this->type = type;
-		memset(&this->clientAddress, 0, sizeof(this->clientAddress));
-		memset(&this->serverAddress, 0, sizeof(this->serverAddress));
+		this->protocolVersion = protocolVersion;
+		memset(&this->receiveAddress, '\0', sizeof(this->receiveAddress));
+		memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
 	}
 
 	/**
@@ -128,12 +131,14 @@ namespace kt
 	Socket::Socket(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
+		this->udpSendSocket = socket.udpSendSocket;
 		this->hostname = socket.hostname;
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		this->protocolVersion = socket.protocolVersion;
 
-		this->clientAddress = socket.clientAddress;
+		this->receiveAddress = socket.receiveAddress;
 		this->serverAddress = socket.serverAddress;
 #ifdef __linux__
 		this->bluetoothAddress = socket.bluetoothAddress;
@@ -152,12 +157,14 @@ namespace kt
 	Socket& Socket::operator=(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
+		this->udpSendSocket = socket.udpSendSocket;
 		this->hostname = socket.hostname;
 		this->protocol = socket.protocol;
 		this->port = socket.port;
 		this->type = socket.type;
+		this->protocolVersion = socket.protocolVersion;
 
-		this->clientAddress = socket.clientAddress;
+		this->receiveAddress = socket.receiveAddress;
 		this->serverAddress = socket.serverAddress;
 #ifdef __linux__
 		this->bluetoothAddress = socket.bluetoothAddress;
@@ -173,7 +180,7 @@ namespace kt
 		throw SocketException("Socket:constructBluetoothSocket() is not supported on Windows.");
 
 		/*this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
-		if (this->socketDescriptor == 0)
+		if (isInvalidSocket(this->socketDescriptor))
 		{
 			throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 		}
@@ -182,7 +189,7 @@ namespace kt
 		this->bluetoothAddress.btAddr = std::stoull(this->hostname);
 		this->bluetoothAddress.port = this->port;
 
-		if (connect(this->socketDescriptor, (struct sockaddr*)&this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == -1)
+		if (connect(this->socketDescriptor, (sockaddr*)&this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == -1)
 		{
 			throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 		}*/
@@ -190,7 +197,7 @@ namespace kt
 #elif __linux__
 		this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
-		if (this->socketDescriptor == -1)
+		if (isInvalidSocket(this->socketDescriptor))
 	    {
 	    	throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 	    }
@@ -199,7 +206,7 @@ namespace kt
 	    this->bluetoothAddress.rc_channel = (uint8_t) port;
 	    str2ba(this->hostname.c_str(), &this->bluetoothAddress.rc_bdaddr);
 
-	   	if (connect(this->socketDescriptor, (struct sockaddr *) &this->bluetoothAddress, sizeof(this->bluetoothAddress)) == -1)
+	   	if (connect(this->socketDescriptor, (sockaddr*) &this->bluetoothAddress, sizeof(this->bluetoothAddress)) == -1)
 	   	{
 	   		throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
 		}
@@ -208,63 +215,69 @@ namespace kt
 
 	void Socket::constructWifiSocket()
 	{
-		const int socketFamily = AF_INET;
 		const int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
 		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
+
+		memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 		
 #ifdef _WIN32
-		WSADATA wsaData;
+		WSADATA wsaData{};
 		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
 		{
 			throw SocketException("WSAStartup Failed. " + std::to_string(res));
 		}
-		
-		this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
-		if (this->socketDescriptor == 0)
-		{
-			throw SocketException("Error establishing Wifi socket: " + this->getErrorCode());
-		}
-
-#elif __linux__
-		this->socketDescriptor = socket(socketFamily, socketType, 0);
-	    if (this->socketDescriptor == -1)
-	    {
-	    	throw SocketException("Error establishing Wifi socket: " + this->getErrorCode());
-	    }
 
 #endif
-		struct hostent* server = gethostbyname(this->hostname.c_str());
-		if (!this->hostname.empty() && server != nullptr)
+
+		addrinfo* resolvedAddresses = nullptr;
+		addrinfo hints{};
+		hints.ai_family = static_cast<int>(this->protocolVersion);
+		hints.ai_socktype = socketType;
+		hints.ai_protocol = socketProtocol;
+		int res = getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &hints, &resolvedAddresses);
+		if (res != 0 || this->hostname.empty() || resolvedAddresses == nullptr)
 		{
-			memset(&this->serverAddress, 0, sizeof(this->serverAddress));
-			this->serverAddress.sin_family = AF_INET;
-			memcpy((char*)&this->serverAddress.sin_addr.s_addr, (char*)server->h_addr, server->h_length);
-			this->serverAddress.sin_port = htons(this->port);
+			if (resolvedAddresses != nullptr)
+			{
+				freeaddrinfo(resolvedAddresses);
+			}
+
+			throw SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "]. Look up response code: [" + std::to_string(res) + "]. " + getErrorCode());
+		}
+
+		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
+		// we will return, otherwise we will throw is we are unable to connect to any.
+		if (this->protocol == kt::SocketProtocol::TCP)
+		{
+			for (addrinfo* addr = resolvedAddresses; addr != nullptr; addr = addr->ai_next) 
+			{	
+				this->socketDescriptor = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+				if (!isInvalidSocket(this->socketDescriptor))
+				{
+					int connectionResult = connect(this->socketDescriptor, addr->ai_addr, addr->ai_addrlen);
+					if (connectionResult == 0)
+					{
+						std::memcpy(&this->serverAddress, addr->ai_addr, addr->ai_addrlen);
+						this->protocolVersion = static_cast<InternetProtocolVersion>(addr->ai_family);
+						freeaddrinfo(resolvedAddresses);
+						// Return once we successfully connect to one
+						return;
+					}
+				}
+
+				this->close();
+				this->socketDescriptor = getInvalidSocketValue();
+			}
+			freeaddrinfo(resolvedAddresses);
+			throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + getErrorCode());
 		}
 		else
 		{
-			throw SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "].");
+			this->udpSendSocket = socket(resolvedAddresses->ai_family, resolvedAddresses->ai_socktype, resolvedAddresses->ai_protocol);
+			this->protocolVersion = static_cast<InternetProtocolVersion>(resolvedAddresses->ai_family);
+			std::memcpy(&this->serverAddress, resolvedAddresses->ai_addr, resolvedAddresses->ai_addrlen);
+			freeaddrinfo(resolvedAddresses);
 		}
-
-		if (this->protocol == kt::SocketProtocol::TCP)
-		{
-			if (int res = connect(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, sizeof(this->serverAddress)); res == -1)
-			{
-				this->close();
-				throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + this->getErrorCode());
-			}
-		}
-	}
-
-	std::string Socket::getErrorCode() const
-	{
-#ifdef _WIN32
-		return std::to_string(WSAGetLastError());
-
-#elif __linux__
-		return std::string(std::strerror(errno));
-
-#endif
 	}
 
 	/**
@@ -275,9 +288,11 @@ namespace kt
 	{
 #ifdef _WIN32
 		closesocket(this->socketDescriptor);
+		closesocket(this->udpSendSocket);
 
 #elif __linux__
 		::close(this->socketDescriptor);
+		::close(this->udpSendSocket);
 #endif
 
 		this->bound = false;
@@ -292,39 +307,77 @@ namespace kt
 	 * 
 	 * @throw BindingException - if the socket fails to bind
 	 */ 
-	bool Socket::bind()
+	bool Socket::bind(const kt::InternetProtocolVersion protocolVersion)
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			// Clear client address
-			memset(&this->clientAddress, 0, sizeof(this->clientAddress));
+			memset(&this->receiveAddress, '\0', sizeof(this->receiveAddress));
+			
+			const int socketType = SOCK_DGRAM;
+			const int socketProtocol = IPPROTO_UDP;
+			
+			addrinfo hint{};
+			hint.ai_flags = AI_PASSIVE;
+			hint.ai_family = static_cast<int>(protocolVersion);
+			hint.ai_socktype = socketType;
+			hint.ai_protocol = socketProtocol;
 
-			struct sockaddr_in localAddress;
-			localAddress.sin_family = AF_INET;
-			localAddress.sin_port = htons(this->port);
-			localAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-			this->bound = ::bind(this->socketDescriptor, (struct sockaddr*) &localAddress, sizeof(localAddress)) != -1;
+			addrinfo *addresses = nullptr;
+			if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hint, &addresses) != 0)
+			{
+				freeaddrinfo(addresses);
+				throw SocketException("Failed to retrieve address info of local host. " + getErrorCode());
+			}
+			this->protocolVersion = static_cast<InternetProtocolVersion>(addresses->ai_family);
+			this->socketDescriptor = socket(addresses->ai_family, addresses->ai_socktype, addresses->ai_protocol);
+
+#ifdef _WIN32
+			if (this->protocolVersion == InternetProtocolVersion::IPV6)
+			{
+				const int disableOption = 0;
+				if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+				{
+					throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+				}
+			}
+#endif
+
+			this->bound = ::bind(this->socketDescriptor, addresses->ai_addr, addresses->ai_addrlen) != -1;
+			freeaddrinfo(addresses);
 			if (!this->bound)
 			{
-				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)));
+				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
 			}
 
 			if (this->port == 0)
 			{
-				socklen_t socketSize = sizeof(this->serverAddress);
-				if (getsockname(this->socketDescriptor, (struct sockaddr*)&this->serverAddress, &socketSize) != 0)
-				{
-					this->close();
-					throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + std::string(std::strerror(errno)));
-				}
-
-				this->port = ntohs(this->serverAddress.sin_port);
+				this->initialiseListeningPortNumber();
 			}
 
 			return this->bound;
 		}
 		return false;
 	}
+
+	void Socket::initialiseListeningPortNumber()
+    {
+        socklen_t socketSize = sizeof(this->serverAddress);
+        if (getsockname(this->socketDescriptor, &this->serverAddress.address, &socketSize) != 0)
+        {
+            this->close();
+            throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
+        }
+
+        if (this->protocolVersion == InternetProtocolVersion::IPV6)
+        {
+            this->port = ntohs(this->serverAddress.ipv6.sin6_port);
+        }
+        else
+        {
+            this->port = ntohs(this->serverAddress.ipv4.sin_port);
+        }
+    }
 
 	/**
 	 * Sends input std::string to the receiver via the configured socket.
@@ -344,26 +397,17 @@ namespace kt
 			}
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				struct sockaddr_in address = this->getSendAddress();
-				return ::sendto(this->socketDescriptor, message.c_str(), message.size(), flag, (const struct sockaddr *)&address, sizeof(address)) != -1;
+				SocketAddress address = this->getSendAddress();
+				return ::sendto(this->udpSendSocket, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
 			}
 		}
 		return false;
 	}
 
-	int Socket::pollSocket(const unsigned long timeout) const
+	int Socket::pollSocket(SOCKET socket, const long& timeout) const
 	{
-		fd_set sReady;
-		struct timeval timeOutVal;
-
-		memset((char*) &timeOutVal, 0, sizeof(timeOutVal));
-		timeOutVal.tv_usec = static_cast<long>(timeout);
-
-		FD_ZERO(&sReady);
-		FD_SET(this->socketDescriptor, &sReady);
-
-		// Need this->socketDescriptor + 1 here
-		int res = select(this->socketDescriptor + 1, &sReady, nullptr, nullptr, &timeOutVal);
+		timeval timeOutVal{};
+		int res = kt::pollSocket(socket, timeout, &timeOutVal);
 #ifdef __linux__
 		if (res == 0)
 		{
@@ -377,7 +421,29 @@ namespace kt
 			}
 		}
 #endif
+
 		return res;
+	}
+
+	/**
+	 * Poll the provided socket descriptor for the provided timeout in microseconds.
+	 */
+	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal)
+	{
+		fd_set sReady{};
+		timeval timeoutVal{};
+		if (timeOutVal == nullptr)
+		{
+			timeOutVal = &timeoutVal;
+		}
+		
+		timeOutVal->tv_usec = static_cast<long>(timeout);
+
+		FD_ZERO(&sReady);
+		FD_SET(socketDescriptor, &sReady);
+
+		// Need this->socketDescriptor + 1 here
+		return select(socketDescriptor + 1, &sReady, nullptr, nullptr, timeOutVal);
 	}
 
 	/**
@@ -389,7 +455,7 @@ namespace kt
 	 */
 	bool Socket::ready(const unsigned long timeout) const
 	{
-		int result = this->pollSocket(timeout);
+		int result = this->pollSocket(this->socketDescriptor, timeout);
 		// 0 indicates that there is no data
 		return result > 0;
 	}
@@ -411,7 +477,7 @@ namespace kt
 			return false;
 		}
 
-		int result = this->pollSocket(timeout);
+		int result = this->pollSocket(this->socketDescriptor, timeout);
 
 		// -1 indicates that the connection is not available
 		return result != -1;
@@ -460,6 +526,14 @@ namespace kt
 	}
 
 	/**
+	 * @return the kt::InternetProtocolVersion for this kt::Socket.
+	*/
+    InternetProtocolVersion Socket::getInternetProtocolVersion() const
+    {
+        return this->protocolVersion;
+    }
+
+    /**
 	 * @return the kt::SocketProtocol configured for this kt::Socket.
 	 */
 	kt::SocketProtocol Socket::getProtocol() const
@@ -477,11 +551,35 @@ namespace kt
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			std::string asString(inet_ntoa(this->clientAddress.sin_addr));
-			// Since we zero out the address, we need to check its not default initialised
-			return asString != "0.0.0.0" ? std::optional<std::string>{asString} : std::nullopt;
+			return kt::resolveToAddress(&this->receiveAddress, this->getInternetProtocolVersion());
 		}
+
 		return std::nullopt;
+	}
+
+	std::optional<std::string> resolveToAddress(const SocketAddress* address, const InternetProtocolVersion protocolVersion)
+	{
+		const size_t addressLength = protocolVersion == InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
+		std::string asString;
+		asString.resize(addressLength);
+
+		if (protocolVersion == InternetProtocolVersion::IPV6)
+		{
+			inet_ntop(static_cast<int>(protocolVersion), &address->ipv6.sin6_addr, &asString[0], addressLength);
+		}
+		else
+		{
+			inet_ntop(static_cast<int>(protocolVersion), &address->ipv4.sin_addr, &asString[0], addressLength);
+		}
+
+		// Removing trailing \0 bytes
+		const size_t delimiterIndex = asString.find_first_of('\0');
+		if (delimiterIndex != std::string::npos) 
+		{
+			asString = asString.substr(0, delimiterIndex);
+		}
+		// Since we zero out the address, we need to check its not default initialised
+		return !asString.empty() && asString != "0.0.0.0" && asString != "::" ? std::optional<std::string>{asString} : std::nullopt;
 	}
 
 	/**
@@ -492,16 +590,15 @@ namespace kt
 		return this->hostname;
 	}
 
-	struct sockaddr_in Socket::getSendAddress()
+	SocketAddress Socket::getSendAddress() const
 	{
-		struct sockaddr_in newAddress;
-		memset(&newAddress, 0, sizeof(newAddress));
+		SocketAddress newAddress{};
 
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			if (this->isBound())
 			{
-				memcpy(&newAddress, &this->clientAddress, sizeof(this->clientAddress));
+				memcpy(&newAddress, &this->receiveAddress, sizeof(this->receiveAddress));
 			}
 			else
 			{
@@ -554,8 +651,9 @@ namespace kt
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			// UDP is odd, and will consume the entire datagram after a single read even if not all bytes are read
-			socklen_t addressLength = sizeof(this->clientAddress);
-			int flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			memset(&this->receiveAddress, '\0', sizeof(this->receiveAddress));
+			socklen_t addressLength = sizeof(this->receiveAddress);
+			int flag = recvfrom(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive), 0, &this->receiveAddress.address, &addressLength);
 			if (flag < 1)
 			{
 				// This is for Windows, in some scenarios Windows will return a -1 flag but the buffer is populated properly
@@ -587,7 +685,6 @@ namespace kt
 		}
 
 		std::string data;
-
 		if (!this->ready())
 		{
 			return data;
@@ -611,9 +708,10 @@ namespace kt
 		{
 			std::string temp;
 			temp.resize(this->MAX_BUFFER_SIZE);
-			socklen_t addressLength = sizeof(this->clientAddress);
+			memset(&this->receiveAddress, '\0', sizeof(this->receiveAddress));
+			socklen_t addressLength = sizeof(this->receiveAddress);
 			
-			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, (struct sockaddr*)&this->clientAddress, &addressLength);
+			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, &this->receiveAddress.address, &addressLength);
 			if (flag < 1)
 			{
 				return data;
@@ -657,7 +755,7 @@ namespace kt
 
 		while (this->ready(timeout) && !hitEOF)
 		{
-			std::string res = receiveAmount(this->pollSocket(timeout));
+			std::string res = receiveAmount(this->pollSocket(this->socketDescriptor, timeout));
 			if (!res.empty() && res[0] == '\0')
 			{
 				hitEOF = true;
@@ -749,7 +847,7 @@ namespace kt
 	    for (int i = 0; i < numberOfResponses; i++) 
 	    {
 	        ba2str( &(ii + i)->bdaddr, deviceAddress);
-			memset(&deviceName, 0, sizeof(deviceName));
+			memset(&deviceName, '\0', sizeof(deviceName));
 	        if (hci_read_remote_name(tempSocket, &(ii+i)->bdaddr, sizeof(deviceName), deviceName, 0) < 0)
 	        {
 	        	strcpy(deviceName, "[unknown]");
@@ -823,6 +921,5 @@ namespace kt
 		return std::optional<std::string>{std::string(localMACAddress)};
 #endif
 	}
-
 
 } // End namespace kt

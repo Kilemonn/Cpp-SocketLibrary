@@ -7,7 +7,7 @@
 #include "../../src/serversocket/ServerSocket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
 
-const std::string LOCALHOST = "127.0.0.1";
+const std::string LOCALHOST = "localhost"; //"127.0.0.1";
 
 namespace kt
 {
@@ -186,8 +186,31 @@ namespace kt
 
     TEST_F(SocketTCPTest, TCPClose)
     {
+        Socket server = serverSocket.accept();
+        ASSERT_TRUE(socket.connected());
         socket.close();
         ASSERT_FALSE(socket.connected());
+        server.close();
+    }
+
+    TEST_F(SocketTCPTest, IPV6Address)
+    {
+        ServerSocket ipv6ServerSocket(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
+        
+        Socket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+
+        // Accept ipv6 connnection
+        Socket ipv6Server = ipv6ServerSocket.accept();
+        ASSERT_TRUE(ipv6Server.connected());
+
+        const std::string testString = "Test";
+        ASSERT_TRUE(ipv6Socket.send(testString));
+        const std::string response = ipv6Server.receiveAmount(testString.size());
+        ASSERT_EQ(response, testString);
+
+        ipv6Server.close();
+        ipv6Socket.close();
+        ipv6ServerSocket.close();
     }
     
 }

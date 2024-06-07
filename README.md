@@ -29,14 +29,14 @@ The following **linux** dependencies are required:
 
 ## Usage Examples
 
-- TCP Example:
+- TCP Example using IPV6:
 
 ```cpp
 // Create a new Wifi ServerSocket
-kt::ServerSocket server(kt::SocketType::Wifi, 56756);
+kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20);
 
 // Create new TCP socket
-kt::Socket client("127.0.0.1", 56756, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+kt::Socket client("::1", server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
 // Accept connection to server
 kt::Socket serverSocket = server.accept();
@@ -52,7 +52,7 @@ serverSocket.close();
 server.close();
 ```
 
-- UDP Example:
+- UDP Example using IPV4 (the default protocol version - so protocol related arguments are omitted):
 
 ```cpp
 kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
