@@ -30,7 +30,7 @@ namespace kt
     TEST_F(ServerSocketTest, TestDefaultConstructor)
     {
         ASSERT_EQ(SocketType::Wifi, serverSocket.getType());
-        ASSERT_EQ(InternetProtocolVersion::IPV4, serverSocket.getInternetProtocolVersion());
+        ASSERT_NE(InternetProtocolVersion::Any, serverSocket.getInternetProtocolVersion());
         ASSERT_EQ(PORT_NUMBER, serverSocket.getPort());
     }
 
@@ -82,7 +82,7 @@ namespace kt
     {
         ServerSocket ipv6Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
 
-        Socket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort(), SocketType::Wifi, SocketProtocol::TCP, InternetProtocolVersion::IPV6);
+        Socket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort(), SocketType::Wifi, SocketProtocol::TCP);
         Socket serverClient = ipv6Server.accept();
 
         const std::string testString = "test";
@@ -100,17 +100,22 @@ namespace kt
      */
     TEST_F(ServerSocketTest, TestServerSocketAsIPV4ServerAndIPV4Client)
     {
-        ASSERT_EQ(InternetProtocolVersion::IPV4, serverSocket.getInternetProtocolVersion());
+        serverSocket.close();
+
+        ServerSocket ipv4Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV4);
+        ASSERT_EQ(InternetProtocolVersion::IPV4, ipv4Server.getInternetProtocolVersion());
 
         // Attempt to connect to a local server using a IPV6 address (which is not being hosted)
         EXPECT_THROW({
-            Socket client("::1", serverSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+            Socket client("::1", ipv4Server.getPort(), SocketType::Wifi, SocketProtocol::TCP);
         }, SocketException);
         
         // Make sure theres no incoming connections
         EXPECT_THROW({
-            serverSocket.accept(1000);
+            ipv4Server.accept(1000);
         }, TimeoutException);
+
+        ipv4Server.close();
     }
 
     /**

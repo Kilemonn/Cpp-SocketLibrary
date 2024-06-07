@@ -41,23 +41,23 @@ namespace kt
 		private:
 			unsigned int port;
 			SocketType type = SocketType::None;
-			InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4;
+			InternetProtocolVersion protocolVersion = InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {};
-			SOCKET socketDescriptor = 0;
+			SOCKET socketDescriptor = getInvalidSocketValue();
 
 			void setDiscoverable();
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
 			void initialisePortNumber();
-			size_t initialiseServerAddress(const int&);
+			size_t initialiseServerAddress();
 
 			Socket acceptWifiConnection(const long& = 0);
 			Socket acceptBluetoothConnection(const long& = 0);
 
 		public:
 			ServerSocket() = default;
-			ServerSocket(const SocketType, const unsigned int& = 0, const unsigned int& = 20, const InternetProtocolVersion = InternetProtocolVersion::IPV4);
+			ServerSocket(const SocketType, const unsigned int& = 0, const unsigned int& = 20, const InternetProtocolVersion = InternetProtocolVersion::Any);
 			ServerSocket(const ServerSocket&);
 			ServerSocket& operator=(const ServerSocket&);
 

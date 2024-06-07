@@ -33,10 +33,10 @@ The following **linux** dependencies are required:
 
 ```cpp
 // Create a new Wifi ServerSocket
-kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20, InternetProtocolVersion::IPV6);
+kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20);
 
 // Create new TCP socket
-kt::Socket client("::1", server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP, InternetProtocolVersion::IPV6);
+kt::Socket client("::1", server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
 
 // Accept connection to server
 kt::Socket serverSocket = server.accept();

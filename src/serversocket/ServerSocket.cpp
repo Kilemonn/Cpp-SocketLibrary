@@ -178,7 +178,6 @@ namespace kt
 
     void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
-        const int socketFamily = static_cast<int>(this->protocolVersion);
         const int socketType = SOCK_STREAM;
         const int socketProtocol = IPPROTO_TCP;
 
@@ -190,9 +189,9 @@ namespace kt
         }
 #endif
 
-        size_t socketSize = initialiseServerAddress(socketFamily);
+        size_t socketSize = initialiseServerAddress();
 
-        this->socketDescriptor = socket(socketFamily, socketType, socketProtocol);
+        this->socketDescriptor = socket(static_cast<int>(this->protocolVersion), socketType, socketProtocol);
         if (isInvalidSocket(this->socketDescriptor))
         {
             throw SocketException("Error establishing wifi server socket: " + getErrorCode());
@@ -235,13 +234,13 @@ namespace kt
         }
     }
 
-    size_t ServerSocket::initialiseServerAddress(const int& socketFamily)
+    size_t ServerSocket::initialiseServerAddress()
     {
         addrinfo hint{};
         memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 
         hint.ai_flags = AI_PASSIVE;
-        hint.ai_family = socketFamily;
+        hint.ai_family = static_cast<int>(this->protocolVersion);
         hint.ai_socktype = SOCK_STREAM;
         hint.ai_protocol = IPPROTO_TCP;
 
@@ -251,7 +250,7 @@ namespace kt
             freeaddrinfo(addresses);
             throw SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
         }
-
+        this->protocolVersion = static_cast<InternetProtocolVersion>(addresses->ai_family);
         std::memcpy(&this->serverAddress, addresses->ai_addr, addresses->ai_addrlen);
         freeaddrinfo(addresses);
         return addresses->ai_addrlen;

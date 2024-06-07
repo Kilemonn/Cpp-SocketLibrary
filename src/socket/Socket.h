@@ -9,6 +9,7 @@
 #include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/Address.h"
+#include "../socketexceptions/SocketError.h"
 
 #ifdef _WIN32
 
@@ -45,11 +46,12 @@ namespace kt
 			unsigned int port;
 			SocketProtocol protocol = SocketProtocol::None;
 			SocketType type = SocketType::None;
-			InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4;
+			InternetProtocolVersion protocolVersion = InternetProtocolVersion::Any;
 			bool bound = false;
 			SocketAddress serverAddress = {}; // For Wifi
-			SocketAddress clientAddress = {}; // For UDP, stores the client address of the last message received
-			SOCKET socketDescriptor = 0;
+			SocketAddress receiveAddress = {}; // For UDP, stores the client address of the last message received
+			SOCKET updSendSocket = getInvalidSocketValue();
+			SOCKET socketDescriptor = getInvalidSocketValue();
 
 #ifdef _WIN32
 			//SOCKADDR_BTH bluetoothAddress;
@@ -64,18 +66,18 @@ namespace kt
 			void constructBluetoothSocket();
 			void constructWifiSocket();
 			SocketAddress getSendAddress() const;
-			int pollSocket(const long& = 1000) const;
+			int pollSocket(SOCKET socket, const long& = 1000) const;
 			void initialiseListeningPortNumber();
 
 		public:
 			Socket() = default;
-			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None, const kt::InternetProtocolVersion protocolVersion = InternetProtocolVersion::IPV4); // Create Wi-Fi/Bluetooth Socket
-			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&, const kt::InternetProtocolVersion protocolVersion);
+			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
+			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&, const kt::InternetProtocolVersion);
 
 			Socket(const Socket&); // Copy Constructor
 			Socket& operator=(const Socket&);
 			
-			bool bind();
+			bool bind(const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			void close();
 			
 			bool ready(const unsigned long = 1000) const;
