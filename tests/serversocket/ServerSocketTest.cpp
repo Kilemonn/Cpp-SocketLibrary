@@ -125,10 +125,10 @@ namespace kt
     {
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         EXPECT_THROW({
-            Socket serverClient = serverSocket.accept(2000);
+            Socket serverClient = serverSocket.accept(1 * 1000000);
         }, TimeoutException);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        ASSERT_GE(2, std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
+        ASSERT_GE(1, std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
     }
 }

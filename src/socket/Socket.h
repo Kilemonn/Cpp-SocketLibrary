@@ -50,7 +50,7 @@ namespace kt
 			bool bound = false;
 			SocketAddress serverAddress = {}; // For Wifi
 			SocketAddress receiveAddress = {}; // For UDP, stores the client address of the last message received
-			SOCKET udpSendSocket = getInvalidSocketValue();
+			SOCKET updSendSocket = getInvalidSocketValue();
 			SOCKET socketDescriptor = getInvalidSocketValue();
 
 #ifdef _WIN32
@@ -66,7 +66,7 @@ namespace kt
 			void constructBluetoothSocket();
 			void constructWifiSocket();
 			SocketAddress getSendAddress() const;
-			int pollSocket(SOCKET socket, const short&, const int& = 100) const;
+			int pollSocket(SOCKET socket, const long& = 1000) const;
 			void initialiseListeningPortNumber();
 
 		public:
@@ -80,8 +80,8 @@ namespace kt
 			bool bind(const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			void close();
 			
-			bool ready(const int = 100) const;
-			bool connected(const int = 100) const;
+			bool ready(const unsigned long = 1000) const;
+			bool connected(const unsigned long = 1000) const;
 			bool send(const std::string&, int = 0);
 
 			unsigned int getPort() const;
@@ -95,13 +95,13 @@ namespace kt
 			std::optional<char> get();
 			std::string receiveAmount(const unsigned int);
 			std::string receiveToDelimiter(const char);
-			std::string receiveAll(const unsigned long = 100);
+			std::string receiveAll(const unsigned long = 1000);
 
 			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int = 5);
 			static std::optional<std::string> getLocalMACAddress();
 	};
 
 	std::optional<std::string> resolveToAddress(const SocketAddress*, const InternetProtocolVersion);
-	int pollSocket(const SOCKET& socketDescriptor, const short&, const int& timeout);
+	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal = nullptr);
 
 } // End namespace kt 
