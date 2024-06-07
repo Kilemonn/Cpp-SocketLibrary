@@ -415,29 +415,26 @@ namespace kt
 	 */
 	int pollSocket(const SOCKET& socketDescriptor, const short& events, const int& timeout)
 	{
-		pollfd pollFds;
-		pollFds.fd = socketDescriptor;
-		pollFds.events = events;
+		pollfd pollFds[1];
+		pollFds[0].fd = socketDescriptor;
+		pollFds[0].events = events;
 
 		int eventsOccurred = 0;
 
 #ifdef _WIN32
-		eventsOccurred = WSAPoll(&pollFds, 1, timeout);
+		eventsOccurred = WSAPoll(pollFds, 1, timeout);
 #elif __linux__
-		eventsOccurred = poll(&pollFds, 1, timeout);
+		eventsOccurred = poll(pollFds, 1, timeout);
 #endif
 		
-		std::cout << "Got " << eventsOccurred << " event(s)." << std::endl;
-		if (eventsOccurred <= 0)
+		if (eventsOccurred == 0)
 		{
-			std::cout << "Errono - " << getErrorCode() << " " << errno << std::endl;
-			std::cout << "Error codes" << EFAULT << " " << EINTR << " " << EINVAL << " " << EINVAL << " " << ENOMEM << std::endl;
+			// No events occurred
 			return eventsOccurred;
 		}
 		else
 		{
-			std::cout << "REvents " << pollFds.revents << " events: " << events << std::endl;
-			int inputEventOccurred = pollFds.revents & events;
+			int inputEventOccurred = pollFds[0].revents & events;
 			if (inputEventOccurred)
 			{
 				return 1;
@@ -481,13 +478,8 @@ namespace kt
 			return false;
 		}
 
-#ifdef _WIN32
-		int result = this->pollSocket(this->socketDescriptor, SHRT_MAX, timeout);
-		return result != -1;
-#elif __linux__
 		int result = this->pollSocket(this->socketDescriptor, POLLERR | POLLHUP | POLLNVAL, timeout);
 		return result != 1;
-#endif
 	}
 
 	/**

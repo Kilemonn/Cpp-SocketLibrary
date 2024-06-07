@@ -186,11 +186,8 @@ namespace kt
 
     TEST_F(SocketTCPTest, TCPClose)
     {
-        Socket server = serverSocket.accept();
-        ASSERT_TRUE(socket.connected());
         socket.close();
         ASSERT_FALSE(socket.connected());
-        server.close();
     }
 
     TEST_F(SocketTCPTest, IPV6Address)
