@@ -131,7 +131,7 @@ namespace kt
 	Socket::Socket(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
-		this->updSendSocket = socket.updSendSocket;
+		this->udpSendSocket = socket.udpSendSocket;
 		this->hostname = socket.hostname;
 		this->protocol = socket.protocol;
 		this->port = socket.port;
@@ -157,7 +157,7 @@ namespace kt
 	Socket& Socket::operator=(const Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
-		this->updSendSocket = socket.updSendSocket;
+		this->udpSendSocket = socket.udpSendSocket;
 		this->hostname = socket.hostname;
 		this->protocol = socket.protocol;
 		this->port = socket.port;
@@ -273,7 +273,7 @@ namespace kt
 		}
 		else
 		{
-			this->updSendSocket = socket(resolvedAddresses->ai_family, resolvedAddresses->ai_socktype, resolvedAddresses->ai_protocol);
+			this->udpSendSocket = socket(resolvedAddresses->ai_family, resolvedAddresses->ai_socktype, resolvedAddresses->ai_protocol);
 			this->protocolVersion = static_cast<InternetProtocolVersion>(resolvedAddresses->ai_family);
 			std::memcpy(&this->serverAddress, resolvedAddresses->ai_addr, resolvedAddresses->ai_addrlen);
 			freeaddrinfo(resolvedAddresses);
@@ -288,11 +288,11 @@ namespace kt
 	{
 #ifdef _WIN32
 		closesocket(this->socketDescriptor);
-		closesocket(this->updSendSocket);
+		closesocket(this->udpSendSocket);
 
 #elif __linux__
 		::close(this->socketDescriptor);
-		::close(this->updSendSocket);
+		::close(this->udpSendSocket);
 #endif
 
 		this->bound = false;
@@ -398,7 +398,7 @@ namespace kt
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
 				SocketAddress address = this->getSendAddress();
-				return ::sendto(this->updSendSocket, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
+				return ::sendto(this->udpSendSocket, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
 			}
 		}
 		return false;
@@ -755,7 +755,7 @@ namespace kt
 
 		while (this->ready(timeout) && !hitEOF)
 		{
-			std::string res = receiveAmount(this->pollSocket(timeout));
+			std::string res = receiveAmount(this->pollSocket(this->socketDescriptor, timeout));
 			if (!res.empty() && res[0] == '\0')
 			{
 				hitEOF = true;

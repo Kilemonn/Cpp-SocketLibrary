@@ -50,7 +50,7 @@ namespace kt
 			bool bound = false;
 			SocketAddress serverAddress = {}; // For Wifi
 			SocketAddress receiveAddress = {}; // For UDP, stores the client address of the last message received
-			SOCKET updSendSocket = getInvalidSocketValue();
+			SOCKET udpSendSocket = getInvalidSocketValue();
 			SOCKET socketDescriptor = getInvalidSocketValue();
 
 #ifdef _WIN32
