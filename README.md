@@ -15,10 +15,10 @@ The following **linux** dependencies are required:
 
 ### Building the Library and Running the Tests - Linux
 
-1. To build the library, firstly run cmake: `cmake . -B build` in the root directory of the repository (`CppSocketLibrary/`).
-2. Then move into the new `build` folder: `cd build`.
+1. To build the library, firstly run cmake: `cmake . -B build-linux` in the root directory of the repository (`CppSocketLibrary/`).
+2. Then move into the new `build-linux` folder: `cd build-linux`.
 3. Then you can run `make` to build the library.
-4. Then you can run `make check`.
+4. Then you can run `make check` to run the available tests.
 
 ### Building the Library and Running the Tests - Windows
 
@@ -33,7 +33,7 @@ The following **linux** dependencies are required:
 
 ```cpp
 // Create a new Wifi ServerSocket
-kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20);
+kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20, InternetProtocolVersion::IPV6);
 
 // Create new TCP socket
 kt::Socket client("::1", server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
@@ -58,7 +58,7 @@ server.close();
 kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 // Which ever socket is acting as the "server" needs to bind, only a single process can be bound 
 // to a specific port at a time
-serverSocket.bind();
+serverSocket.bind(InternetProtocolVersion::IPV4); // This argument can be removed as the default is `InternetProtocolVersion::IPV6`, setting arg here explicitly for clarity.
 
 kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
