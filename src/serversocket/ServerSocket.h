@@ -2,7 +2,7 @@
 
 #include <optional>
 
-#include "../address/Address.h"
+#include "../address/SocketAddress.h"
 
 #include "../socket/Socket.h"
 
@@ -38,10 +38,10 @@ namespace kt
 {
 	class ServerSocket
 	{
-		private:
+		protected:
 			unsigned int port;
-			SocketType type = SocketType::None;
-			InternetProtocolVersion protocolVersion = InternetProtocolVersion::Any;
+			kt::SocketType type = kt::SocketType::None;
+			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {};
 			SOCKET socketDescriptor = getInvalidSocketValue();
 
@@ -52,20 +52,20 @@ namespace kt
 			void initialisePortNumber();
 			size_t initialiseServerAddress();
 
-			Socket acceptWifiConnection(const long& = 0);
-			Socket acceptBluetoothConnection(const long& = 0);
+			kt::Socket acceptWifiConnection(const long& = 0);
+			kt::Socket acceptBluetoothConnection(const long& = 0);
 
 		public:
 			ServerSocket() = default;
-			ServerSocket(const SocketType, const unsigned int& = 0, const unsigned int& = 20, const InternetProtocolVersion = InternetProtocolVersion::Any);
-			ServerSocket(const ServerSocket&);
-			ServerSocket& operator=(const ServerSocket&);
+			ServerSocket(const kt::SocketType, const unsigned int& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+			ServerSocket(const kt::ServerSocket&);
+			kt::ServerSocket& operator=(const kt::ServerSocket&);
 
-			SocketType getType() const;
-			InternetProtocolVersion getInternetProtocolVersion() const;
+			kt::SocketType getType() const;
+			kt::InternetProtocolVersion getInternetProtocolVersion() const;
 			unsigned int getPort() const;
 
-			Socket accept(const long& = 0);
+			kt::Socket accept(const long& = 0);
 			void close();
 	};
 

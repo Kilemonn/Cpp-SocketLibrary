@@ -7,9 +7,9 @@
 
 namespace kt
 {
-	class TimeoutException : public SocketException
+	class TimeoutException : public kt::SocketException
 	{
 		public:
-			TimeoutException(const std::string &s) : SocketException(s) {}
+			TimeoutException(const std::string &s) : kt::SocketException(s) {}
 	};
 }

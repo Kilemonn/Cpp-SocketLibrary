@@ -31,13 +31,13 @@ namespace kt
      */
     TEST_F(SocketTCPTest, TCPConstructor)
     {
-        ASSERT_FALSE(socket.isBound());
+        ASSERT_FALSE(socket.isUdpBound());
         ASSERT_TRUE(socket.connected());
         ASSERT_EQ(socket.getType(), SocketType::Wifi);
         ASSERT_EQ(socket.getProtocol(), SocketProtocol::TCP);
         ASSERT_FALSE(socket.ready());
-        ASSERT_EQ(LOCALHOST, socket.getAddress());
-        ASSERT_EQ(std::nullopt, socket.getLastRecievedAddress());
+        ASSERT_EQ(LOCALHOST, socket.getHostname());
+        ASSERT_EQ(std::nullopt, socket.getLastUDPRecievedAddress());
     }
 
     /*

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "../enums/InternetProtocolVersion.h"
+
 #ifdef _WIN32
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -33,4 +35,6 @@ namespace kt
         sockaddr_in ipv4;
         sockaddr_in6 ipv6;
     } SocketAddress;
+
+    kt::InternetProtocolVersion getInternetProtocolVersion(kt::SocketAddress&);
 }

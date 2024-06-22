@@ -34,9 +34,9 @@ namespace kt
         ASSERT_EQ(socket.getProtocol(), SocketProtocol::UDP);
         ASSERT_FALSE(socket.connected());
         ASSERT_FALSE(socket.ready());
-        ASSERT_FALSE(socket.isBound());
-        ASSERT_EQ(LOCALHOST, socket.getAddress());
-        ASSERT_EQ(std::nullopt, socket.getLastRecievedAddress());
+        ASSERT_FALSE(socket.isUdpBound());
+        ASSERT_EQ(LOCALHOST, socket.getHostname());
+        ASSERT_EQ(std::nullopt, socket.getLastUDPRecievedAddress());
     }
 
     /*
@@ -44,7 +44,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPBind_NotCalled)
     {
-        ASSERT_FALSE(socket.isBound());
+        ASSERT_FALSE(socket.isUdpBound());
 
         kt::Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
@@ -58,12 +58,12 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPBindAndBound_MultipleCalls)
     {
-        ASSERT_FALSE(socket.isBound());
+        ASSERT_FALSE(socket.isUdpBound());
         ASSERT_TRUE(socket.bind());
-        ASSERT_TRUE(socket.isBound());
+        ASSERT_TRUE(socket.isUdpBound());
 
         kt::Socket newServer(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-        ASSERT_FALSE(newServer.isBound());
+        ASSERT_FALSE(newServer.isUdpBound());
         EXPECT_THROW(newServer.bind(), BindingException);
     }
 
@@ -72,13 +72,13 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPBind_WithoutSpecifiedPort)
     {
-        ASSERT_FALSE(socket.isBound());
+        ASSERT_FALSE(socket.isUdpBound());
 
         unsigned int port = 0;
         kt::Socket newServer(LOCALHOST, port, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-        ASSERT_FALSE(newServer.isBound());
+        ASSERT_FALSE(newServer.isUdpBound());
         newServer.bind();
-        ASSERT_TRUE(newServer.isBound());
+        ASSERT_TRUE(newServer.isUdpBound());
         ASSERT_NE(port, newServer.getPort()); // Make sure we have looked up and resolved the port number upon successful binding
 
         newServer.close();
@@ -177,7 +177,7 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(testString, received);
 
-        ASSERT_EQ(address, socket.getLastRecievedAddress());
+        ASSERT_EQ(address, socket.getLastUDPRecievedAddress());
 
         client.close();
     }
@@ -199,7 +199,7 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(testString, received);
 
-        ASSERT_EQ(address, socket.getLastRecievedAddress());
+        ASSERT_EQ(address, socket.getLastUDPRecievedAddress());
 
         client.close();
     }

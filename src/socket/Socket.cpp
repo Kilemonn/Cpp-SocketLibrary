@@ -61,7 +61,7 @@ namespace kt
 	 * @throw SocketException - If the Socket is unable to be instanciated or connect to server.
 	 * @throw BindingException - If the Socket is unable to bind to the port specified.
 	 */
-	Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
+	kt::Socket::Socket(const std::string& hostname, const unsigned int& port, const kt::SocketType type, const kt::SocketProtocol protocol)
 	{
 		this->hostname = hostname;
 		this->port = port;
@@ -83,7 +83,7 @@ namespace kt
 		else if (this->type == kt::SocketType::Bluetooth && this->protocol != kt::SocketProtocol::None)
 		{
 			// No protocol should be set when using a bluetooth socket
-			throw SocketException("Bluetooth socket Protocol should be 'None'.");
+			throw kt::SocketException("Bluetooth socket Protocol should be 'None'.");
 		}
 
 	    if (type == kt::SocketType::Wifi)
@@ -97,7 +97,7 @@ namespace kt
 		else
 		{
 			// kt::SocketType::None
-			throw SocketException("Unable to build Socket with 'None' as its SocketType");
+			throw kt::SocketException("Unable to build Socket with 'None' as its SocketType");
 		}
 	}
 
@@ -111,7 +111,7 @@ namespace kt
 	 * @param port - the port number of the socket to copy.
 	 * @param protocolVersion - the protocol version that the socket will use.
 	 */
-	Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
+	kt::Socket::Socket(const SOCKET& socketDescriptor, const kt::SocketType type, const kt::SocketProtocol protocol, const std::string& hostname, const unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
 	{
 		this->hostname = hostname;
 		this->port = port;
@@ -128,7 +128,7 @@ namespace kt
 	 * 
 	 * @param socket - The Socket object to be copied.
 	 */
-	Socket::Socket(const Socket& socket)
+	kt::Socket::Socket(const kt::Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
 		this->udpSendSocket = socket.udpSendSocket;
@@ -154,7 +154,7 @@ namespace kt
 	 * 
 	 * @return kt::Socket the copied socket
 	 */
-	Socket& Socket::operator=(const Socket& socket)
+	kt::Socket& kt::Socket::operator=(const kt::Socket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
 		this->udpSendSocket = socket.udpSendSocket;
@@ -174,10 +174,10 @@ namespace kt
 		return *this;
 	}
 
-	void Socket::constructBluetoothSocket()
+	void kt::Socket::constructBluetoothSocket()
 	{
 #ifdef _WIN32
-		throw SocketException("Socket:constructBluetoothSocket() is not supported on Windows.");
+		throw kt::SocketException("Socket:constructBluetoothSocket() is not supported on Windows.");
 
 		/*this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 		if (isInvalidSocket(this->socketDescriptor))
@@ -213,7 +213,7 @@ namespace kt
 #endif
 	}
 
-	void Socket::constructWifiSocket()
+	void kt::Socket::constructWifiSocket()
 	{
 		const int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
 		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
@@ -224,7 +224,7 @@ namespace kt
 		WSADATA wsaData{};
 		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
 		{
-			throw SocketException("WSAStartup Failed. " + std::to_string(res));
+			throw kt::SocketException("WSAStartup Failed. " + std::to_string(res));
 		}
 
 #endif
@@ -242,7 +242,7 @@ namespace kt
 				freeaddrinfo(resolvedAddresses);
 			}
 
-			throw SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "]. Look up response code: [" + std::to_string(res) + "]. " + getErrorCode());
+			throw kt::SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + "]. Look up response code: [" + std::to_string(res) + "]. " + getErrorCode());
 		}
 
 		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
@@ -258,7 +258,7 @@ namespace kt
 					if (connectionResult == 0)
 					{
 						std::memcpy(&this->serverAddress, addr->ai_addr, addr->ai_addrlen);
-						this->protocolVersion = static_cast<InternetProtocolVersion>(addr->ai_family);
+						this->protocolVersion = static_cast<kt::InternetProtocolVersion>(addr->ai_family);
 						freeaddrinfo(resolvedAddresses);
 						// Return once we successfully connect to one
 						return;
@@ -269,12 +269,12 @@ namespace kt
 				this->socketDescriptor = getInvalidSocketValue();
 			}
 			freeaddrinfo(resolvedAddresses);
-			throw SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + getErrorCode());
+			throw kt::SocketException("Error connecting to Wifi server: [" + std::to_string(res) + "] " + getErrorCode());
 		}
 		else
 		{
 			this->udpSendSocket = socket(resolvedAddresses->ai_family, resolvedAddresses->ai_socktype, resolvedAddresses->ai_protocol);
-			this->protocolVersion = static_cast<InternetProtocolVersion>(resolvedAddresses->ai_family);
+			this->protocolVersion = static_cast<kt::InternetProtocolVersion>(resolvedAddresses->ai_family);
 			std::memcpy(&this->serverAddress, resolvedAddresses->ai_addr, resolvedAddresses->ai_addrlen);
 			freeaddrinfo(resolvedAddresses);
 		}
@@ -284,16 +284,10 @@ namespace kt
 	 * Closes the existing connection. If no connection is open, then it will do nothing.
 	 * This method should be called before the object itself is distructed.
 	 */
-	void Socket::close()
+	void kt::Socket::close()
 	{
-#ifdef _WIN32
-		closesocket(this->socketDescriptor);
-		closesocket(this->udpSendSocket);
-
-#elif __linux__
-		::close(this->socketDescriptor);
-		::close(this->udpSendSocket);
-#endif
+		this->close(this->socketDescriptor);
+		this->close(this->udpSendSocket);
 
 		this->bound = false;
 	}
@@ -307,7 +301,7 @@ namespace kt
 	 * 
 	 * @throw BindingException - if the socket fails to bind
 	 */ 
-	bool Socket::bind(const kt::InternetProtocolVersion protocolVersion)
+	bool kt::Socket::bind(const kt::InternetProtocolVersion protocolVersion)
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
@@ -327,18 +321,18 @@ namespace kt
 			if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hint, &addresses) != 0)
 			{
 				freeaddrinfo(addresses);
-				throw SocketException("Failed to retrieve address info of local host. " + getErrorCode());
+				throw kt::SocketException("Failed to retrieve address info of local host. " + getErrorCode());
 			}
-			this->protocolVersion = static_cast<InternetProtocolVersion>(addresses->ai_family);
+			this->protocolVersion = static_cast<kt::InternetProtocolVersion>(addresses->ai_family);
 			this->socketDescriptor = socket(addresses->ai_family, addresses->ai_socktype, addresses->ai_protocol);
 
 #ifdef _WIN32
-			if (this->protocolVersion == InternetProtocolVersion::IPV6)
+			if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
 			{
 				const int disableOption = 0;
 				if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
 				{
-					throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+					throw kt::SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
 				}
 			}
 #endif
@@ -347,7 +341,7 @@ namespace kt
 			freeaddrinfo(addresses);
 			if (!this->bound)
 			{
-				throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
+				throw kt::BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
 			}
 
 			if (this->port == 0)
@@ -360,16 +354,16 @@ namespace kt
 		return false;
 	}
 
-	void Socket::initialiseListeningPortNumber()
+	void kt::Socket::initialiseListeningPortNumber()
     {
         socklen_t socketSize = sizeof(this->serverAddress);
         if (getsockname(this->socketDescriptor, &this->serverAddress.address, &socketSize) != 0)
         {
             this->close();
-            throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
+            throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
         }
 
-        if (this->protocolVersion == InternetProtocolVersion::IPV6)
+        if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
         {
             this->port = ntohs(this->serverAddress.ipv6.sin6_port);
         }
@@ -379,6 +373,16 @@ namespace kt
         }
     }
 
+	void Socket::close(SOCKET socket)
+	{
+#ifdef _WIN32
+		closesocket(socket);
+
+#elif __linux__
+		::close(socket);
+#endif
+	}
+
 	/**
 	 * Sends input std::string to the receiver via the configured socket.
 	 * 
@@ -387,7 +391,7 @@ namespace kt
 	 * 
 	 * @return true if the message was sent without error, else false.
 	 */
-	bool Socket::send(const std::string& message, int flag)
+	bool kt::Socket::send(const std::string& message, int flag)
 	{
 		if (!message.empty())
 		{
@@ -397,14 +401,18 @@ namespace kt
 			}
 			else if (this->protocol == kt::SocketProtocol::UDP)
 			{
-				SocketAddress address = this->getSendAddress();
-				return ::sendto(this->udpSendSocket, message.c_str(), message.size(), flag, &address.address, sizeof(address)) != -1;
+				std::optional<kt::SocketAddress> address = this->getUDPSendAddress();
+				if (address.has_value())
+				{
+					return ::sendto(this->udpSendSocket, message.c_str(), message.size(), flag, &(address.value().address), sizeof(address.value())) != -1;
+				}
+				return false;
 			}
 		}
 		return false;
 	}
 
-	int Socket::pollSocket(SOCKET socket, const long& timeout) const
+	int kt::Socket::pollSocket(SOCKET socket, const long& timeout) const
 	{
 		timeval timeOutVal{};
 		int res = kt::pollSocket(socket, timeout, &timeOutVal);
@@ -453,7 +461,7 @@ namespace kt
 	 * 
 	 * @return true if there is data to read otherwise false.
 	 */
-	bool Socket::ready(const unsigned long timeout) const
+	bool kt::Socket::ready(const unsigned long timeout) const
 	{
 		int result = this->pollSocket(this->socketDescriptor, timeout);
 		// 0 indicates that there is no data
@@ -469,7 +477,7 @@ namespace kt
 	 * 
 	 * **NOTE:** This method is still in BETA, and cannot detect if the connection has been closed by the remote device.
 	 */
-	bool Socket::connected(const unsigned long timeout) const
+	bool kt::Socket::connected(const unsigned long timeout) const
 	{
 		// UDP is connectionless
 		if (this->protocol == kt::SocketProtocol::UDP)
@@ -489,7 +497,7 @@ namespace kt
 	 * 
 	 * @return true if this socket is bound, otherwise false. 
 	 */
-	bool Socket::isBound() const
+	bool kt::Socket::isUdpBound() const
 	{
 		return this->bound;
 	}
@@ -499,7 +507,7 @@ namespace kt
 	 * 
 	 * @return The character read.
 	 */
-	std::optional<char> Socket::get()
+	std::optional<char> kt::Socket::get()
 	{
 		std::string received = this->receiveAmount(1);
 		if (received.empty())
@@ -512,7 +520,7 @@ namespace kt
 	/**
 	 * @return the port number used by this socket.
 	 */
-	unsigned int Socket::getPort() const
+	unsigned int kt::Socket::getPort() const
 	{
 		return this->port;
 	}
@@ -520,7 +528,7 @@ namespace kt
 	/**
 	 * @return the kt::SocketType for this kt::Socket.
 	 */
-	kt::SocketType Socket::getType() const
+	kt::SocketType kt::Socket::getType() const
 	{
 		return this->type;
 	}
@@ -528,7 +536,7 @@ namespace kt
 	/**
 	 * @return the kt::InternetProtocolVersion for this kt::Socket.
 	*/
-    InternetProtocolVersion Socket::getInternetProtocolVersion() const
+	kt::InternetProtocolVersion kt::Socket::getInternetProtocolVersion() const
     {
         return this->protocolVersion;
     }
@@ -536,7 +544,7 @@ namespace kt
     /**
 	 * @return the kt::SocketProtocol configured for this kt::Socket.
 	 */
-	kt::SocketProtocol Socket::getProtocol() const
+	kt::SocketProtocol kt::Socket::getProtocol() const
 	{
 		return this->protocol;
 	}
@@ -547,7 +555,7 @@ namespace kt
 	 * 
 	 * @return when using *kt::SocketProtocol::UDP* the address of the last device who sent the data that was most recently read. Always returns an empty string for kt::SocketProtocol::TCP kt::Sockets.
 	 */
-	std::optional<std::string> Socket::getLastRecievedAddress() const
+	std::optional<std::string> kt::Socket::getLastUDPRecievedAddress() const
 	{
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
@@ -557,13 +565,24 @@ namespace kt
 		return std::nullopt;
 	}
 
-	std::optional<std::string> resolveToAddress(const SocketAddress* address, const InternetProtocolVersion protocolVersion)
+	std::optional<kt::SocketAddress> kt::Socket::getLastUDPReceivedAddress() const
 	{
-		const size_t addressLength = protocolVersion == InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
+		if (this->protocol == kt::SocketProtocol::UDP)
+		{
+			kt::SocketAddress address{};
+			std::memcpy(&address, &this->receiveAddress, sizeof(address));
+			return std::optional{ address };
+		}
+		return std::nullopt;
+	}
+
+	std::optional<std::string> resolveToAddress(const kt::SocketAddress* address, const kt::InternetProtocolVersion protocolVersion)
+	{
+		const size_t addressLength = protocolVersion == kt::InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
 		std::string asString;
 		asString.resize(addressLength);
 
-		if (protocolVersion == InternetProtocolVersion::IPV6)
+		if (protocolVersion == kt::InternetProtocolVersion::IPV6)
 		{
 			inet_ntop(static_cast<int>(protocolVersion), &address->ipv6.sin6_addr, &asString[0], addressLength);
 		}
@@ -585,27 +604,49 @@ namespace kt
 	/**
 	 * @return the hostname configured for this socket.
 	 */
-	std::string Socket::getAddress() const
+	std::string kt::Socket::getHostname() const
 	{
 		return this->hostname;
 	}
 
-	SocketAddress Socket::getSendAddress() const
+	std::optional<kt::SocketAddress> kt::Socket::getUDPSendAddress() const
 	{
-		SocketAddress newAddress{};
-
 		if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			if (this->isBound())
+			kt::SocketAddress newAddress{};
+			// If the current server address is empty then we should return a null optional
+			if (std::memcmp(&newAddress, &this->serverAddress, sizeof(newAddress)) == 0)
 			{
-				memcpy(&newAddress, &this->receiveAddress, sizeof(this->receiveAddress));
+				return std::nullopt;
 			}
-			else
-			{
-				memcpy(&newAddress, &this->serverAddress, sizeof(this->serverAddress));
-			}
+			
+			memcpy(&newAddress, &this->serverAddress, sizeof(this->serverAddress));
+			return std::optional{ newAddress };
 		}
-		return newAddress;
+		return std::nullopt;
+	}
+
+	void Socket::setUDPSendAddress(std::string newHostname, unsigned int newPort)
+	{
+		this->protocolVersion = kt::InternetProtocolVersion::Any;
+		this->hostname = newHostname;
+		this->port = newPort;
+		this->constructWifiSocket();
+	}
+
+	void Socket::setUDPSendAddress(kt::SocketAddress newSocketAddress)
+	{
+		if (this->getProtocol() == kt::SocketProtocol::UDP)
+		{
+			kt::InternetProtocolVersion newVersion = kt::getInternetProtocolVersion(newSocketAddress);
+			if (newVersion != this->getInternetProtocolVersion())
+			{
+				this->close(this->udpSendSocket);
+				this->udpSendSocket = socket(newSocketAddress.address.sa_family, SOCK_DGRAM, IPPROTO_UDP);
+				this->protocolVersion = newVersion;
+			}
+			std::memcpy(&this->serverAddress, &newSocketAddress, sizeof(this->serverAddress));
+		}
 	}
 
 	/**
@@ -616,7 +657,7 @@ namespace kt
 	 * 
 	 * @return A std::string of the specified size with the respective character read in. 
 	 */
-	std::string Socket::receiveAmount(const unsigned int amountToReceive)
+	std::string kt::Socket::receiveAmount(const unsigned int amountToReceive)
 	{
 		if (amountToReceive == 0 || !this->ready())
 		{
@@ -672,16 +713,17 @@ namespace kt
 	 * Reads from the sender until the passed in delimiter is reached. The delimiter is discarded and the characters preceeding it are returned as a std::string.
 	 * 
 	 * @param delimiter The delimiter that will be used to mark the end of the read in process.
+	 * @param udpMaxAmountToRead Only used when using UDP, it is set as a packet read limit, which the delimiter is scanned for then the remaining data after it is truncated and lost.
 	 * 
 	 * @return A std::string with all of the characters preceeding the delimiter.
 	 * 
 	 * @throw SocketException - if the delimiter is '\0'.
 	 */
-	std::string Socket::receiveToDelimiter(const char delimiter)
+	std::string kt::Socket::receiveToDelimiter(const char& delimiter, unsigned int udpMaxAmountToRead)
 	{
 		if (delimiter == '\0')
 		{
-			throw SocketException("The null terminator '\\0' is an invalid delimiter.");
+			throw kt::SocketException("The null terminator '\\0' is an invalid delimiter.");
 		}
 
 		std::string data;
@@ -707,11 +749,15 @@ namespace kt
 		else if (this->protocol == kt::SocketProtocol::UDP)
 		{
 			std::string temp;
-			temp.resize(this->MAX_BUFFER_SIZE);
+			if (udpMaxAmountToRead == 0)
+			{
+				udpMaxAmountToRead = DEFAULT_UDP_BUFFER_SIZE;
+			}
+			temp.resize(udpMaxAmountToRead);
 			memset(&this->receiveAddress, '\0', sizeof(this->receiveAddress));
 			socklen_t addressLength = sizeof(this->receiveAddress);
 			
-			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(this->MAX_BUFFER_SIZE), 0, &this->receiveAddress.address, &addressLength);
+			int flag = recvfrom(this->socketDescriptor, &temp[0], static_cast<int>(udpMaxAmountToRead), 0, &this->receiveAddress.address, &addressLength);
 			if (flag < 1)
 			{
 				return data;
@@ -737,11 +783,11 @@ namespace kt
 	 * **NOTE:** This method can take a long time to execute. If you know the desired size and/or a delimiter, the other methods may be more fitting. 
 	 * This method may take some time for the receiver to retreive the whole message due to the inability to flush streams when using sockets.
 	 */
-	std::string Socket::receiveAll(const unsigned long timeout)
+	std::string kt::Socket::receiveAll(const unsigned long timeout)
 	{
-		if (this->protocol == SocketProtocol::UDP)
+		if (this->protocol == kt::SocketProtocol::UDP)
 		{
-			throw SocketException("Socket::receiveAll(unsigned long) is not supported for UDP socket configuration. Please use Socket::receiveAmount(unsigned int) instead.");
+			throw kt::SocketException("Socket::receiveAll(unsigned long) is not supported for UDP socket configuration. Please use Socket::receiveAmount(unsigned int) instead.");
 		}
 
 		std::string result;
@@ -778,10 +824,10 @@ namespace kt
 	 * 
 	 * @return A std::vector&lt;std::pair&lt;std::string, std::string>> where .first is the devices address, and .second is the device name.
 	 */
-	std::vector<std::pair<std::string, std::string> > Socket::scanDevices(unsigned int duration)
+	std::vector<std::pair<std::string, std::string> > kt::Socket::scanDevices(unsigned int duration)
 	{
 #ifdef _WIN32
-		throw SocketException("Socket::scanDevices(int) is not supported on Windows.");
+		throw kt::SocketException("Socket::scanDevices(int) is not supported on Windows.");
 
 		/*WSADATA wsaData;
 		int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -865,10 +911,10 @@ namespace kt
 #endif
 	}
 
-	std::optional<std::string> Socket::getLocalMACAddress()
+	std::optional<std::string> kt::Socket::getLocalMACAddress()
 	{
 #ifdef _WIN32
-		throw SocketException("Socket::getLocalMACAddress() is not supported on Windows.");
+		throw kt::SocketException("Socket::getLocalMACAddress() is not supported on Windows.");
 
 		// Up to 20 Interfaces
 		/*IP_ADAPTER_INFO AdapterInfo[20];

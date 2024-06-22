@@ -8,7 +8,7 @@
 #include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
-#include "../address/Address.h"
+#include "../address/SocketAddress.h"
 #include "../socketexceptions/SocketError.h"
 
 #ifdef _WIN32
@@ -39,17 +39,19 @@ typedef int SOCKET;
 
 namespace kt
 {
+	const unsigned int DEFAULT_UDP_BUFFER_SIZE = 10240; // 10 kilobytes
+
 	class Socket
 	{
-		private:
+		protected:
 			std::string hostname;
 			unsigned int port;
-			SocketProtocol protocol = SocketProtocol::None;
-			SocketType type = SocketType::None;
-			InternetProtocolVersion protocolVersion = InternetProtocolVersion::Any;
+			kt::SocketProtocol protocol = kt::SocketProtocol::None;
+			kt::SocketType type = kt::SocketType::None;
+			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			bool bound = false;
-			SocketAddress serverAddress = {}; // For Wifi
-			SocketAddress receiveAddress = {}; // For UDP, stores the client address of the last message received
+			kt::SocketAddress serverAddress = {}; // For Wifi
+			kt::SocketAddress receiveAddress = {}; // For UDP, stores the client address of the last message received
 			SOCKET udpSendSocket = getInvalidSocketValue();
 			SOCKET socketDescriptor = getInvalidSocketValue();
 
@@ -61,21 +63,20 @@ namespace kt
 
 #endif
 
-			const unsigned int MAX_BUFFER_SIZE = 10240;
-
 			void constructBluetoothSocket();
 			void constructWifiSocket();
-			SocketAddress getSendAddress() const;
 			int pollSocket(SOCKET socket, const long& = 1000) const;
 			void initialiseListeningPortNumber();
+
+			void close(SOCKET socket);
 
 		public:
 			Socket() = default;
 			Socket(const std::string&, const unsigned int&, const kt::SocketType, const kt::SocketProtocol = kt::SocketProtocol::None); // Create Wi-Fi/Bluetooth Socket
 			Socket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&, const kt::InternetProtocolVersion);
 
-			Socket(const Socket&); // Copy Constructor
-			Socket& operator=(const Socket&);
+			Socket(const kt::Socket&);
+			kt::Socket& operator=(const kt::Socket&);
 			
 			bool bind(const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			void close();
@@ -85,23 +86,28 @@ namespace kt
 			bool send(const std::string&, int = 0);
 
 			unsigned int getPort() const;
-			bool isBound() const;
+			bool isUdpBound() const;
 			kt::SocketProtocol getProtocol() const;
 			kt::SocketType getType() const;
-			InternetProtocolVersion getInternetProtocolVersion() const;
-			std::optional<std::string> getLastRecievedAddress() const;
-			std::string getAddress() const;
+			kt::InternetProtocolVersion getInternetProtocolVersion() const;
+			std::string getHostname() const;
+
+			std::optional<std::string> getLastUDPRecievedAddress() const;
+			std::optional<kt::SocketAddress> getLastUDPReceivedAddress() const;
+			std::optional<kt::SocketAddress> getUDPSendAddress() const;
+			void setUDPSendAddress(std::string, unsigned int);
+			void setUDPSendAddress(kt::SocketAddress);
 
 			std::optional<char> get();
 			std::string receiveAmount(const unsigned int);
-			std::string receiveToDelimiter(const char);
+			std::string receiveToDelimiter(const char&, unsigned int = 0);
 			std::string receiveAll(const unsigned long = 1000);
 
 			static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int = 5);
 			static std::optional<std::string> getLocalMACAddress();
 	};
 
-	std::optional<std::string> resolveToAddress(const SocketAddress*, const InternetProtocolVersion);
+	std::optional<std::string> resolveToAddress(const kt::SocketAddress*, const kt::InternetProtocolVersion);
 	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal = nullptr);
 
 } // End namespace kt 
