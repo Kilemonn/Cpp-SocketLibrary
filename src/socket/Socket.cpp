@@ -88,7 +88,7 @@ namespace kt
 
 	    if (type == kt::SocketType::Wifi)
 	    {
-			this->constructWifiSocket();
+			this->constructWifiSocket(this->port);
 	    }
 	    else if (type == kt::SocketType::Bluetooth)
 	    {
@@ -213,7 +213,7 @@ namespace kt
 #endif
 	}
 
-	void kt::Socket::constructWifiSocket()
+	void kt::Socket::constructWifiSocket(unsigned int& newPort)
 	{
 		const int socketType = this->protocol == kt::SocketProtocol::TCP ? SOCK_STREAM : SOCK_DGRAM;
 		const int socketProtocol = this->protocol == kt::SocketProtocol::TCP ? IPPROTO_TCP : IPPROTO_UDP;
@@ -234,7 +234,7 @@ namespace kt
 		hints.ai_family = static_cast<int>(this->protocolVersion);
 		hints.ai_socktype = socketType;
 		hints.ai_protocol = socketProtocol;
-		int res = getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &hints, &resolvedAddresses);
+		int res = getaddrinfo(this->hostname.c_str(), std::to_string(newPort).c_str(), &hints, &resolvedAddresses);
 		if (res != 0 || this->hostname.empty() || resolvedAddresses == nullptr)
 		{
 			if (resolvedAddresses != nullptr)
@@ -404,7 +404,8 @@ namespace kt
 				std::optional<kt::SocketAddress> address = this->getUDPSendAddress();
 				if (address.has_value())
 				{
-					return ::sendto(this->udpSendSocket, message.c_str(), message.size(), flag, &(address.value().address), sizeof(address.value())) != -1;
+					int result = ::sendto(this->udpSendSocket, message.c_str(), message.size(), flag, &(address.value().address), sizeof(address.value()));
+					return result != -1;
 				}
 				return false;
 			}
@@ -626,12 +627,11 @@ namespace kt
 		return std::nullopt;
 	}
 
-	void Socket::setUDPSendAddress(std::string newHostname, unsigned int newPort)
+	void Socket::setUDPSendAddress(std::string newHostname, unsigned int newPort, kt::InternetProtocolVersion newProtocolVersion)
 	{
-		this->protocolVersion = kt::InternetProtocolVersion::Any;
+		this->protocolVersion = newProtocolVersion;
 		this->hostname = newHostname;
-		this->port = newPort;
-		this->constructWifiSocket();
+		this->constructWifiSocket(newPort);
 	}
 
 	void Socket::setUDPSendAddress(kt::SocketAddress newSocketAddress)

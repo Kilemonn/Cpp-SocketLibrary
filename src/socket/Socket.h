@@ -64,7 +64,7 @@ namespace kt
 #endif
 
 			void constructBluetoothSocket();
-			void constructWifiSocket();
+			void constructWifiSocket(unsigned int&);
 			int pollSocket(SOCKET socket, const long& = 1000) const;
 			void initialiseListeningPortNumber();
 
@@ -95,7 +95,7 @@ namespace kt
 			std::optional<std::string> getLastUDPRecievedAddress() const;
 			std::optional<kt::SocketAddress> getLastUDPReceivedAddress() const;
 			std::optional<kt::SocketAddress> getUDPSendAddress() const;
-			void setUDPSendAddress(std::string, unsigned int);
+			void setUDPSendAddress(std::string, unsigned int, kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			void setUDPSendAddress(kt::SocketAddress);
 
 			std::optional<char> get();
