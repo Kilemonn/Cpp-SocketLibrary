@@ -178,9 +178,8 @@ namespace kt
         ASSERT_EQ(testString, received);
 
         ASSERT_EQ(address, socket.getLastUDPRecievedAddress());
-        ASSERT_NE(std::nullopt, socket.getLastUDPReceivedAddress());
-        ASSERT_EQ(InternetProtocolVersion::IPV4, kt::getInternetProtocolVersion(socket.getLastUDPReceivedAddress().value()));
-
+        kt::SocketAddress recievedAddress = socket.getLastUDPReceivedAddress().value();
+        ASSERT_EQ(InternetProtocolVersion::IPV4, kt::getInternetProtocolVersion(recievedAddress));
 
         client.close();
     }
@@ -204,7 +203,8 @@ namespace kt
 
         ASSERT_EQ(address, socket.getLastUDPRecievedAddress());
         ASSERT_NE(std::nullopt, socket.getLastUDPReceivedAddress());
-        ASSERT_EQ(InternetProtocolVersion::IPV6, kt::getInternetProtocolVersion(socket.getLastUDPReceivedAddress().value()));
+        kt::SocketAddress recievedAddress = socket.getLastUDPReceivedAddress().value();
+        ASSERT_EQ(InternetProtocolVersion::IPV6, kt::getInternetProtocolVersion(recievedAddress));
 
         client.close();
     }
