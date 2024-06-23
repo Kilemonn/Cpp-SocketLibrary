@@ -3,6 +3,9 @@
 
 #include "../enums/InternetProtocolVersion.h"
 
+#include <string>
+#include <optional>
+
 #ifdef _WIN32
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -36,5 +39,9 @@ namespace kt
         sockaddr_in6 ipv6;
     } SocketAddress;
 
-    kt::InternetProtocolVersion getInternetProtocolVersion(kt::SocketAddress&);
+    kt::InternetProtocolVersion getInternetProtocolVersion(const kt::SocketAddress&);
+
+    long getPortNumber(const kt::SocketAddress&);
+
+    std::optional<std::string> resolveToAddress(const kt::SocketAddress&);
 }

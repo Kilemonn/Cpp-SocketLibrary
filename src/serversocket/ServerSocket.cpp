@@ -366,7 +366,7 @@ namespace kt
         }
 
         unsigned int portNum = this->getInternetProtocolVersion() == kt::InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
-        std::optional<std::string> hostname = kt::resolveToAddress(&acceptedAddress, this->getInternetProtocolVersion());
+        std::optional<std::string> hostname = kt::resolveToAddress(acceptedAddress);
 		if (!hostname.has_value())
 		{
             throw kt::SocketException("Unable to resolve accepted hostname from accepted socket.");

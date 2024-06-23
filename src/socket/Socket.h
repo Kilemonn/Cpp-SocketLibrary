@@ -107,7 +107,6 @@ namespace kt
 			static std::optional<std::string> getLocalMACAddress();
 	};
 
-	std::optional<std::string> resolveToAddress(const kt::SocketAddress*, const kt::InternetProtocolVersion);
 	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal = nullptr);
 
 } // End namespace kt 
