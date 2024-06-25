@@ -21,6 +21,15 @@ namespace kt
 
 	std::pair<int, kt::SocketAddress> UDPSocket::constructSocket(std::string& hostname, unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
 	{
+#ifdef _WIN32
+		WSADATA wsaData{};
+		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
+		{
+			throw kt::SocketException("WSAStartup Failed. " + std::to_string(res));
+		}
+
+#endif
+
 		const int socketType = SOCK_DGRAM;
 		const int protocol = IPPROTO_UDP;
 
@@ -52,6 +61,20 @@ namespace kt
 	 */
 	bool kt::UDPSocket::bind(const unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
 	{
+		if (this->isUdpBound())
+		{
+			return true;
+		}
+
+#ifdef _WIN32
+		WSADATA wsaData{};
+		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
+		{
+			throw kt::SocketException("WSAStartup Failed. " + std::to_string(res));
+		}
+
+#endif
+
 		this->listeningPort = port;
 
 		kt::SocketAddress receiveAddress{};
@@ -67,12 +90,16 @@ namespace kt
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::nullopt, this->listeningPort, hints);
 		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
 		{
-			throw kt::SocketException("Failed to retrieve address info of local host. With error:" + std::to_string(resolvedAddresses.second) + " " + getErrorCode());
+			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(this->listeningPort) + ". Error message from code: " + gai_strerror(resolvedAddresses.second));
 		}
 
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
 		this->protocolVersion = static_cast<kt::InternetProtocolVersion>(firstAddress.address.sa_family);
 		this->receiveSocket = socket(firstAddress.address.sa_family, socketType, socketProtocol);
+		if (kt::isInvalidSocket(this->receiveSocket))
+		{
+			throw kt::SocketException("Unable to construct socket from local host details. " + getErrorCode());
+		}
 
 #ifdef _WIN32
 		if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
@@ -123,7 +150,7 @@ namespace kt
 	std::pair<bool, int> UDPSocket::sendTo(const std::string& message, const kt::SocketAddress& address, const int& flags)
 	{
 		SOCKET tempSocket = socket(address.address.sa_family, SOCK_DGRAM, IPPROTO_UDP);
-		if (!kt::isInvalidSocket(tempSocket))
+		if (kt::isInvalidSocket(tempSocket))
 		{
 			return std::make_pair(false, -2);
 		}
@@ -134,7 +161,6 @@ namespace kt
 	std::pair<bool, int> UDPSocket::sendTo(const std::string& hostname, const unsigned int& port, const std::string& message, const int& flags)
 	{
 		addrinfo hints{};
-		hints.ai_flags = AI_PASSIVE;
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
