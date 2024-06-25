@@ -4,7 +4,8 @@
 
 #include "../address/SocketAddress.h"
 
-#include "../socket/Socket.h"
+#include "../socket/BluetoothSocket.h"
+#include "../socket/TCPSocket.h"
 
 #include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
@@ -50,10 +51,7 @@ namespace kt
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
 			void initialisePortNumber();
-			size_t initialiseServerAddress();
-
-			kt::Socket acceptWifiConnection(const long& = 0);
-			kt::Socket acceptBluetoothConnection(const long& = 0);
+			void initialiseServerAddress();
 
 		public:
 			ServerSocket() = default;
@@ -61,11 +59,13 @@ namespace kt
 			ServerSocket(const kt::ServerSocket&);
 			kt::ServerSocket& operator=(const kt::ServerSocket&);
 
+			kt::TCPSocket acceptTCPConnection(const long& = 0) const;
+			kt::BluetoothSocket acceptBluetoothConnection(const long& = 0);
+
 			kt::SocketType getType() const;
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;
 			unsigned int getPort() const;
 
-			kt::Socket accept(const long& = 0);
 			void close();
 	};
 

@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace kt
 {
@@ -22,7 +23,7 @@ namespace kt
 		return htonl(address.ipv4.sin_port);
 	}
 
-	std::optional<std::string> resolveToAddress(const kt::SocketAddress& address)
+	std::optional<std::string> getAddress(const kt::SocketAddress& address)
 	{
 		const kt::InternetProtocolVersion protocolVersion = getInternetProtocolVersion(address);
 		const size_t addressLength = protocolVersion == kt::InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
@@ -46,5 +47,41 @@ namespace kt
 		}
 		// Since we zero out the address, we need to check its not default initialised
 		return !asString.empty() && asString != "0.0.0.0" && asString != "::" ? std::optional<std::string>{asString} : std::nullopt;
+	}
+
+	std::pair<std::optional<kt::SocketAddress>, int> socketToAddress(const SOCKET& socket)
+	{
+		kt::SocketAddress address{};
+		socklen_t socketSize = sizeof(address);
+		int result = getsockname(socket, &address.address, &socketSize);
+		return std::make_pair(std::optional{ address }, result);
+	}
+
+	std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>& hostname, const unsigned int& port, addrinfo& hints)
+	{
+		std::vector<kt::SocketAddress> addresses;
+		addrinfo* resolvedAddresses = nullptr;
+
+		int result = getaddrinfo(hostname.has_value() ? hostname.value().c_str() : nullptr, std::to_string(port).c_str(), &hints, &resolvedAddresses);
+		if (result != 0 || resolvedAddresses == nullptr)
+		{
+			if (resolvedAddresses != nullptr)
+			{
+				freeaddrinfo(resolvedAddresses);
+			}
+			return std::make_pair(addresses, result);
+		}
+
+		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
+		// we will return, otherwise we will throw is we are unable to connect to any.
+		for (addrinfo* addr = resolvedAddresses; addr != nullptr; addr = addr->ai_next)
+		{
+			kt::SocketAddress address = {};
+			std::memcpy(&address, addr->ai_addr, addr->ai_addrlen);
+			addresses.push_back(address);
+		}
+		freeaddrinfo(resolvedAddresses);
+
+		return std::make_pair(addresses, result);
 	}
 }

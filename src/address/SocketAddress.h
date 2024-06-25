@@ -5,6 +5,8 @@
 
 #include <string>
 #include <optional>
+#include <vector>
+#include <cstring>
 
 #ifdef _WIN32
 
@@ -24,6 +26,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <netdb.h>
+
+// Typedef to match the windows typedef since they are different underlying types
+typedef int SOCKET;
 
 #endif
 
@@ -43,5 +50,9 @@ namespace kt
 
     long getPortNumber(const kt::SocketAddress&);
 
-    std::optional<std::string> resolveToAddress(const kt::SocketAddress&);
+    std::optional<std::string> getAddress(const kt::SocketAddress&);
+
+    std::pair<std::optional<kt::SocketAddress>, int> socketToAddress(const SOCKET&);
+
+    std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>&, const unsigned int&, addrinfo&);
 }

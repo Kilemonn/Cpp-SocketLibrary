@@ -19,10 +19,10 @@ FetchContent_MakeAvailable(googletest)
 
 
 set(SOURCE
-        serversocket/ServerSocketTest.cpp
-        socket/SocketTCPTest.cpp
-        socket/SocketUDPTest.cpp
-        socket/SocketBluetoothTest.cpp
+        serversocket/ServerSocketTCPTest.cpp
+        socket/TCPSocketTest.cpp
+        socket/UDPSocketTest.cpp
+        socket/BluetoothSocketTest.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE})
