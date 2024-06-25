@@ -11,16 +11,16 @@ namespace kt
 		return static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
 	}
 
-	long getPortNumber(const kt::SocketAddress& address)
+	unsigned int getPortNumber(const kt::SocketAddress& address)
 	{
 		kt::InternetProtocolVersion version = getInternetProtocolVersion(address);
 		if (version == kt::InternetProtocolVersion::IPV6)
 		{
-			return htonl(address.ipv6.sin6_port);
+			return htons(address.ipv6.sin6_port);
 		}
 		// I believe the address is in the same position for ipv4 and ipv6 structs, so it doesn't really matter.
 		// Doing the checks anway to make sure its fine
-		return htonl(address.ipv4.sin_port);
+		return htons(address.ipv4.sin_port);
 	}
 
 	std::optional<std::string> getAddress(const kt::SocketAddress& address)

@@ -48,7 +48,7 @@ namespace kt
 
     kt::InternetProtocolVersion getInternetProtocolVersion(const kt::SocketAddress&);
 
-    long getPortNumber(const kt::SocketAddress&);
+    unsigned int getPortNumber(const kt::SocketAddress&);
 
     std::optional<std::string> getAddress(const kt::SocketAddress&);
 

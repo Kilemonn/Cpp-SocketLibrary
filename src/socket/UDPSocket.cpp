@@ -185,7 +185,7 @@ namespace kt
 		data.resize(receiveLength);
 
 		socklen_t addressLength = sizeof(receiveAddress);
-		int flag = recvfrom(this->listeningPort, &data[0], static_cast<int>(receiveLength), flags, &receiveAddress.address, &addressLength);
+		int flag = recvfrom(this->receiveSocket, &data[0], static_cast<int>(receiveLength), flags, &receiveAddress.address, &addressLength);
 		
 #ifdef _WIN32
 		if (flag < 1)
