@@ -42,7 +42,9 @@ namespace kt
     TEST_F(UDPSocketTest, UDPBindAndBound_MultipleCalls)
     {
         ASSERT_FALSE(socket.isUdpBound());
+        ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
         ASSERT_TRUE(socket.bind(0));
+        ASSERT_NE(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
         ASSERT_TRUE(socket.isUdpBound());
 
         kt::UDPSocket newServer;
