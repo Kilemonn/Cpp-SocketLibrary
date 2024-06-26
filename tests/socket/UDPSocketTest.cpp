@@ -93,7 +93,7 @@ namespace kt
         ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
 
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size());
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString, recieved.first.value());
@@ -113,7 +113,7 @@ namespace kt
         ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
 
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size() - 1);
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() - 1);
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.first.value());
@@ -131,7 +131,7 @@ namespace kt
         ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
 
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size() + 1);
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() + 1);
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString, recieved.first.value());
@@ -150,7 +150,7 @@ namespace kt
         ASSERT_TRUE(sendResult.first);
 
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size());
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString, recieved.first.value());
@@ -179,7 +179,7 @@ namespace kt
         kt::UDPSocket socket;
         ASSERT_TRUE(socket.bind(PORT, kt::InternetProtocolVersion::IPV4));
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size());
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString, recieved.first.value());
 

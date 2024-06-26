@@ -161,7 +161,7 @@ namespace kt
 		return std::make_pair(result.first, std::make_pair(result.second, firstAddress));
 	}
 
-	std::pair<std::optional<std::string>, kt::SocketAddress> UDPSocket::receiveFrom(const unsigned int& receiveLength, const int& flags)
+	std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> UDPSocket::receiveFrom(const unsigned int& receiveLength, const int& flags)
 	{
 		std::string data;
 		data.resize(receiveLength);
@@ -174,7 +174,7 @@ namespace kt
 			// This is for Windows, in some scenarios Windows will return a -1 flag but the buffer is populated properly
 			// The code it is returning is 10040 this is indicating that the provided buffer is too small for the incoming
 			// message, there is probably some settings we can tweak, however I think this is okay to return for now.
-			return std::make_pair(std::make_optional(data), result.second);
+			return std::make_pair(data.empty() ? std::nullopt : std::make_optional(data), result);
 		}
 #endif
 
@@ -184,7 +184,7 @@ namespace kt
 			data = data.substr(0, result.first);
 		}
 		
-		return std::make_pair(std::make_optional(data), result.second);
+		return std::make_pair(data.empty() ? std::nullopt : std::make_optional(data), result);
 	}
 
 	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const unsigned int& receiveLength, const int& flags) const

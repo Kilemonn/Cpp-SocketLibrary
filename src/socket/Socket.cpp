@@ -61,7 +61,8 @@ namespace kt
 		FD_SET(socketDescriptor, &sReady);
 
 		// Need this->socketDescriptor + 1 here
-		return select(socketDescriptor + 1, &sReady, nullptr, nullptr, timeOutVal);
+		int result = select(socketDescriptor + 1, &sReady, nullptr, nullptr, timeOutVal);
+		return result;
 	}
 
 	void close(SOCKET socket)

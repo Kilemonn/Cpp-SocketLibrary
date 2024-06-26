@@ -68,7 +68,7 @@ namespace kt
 		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const std::string&, const int& = 0);
 		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const char*, const int&, const int& = 0);
 		
-		std::pair<std::optional<std::string>, kt::SocketAddress> receiveFrom(const unsigned int&, const int& = 0);
+		std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> receiveFrom(const unsigned int&, const int& = 0);
 		std::pair<int, kt::SocketAddress> receiveFrom(char*, const unsigned int&, const int& = 0) const;
 
 		bool isUdpBound() const;

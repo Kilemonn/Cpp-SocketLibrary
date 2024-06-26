@@ -85,7 +85,7 @@ void udpExample()
 
     if (socket.ready())
     {
-        std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size());
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
         ASSERT_EQ(testString, recieved.first.value());
     }
 
