@@ -257,21 +257,14 @@ namespace kt
 
     void kt::ServerSocket::initialisePortNumber()
     {
-        socklen_t socketSize = sizeof(this->serverAddress);
-        if (getsockname(this->socketDescriptor, &this->serverAddress.address, &socketSize) != 0)
-        {
-            this->close();
-            throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
-        }
+        std::pair<std::optional<kt::SocketAddress>, int> address = kt::socketToAddress(this->socketDescriptor);
+		if (address.second != 0 && !address.first.has_value())
+		{
+			this->close();
+			throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
+		}
 
-        if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
-        {
-            this->port = ntohs(this->serverAddress.ipv6.sin6_port);
-        }
-        else
-        {
-            this->port = ntohs(this->serverAddress.ipv4.sin_port);
-        }
+		this->port = kt::getPortNumber(address.first.value());
     }
 
 
