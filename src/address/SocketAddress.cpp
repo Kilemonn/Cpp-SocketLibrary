@@ -84,4 +84,14 @@ namespace kt
 
 		return std::make_pair(addresses, result);
 	}
+
+#ifdef _WIN32
+	int getAddressLength(const kt::SocketAddress& address)
+#else
+	socklen_t getAddressLength(const kt::SocketAddress& address)
+#endif
+	{
+		const kt::InternetProtocolVersion protocolVersion = getInternetProtocolVersion(address);
+		return protocolVersion == kt::InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
+	}
 }

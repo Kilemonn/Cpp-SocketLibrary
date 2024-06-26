@@ -55,4 +55,10 @@ namespace kt
     std::pair<std::optional<kt::SocketAddress>, int> socketToAddress(const SOCKET&);
 
     std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>&, const unsigned int&, addrinfo&);
+
+#ifdef _WIN32
+	int getAddressLength(const kt::SocketAddress&);
+#else
+	socklen_t getAddressLength(const kt::SocketAddress&);
+#endif
 }

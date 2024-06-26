@@ -77,7 +77,6 @@ namespace kt
 
 		this->listeningPort = port;
 
-		kt::SocketAddress receiveAddress{};
 		const int socketType = SOCK_DGRAM;
 		const int socketProtocol = IPPROTO_UDP;
 
@@ -90,7 +89,7 @@ namespace kt
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::nullopt, this->listeningPort, hints);
 		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
 		{
-			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(this->listeningPort) + ". Error message from code: " + gai_strerror(resolvedAddresses.second));
+			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(this->listeningPort));
 		}
 
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
@@ -118,7 +117,7 @@ namespace kt
 		}
 #endif
 
-		int bindResult = ::bind(this->receiveSocket, &firstAddress.address, sizeof(firstAddress.address));
+		int bindResult = ::bind(this->receiveSocket, &firstAddress.address, kt::getAddressLength(firstAddress));
 		this->bound = bindResult != -1;
 		if (!this->bound)
 		{
@@ -185,7 +184,7 @@ namespace kt
 		std::string data;
 		data.resize(receiveLength);
 
-		socklen_t addressLength = sizeof(receiveAddress);
+		auto addressLength = kt::getAddressLength(receiveAddress);
 		int flag = recvfrom(this->receiveSocket, &data[0], static_cast<int>(receiveLength), flags, &receiveAddress.address, &addressLength);
 		
 #ifdef _WIN32
