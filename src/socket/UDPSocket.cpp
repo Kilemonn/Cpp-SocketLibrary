@@ -9,18 +9,7 @@ namespace kt
 	{
 		this->bound = socket.bound;
 		this->receiveSocket = socket.receiveSocket;
-	}
 
-	kt::UDPSocket& UDPSocket::operator=(const kt::UDPSocket& socket)
-	{
-		this->bound = socket.bound;
-		this->receiveSocket = socket.receiveSocket;
-
-		return *this;
-	}
-
-	std::pair<int, kt::SocketAddress> UDPSocket::constructSocket(std::string& hostname, unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
-	{
 #ifdef _WIN32
 		WSADATA wsaData{};
 		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
@@ -29,25 +18,14 @@ namespace kt
 		}
 
 #endif
+	}
 
-		const int socketType = SOCK_DGRAM;
-		const int protocol = IPPROTO_UDP;
+	kt::UDPSocket& UDPSocket::operator=(const kt::UDPSocket& socket)
+	{
+		this->bound = socket.bound;
+		this->receiveSocket = socket.receiveSocket;
 
-		addrinfo hints{};
-		hints.ai_family = static_cast<int>(protocolVersion);
-		hints.ai_socktype = socketType;
-		hints.ai_protocol = protocol;
-
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::optional{ hostname }, port, hints);
-		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
-		{
-			throw kt::SocketException("Unable to resolve IP of destination address with hostname: [" + hostname + ":" + std::to_string(port) + "].Look up response code : [" + std::to_string(resolvedAddresses.second) + "] . " + getErrorCode());
-		}
-
-		kt::SocketAddress resolvedAddress = resolvedAddresses.first.at(0);
-		SOCKET udpSendSocket = socket(resolvedAddress.address.sa_family, socketType, protocol);
-
-		return std::make_pair(udpSendSocket, resolvedAddress);
+		return *this;
 	}
 
 	/**
@@ -75,8 +53,6 @@ namespace kt
 
 #endif
 
-		this->listeningPort = port;
-
 		const int socketType = SOCK_DGRAM;
 		const int socketProtocol = IPPROTO_UDP;
 
@@ -86,10 +62,10 @@ namespace kt
 		hints.ai_socktype = socketType;
 		hints.ai_protocol = socketProtocol;
 
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::nullopt, this->listeningPort, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::nullopt, port, hints);
 		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
 		{
-			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(this->listeningPort));
+			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(port));
 		}
 
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
@@ -116,12 +92,16 @@ namespace kt
 		this->bound = bindResult != -1;
 		if (!this->bound)
 		{
-			throw kt::BindingException("Error binding connection, the port " + std::to_string(this->listeningPort) + " is already being used. Response code from ::bind()" + std::to_string(bindResult) + ". Latest Error code: " + getErrorCode());
+			throw kt::BindingException("Error binding connection, the port " + std::to_string(port) + " is already being used. Response code from ::bind()" + std::to_string(bindResult) + ". Latest Error code: " + getErrorCode());
 		}
 
-		if (this->listeningPort == 0)
+		if (port == 0)
 		{
 			this->initialiseListeningPortNumber();
+		}
+		else
+		{
+			this->listeningPort = std::optional{ port };
 		}
 
 		return this->bound;
@@ -132,6 +112,7 @@ namespace kt
 		this->close(this->receiveSocket);
 		
 		this->bound = false;
+		this->listeningPort = std::nullopt;
 	}
 
 	bool UDPSocket::ready(const unsigned long timeout) const
@@ -211,7 +192,7 @@ namespace kt
 		return this->protocolVersion;
 	}
 
-	unsigned int UDPSocket::getListeningPort() const
+	std::optional<unsigned int> UDPSocket::getListeningPort() const
 	{
 		return this->listeningPort;
 	}
@@ -246,7 +227,7 @@ namespace kt
 			throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
 		}
 
-		this->listeningPort = kt::getPortNumber(address.first.value());
+		this->listeningPort = std::optional{ kt::getPortNumber(address.first.value()) };
 	}
 
 	void UDPSocket::close(SOCKET socket)

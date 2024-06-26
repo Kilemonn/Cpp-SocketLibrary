@@ -43,20 +43,16 @@ typedef int SOCKET;
 
 namespace kt
 {
-	const unsigned int DEFAULT_UDP_BUFFER_SIZE = 10240; // 10 kilobytes
-
 	class UDPSocket
 	{
 	protected:
 		bool bound = false;
 		SOCKET receiveSocket = getInvalidSocketValue();
 		kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
-		unsigned int listeningPort = 0;
+		std::optional<unsigned int> listeningPort = std::nullopt;
 
-		std::pair<int, kt::SocketAddress> constructSocket(std::string&, unsigned int&, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		int pollSocket(SOCKET socket, const long& = 1000) const;
 		void initialiseListeningPortNumber();
-
 		void close(SOCKET socket);
 
 	public:
@@ -70,11 +66,11 @@ namespace kt
 		bool ready(const unsigned long = 1000) const;
 		std::pair<bool, int> sendTo(const std::string&, const kt::SocketAddress&, const int& = 0);
 		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const std::string&, const int& = 0);
-		std::pair<std::optional<std::string>, kt::SocketAddress>  receiveFrom(const unsigned int&, const int& = 0);
+		std::pair<std::optional<std::string>, kt::SocketAddress> receiveFrom(const unsigned int&, const int& = 0);
 
 		bool isUdpBound() const;
 		kt::InternetProtocolVersion getInternetProtocolVersion() const;
-		unsigned int getListeningPort() const;
+		std::optional<unsigned int> getListeningPort() const;
 	};
 
 } // End namespace kt 

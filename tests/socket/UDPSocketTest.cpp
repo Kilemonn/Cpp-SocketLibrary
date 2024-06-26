@@ -32,7 +32,7 @@ namespace kt
     {
         ASSERT_FALSE(socket.ready());
         ASSERT_FALSE(socket.isUdpBound());
-        ASSERT_EQ(0, socket.getListeningPort());
+        ASSERT_EQ(std::nullopt, socket.getListeningPort());
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
     }
 
@@ -49,7 +49,8 @@ namespace kt
 
         kt::UDPSocket newServer;
         ASSERT_FALSE(newServer.isUdpBound());
-        EXPECT_THROW(newServer.bind(socket.getListeningPort()), BindingException);
+        ASSERT_NE(std::nullopt, socket.getListeningPort());
+        EXPECT_THROW(newServer.bind(socket.getListeningPort().value()), BindingException);
     }
 
     /*
@@ -66,9 +67,9 @@ namespace kt
     }
 
     /*
-     * Test UDPSocket.sendTo() to ensure that the listening socket's UDPSocket.ready() call returns *true*.
+     * Test UDPSocket.sendTo() to ensure that it can send correctly to the listening socket.
      */
-    TEST_F(UDPSocketTest, UDPSendAndReady)
+    TEST_F(UDPSocketTest, UDPSendTo)
     {
         ASSERT_TRUE(socket.bind(0));
 
@@ -76,7 +77,7 @@ namespace kt
 
         ASSERT_FALSE(socket.ready());
         const std::string testString = "test";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort(), testString).first);
+        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
         ASSERT_TRUE(socket.ready());
     }
 
@@ -89,7 +90,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort(), testString).first);
+        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
 
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size());
@@ -109,7 +110,7 @@ namespace kt
         UDPSocket client;
         const std::string testString = "test";
         ASSERT_FALSE(socket.ready());
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort(), testString).first);
+        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
 
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size() - 1);
@@ -127,7 +128,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort(), testString).first);
+        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
 
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size() + 1);
@@ -145,7 +146,7 @@ namespace kt
 
         UDPSocket client;
         std::string testString = "test";
-        std::pair<bool, std::pair<int, kt::SocketAddress>> sendResult = client.sendTo(LOCALHOST, socket.getListeningPort(), testString);
+        std::pair<bool, std::pair<int, kt::SocketAddress>> sendResult = client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString);
         ASSERT_TRUE(sendResult.first);
 
         ASSERT_TRUE(socket.ready());

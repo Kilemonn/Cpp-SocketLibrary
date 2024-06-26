@@ -56,7 +56,7 @@ namespace kt
 			timeOutVal = &timeoutVal;
 		}
 		
-		timeOutVal->tv_usec = static_cast<long>(timeout);
+		timeOutVal->tv_usec = timeout;
 
 		FD_ZERO(&sReady);
 		FD_SET(socketDescriptor, &sReady);
