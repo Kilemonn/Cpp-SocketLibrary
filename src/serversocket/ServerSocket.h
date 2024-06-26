@@ -7,7 +7,6 @@
 #include "../socket/BluetoothSocket.h"
 #include "../socket/TCPSocket.h"
 
-#include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
 

@@ -2,7 +2,6 @@
 #include "Socket.h"
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
-#include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../socketexceptions/SocketError.h"
 

@@ -5,7 +5,6 @@
 #include <utility>
 #include <optional>
 
-#include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"
@@ -62,12 +61,13 @@ namespace kt
 
 		bool bind(const unsigned int&, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		void close();
-
 		bool ready(const unsigned long = 1000) const;
+
 		std::pair<bool, int> sendTo(const std::string&, const kt::SocketAddress&, const int& = 0);
 		std::pair<bool, int> sendTo(const char*, const int&, const kt::SocketAddress&, const int& = 0);
 		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const std::string&, const int& = 0);
 		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const char*, const int&, const int& = 0);
+		
 		std::pair<std::optional<std::string>, kt::SocketAddress> receiveFrom(const unsigned int&, const int& = 0);
 		std::pair<int, kt::SocketAddress> receiveFrom(char*, const unsigned int&, const int& = 0) const;
 

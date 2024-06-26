@@ -4,7 +4,6 @@
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
 #include "../socketexceptions/TimeoutException.hpp"
-#include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../socketexceptions/SocketError.h"
 #include "../address/SocketAddress.h"

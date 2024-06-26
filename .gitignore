@@ -47,7 +47,7 @@ TestBluetooth
 
 # Build folder
 **/build/
-**/build-linux/
+**/build-*/
 
 cmake-build-debug/*
 CMakeFiles/*

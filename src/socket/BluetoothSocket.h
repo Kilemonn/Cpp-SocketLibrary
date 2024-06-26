@@ -5,7 +5,6 @@
 #include <utility>
 #include <optional>
 
-#include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"

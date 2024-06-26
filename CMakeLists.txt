@@ -18,7 +18,6 @@ set(HEADERS
         src/socketexceptions/TimeoutException.hpp
         src/socketexceptions/SocketError.h
 
-        src/enums/SocketProtocol.h
         src/enums/SocketType.h
         src/enums/InternetProtocolVersion.h
 )
