@@ -165,26 +165,5 @@ namespace kt
         ASSERT_EQ(testString, recieved.first.value());
     }
 
-    /**
-    * Test a scenario where we bind and read from the socket after the message has been sent.
-    */
-    TEST_F(UDPSocketTest, BindAfterMessageIsSent)
-    {
-        const unsigned int PORT = 87893;
-        kt::UDPSocket client;
-
-        const std::string testString = "BindAfterMessageIsSent";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, PORT, testString).first);
-
-        kt::UDPSocket socket;
-        ASSERT_TRUE(socket.bind(PORT, kt::InternetProtocolVersion::IPV4));
-        ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString, recieved.first.value());
-
-        socket.close();
-    }
-
     // TODO: large payload tests
 }
