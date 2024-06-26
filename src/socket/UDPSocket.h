@@ -65,8 +65,11 @@ namespace kt
 
 		bool ready(const unsigned long = 1000) const;
 		std::pair<bool, int> sendTo(const std::string&, const kt::SocketAddress&, const int& = 0);
+		std::pair<bool, int> sendTo(const char*, const int&, const kt::SocketAddress&, const int& = 0);
 		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const std::string&, const int& = 0);
+		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const char*, const int&, const int& = 0);
 		std::pair<std::optional<std::string>, kt::SocketAddress> receiveFrom(const unsigned int&, const int& = 0);
+		std::pair<int, kt::SocketAddress> receiveFrom(char*, const unsigned int&, const int& = 0) const;
 
 		bool isUdpBound() const;
 		kt::InternetProtocolVersion getInternetProtocolVersion() const;

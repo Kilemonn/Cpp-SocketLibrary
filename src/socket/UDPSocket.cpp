@@ -101,7 +101,7 @@ namespace kt
 		}
 		else
 		{
-			this->listeningPort = std::optional{ port };
+			this->listeningPort = std::make_optional(port);
 		}
 
 		return this->bound;
@@ -124,59 +124,80 @@ namespace kt
 
 	std::pair<bool, int> UDPSocket::sendTo(const std::string& message, const kt::SocketAddress& address, const int& flags)
 	{
+		return this->sendTo(&message[0], message.size(), address, flags);
+	}
+
+	std::pair<bool, int> UDPSocket::sendTo(const char* buffer, const int& bufferLength, const kt::SocketAddress& address, const int& flags)
+	{
 		SOCKET tempSocket = socket(address.address.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 		if (kt::isInvalidSocket(tempSocket))
 		{
 			return std::make_pair(false, -2);
 		}
-		int result = ::sendto(tempSocket, message.c_str(), message.size(), flags, &(address.address), sizeof(address));
+		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
 		this->close(tempSocket);
 		return std::make_pair(result != -1, result);
 	}
 
 	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned int& port, const std::string& message, const int& flags)
 	{
+		return this->sendTo(hostname, port, &message[0], message.size(), flags);
+	}
+
+	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned int& port, const char* buffer, const int& bufferLength, const int& flags)
+	{
 		addrinfo hints{};
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
 
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::optional{ hostname }, port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::make_optional(hostname), port, hints);
 		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
 		{
 			return std::make_pair(false, std::make_pair(resolvedAddresses.second, kt::SocketAddress{}));
 		}
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
-		std::pair<bool, int> result = this->sendTo(message, firstAddress, flags);
+		std::pair<bool, int> result = this->sendTo(buffer, bufferLength, firstAddress, flags);
 		return std::make_pair(result.first, std::make_pair(result.second, firstAddress));
 	}
 
 	std::pair<std::optional<std::string>, kt::SocketAddress> UDPSocket::receiveFrom(const unsigned int& receiveLength, const int& flags)
 	{
-		kt::SocketAddress receiveAddress{};
-		if (!this->bound  || receiveLength == 0 || !this->ready())
-		{
-			return std::make_pair(std::nullopt, receiveAddress);
-		}
 		std::string data;
 		data.resize(receiveLength);
 
-		auto addressLength = kt::getAddressLength(receiveAddress);
-		int flag = recvfrom(this->receiveSocket, &data[0], static_cast<int>(receiveLength), flags, &receiveAddress.address, &addressLength);
+		std::pair<int, kt::SocketAddress> result = this->receiveFrom(&data[0], receiveLength, flags);
 		
 #ifdef _WIN32
-		if (flag < 1)
+		if (result.first < 1)
 		{
 			// This is for Windows, in some scenarios Windows will return a -1 flag but the buffer is populated properly
 			// The code it is returning is 10040 this is indicating that the provided buffer is too small for the incoming
 			// message, there is probably some settings we can tweak, however I think this is okay to return for now.
-			return std::make_pair(std::make_optional(data), receiveAddress);
+			return std::make_pair(std::make_optional(data), result.second);
 		}
 #endif
 
 		// Need to substring to remove any null terminating bytes
-		data = data.substr(0, flag);
-		return std::make_pair(std::make_optional(data), receiveAddress);
+		if (result.first < receiveLength)
+		{
+			data = data.substr(0, result.first);
+		}
+		
+		return std::make_pair(std::make_optional(data), result.second);
+	}
+
+	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const unsigned int& receiveLength, const int& flags) const
+	{
+		kt::SocketAddress receiveAddress{};
+		if (!this->bound || receiveLength == 0 || !this->ready())
+		{
+			return std::make_pair(0, receiveAddress);
+		}
+
+		auto addressLength = kt::getAddressLength(receiveAddress);
+		int flag = recvfrom(this->receiveSocket, buffer, static_cast<int>(receiveLength), flags, &receiveAddress.address, &addressLength);
+		return std::make_pair(flag, receiveAddress);
 	}
 
 	bool UDPSocket::isUdpBound() const
@@ -227,7 +248,7 @@ namespace kt
 			throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
 		}
 
-		this->listeningPort = std::optional{ kt::getPortNumber(address.first.value()) };
+		this->listeningPort = std::make_optional(kt::getPortNumber(address.first.value()));
 	}
 
 	void UDPSocket::close(SOCKET socket)

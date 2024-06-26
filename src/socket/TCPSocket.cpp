@@ -139,10 +139,15 @@ namespace kt
 		return result != -1;
 	}
 
+	bool TCPSocket::send(const char* message, const int& messageLength, const int& flags) const
+	{
+		int result = ::send(this->socketDescriptor, message, messageLength, flags);
+		return result != -1;
+	}
+
 	bool TCPSocket::send(const std::string& message, const int& flags) const
 	{
-		int result = ::send(this->socketDescriptor, message.c_str(), message.size(), flags);
-		return result != -1;
+		return this->send(message.c_str(), message.size(), flags);
 	}
 
 	std::string TCPSocket::getHostname() const
@@ -185,35 +190,33 @@ namespace kt
 	 */
 	std::string kt::TCPSocket::receiveAmount(const unsigned int amountToReceive, const int& flags) const
 	{
-		if (amountToReceive == 0 || !this->ready())
-		{
-			return "";
-		}
-
 		std::string data;
 		data.resize(amountToReceive);
 
-		std::string resultantString;
-		resultantString.reserve(amountToReceive);
+		int amountReceived = this->receiveAmount(&data[0], amountToReceive, flags);
+		return data.substr(0, amountReceived);
+	}
 
-		unsigned int counter = 0;
+	int TCPSocket::receiveAmount(char* buffer, const unsigned int amountToReceive, const int& flags) const
+	{
+		int counter = 0;
+
+		if (amountToReceive == 0 || !this->ready())
+		{
+			return counter;
+		}
+		
 		do
 		{
-			int amountReceived = recv(this->socketDescriptor, &data[0], static_cast<int>(amountToReceive - counter), flags);
+			int amountReceived = recv(this->socketDescriptor, &buffer[counter], static_cast<int>(amountToReceive - counter), flags);
 			if (amountReceived < 1)
 			{
-				return resultantString;
+				return counter;
 			}
-
-			// Need to substring to remove null terminating byte
-			resultantString += data.substr(0, amountReceived);
-
-			data.clear();
 			counter += amountReceived;
 		} while (counter < amountToReceive && this->ready());
-		
-		
-		return resultantString;
+
+		return counter;
 	}
 
 	/**
