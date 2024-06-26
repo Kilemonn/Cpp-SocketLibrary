@@ -110,11 +110,6 @@ namespace kt
 			}
 		}
 
-		const int enableOption = 1;
-		if (setsockopt(this->receiveSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
-		{
-			throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
-		}
 #endif
 
 		int bindResult = ::bind(this->receiveSocket, &firstAddress.address, kt::getAddressLength(firstAddress));
@@ -154,6 +149,7 @@ namespace kt
 			return std::make_pair(false, -2);
 		}
 		int result = ::sendto(tempSocket, message.c_str(), message.size(), flags, &(address.address), sizeof(address));
+		this->close(tempSocket);
 		return std::make_pair(result != -1, result);
 	}
 

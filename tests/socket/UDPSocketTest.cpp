@@ -78,8 +78,6 @@ namespace kt
         const std::string testString = "test";
         ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort(), testString).first);
         ASSERT_TRUE(socket.ready());
-
-        client.close();
     }
 
     /*
@@ -98,8 +96,6 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString, recieved.first.value());
-
-        client.close();
     }
 
     /**
@@ -120,8 +116,6 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.first.value());
-
-        client.close();
     }
 
     /*
@@ -140,8 +134,6 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString, recieved.first.value());
-
-        client.close();
     }
 
     /**
@@ -170,8 +162,6 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_NE(std::nullopt, recieved.first);
         ASSERT_EQ(testString, recieved.first.value());
-
-        client.close();
     }
 
     // TODO: large payload tests
