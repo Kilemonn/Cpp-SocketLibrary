@@ -144,5 +144,35 @@ namespace kt
         client.close();
     }
 
+    /**
+     * Ensure that sendTo() returns the send address properly and that it can be used in future calls to skip the address resolution step.
+     */
+    TEST_F(UDPSocketTest, UDPSendToAddress)
+    {
+        ASSERT_TRUE(socket.bind(0));
+
+        UDPSocket client;
+        std::string testString = "test";
+        std::pair<bool, std::pair<int, kt::SocketAddress>> sendResult = client.sendTo(LOCALHOST, socket.getListeningPort(), testString);
+        ASSERT_TRUE(sendResult.first);
+
+        ASSERT_TRUE(socket.ready());
+        std::pair<std::optional<std::string>, kt::SocketAddress> recieved = socket.receiveFrom(testString.size());
+        ASSERT_FALSE(socket.ready());
+        ASSERT_NE(std::nullopt, recieved.first);
+        ASSERT_EQ(testString, recieved.first.value());
+
+        testString += testString + testString;
+        // Now send using the address resolved and returned from the first call to sendTo()
+        ASSERT_TRUE(client.sendTo(testString, sendResult.second.second).first);
+        ASSERT_TRUE(socket.ready());
+        recieved = socket.receiveFrom(testString.size());
+        ASSERT_FALSE(socket.ready());
+        ASSERT_NE(std::nullopt, recieved.first);
+        ASSERT_EQ(testString, recieved.first.value());
+
+        client.close();
+    }
+
     // TODO: large payload tests
 }

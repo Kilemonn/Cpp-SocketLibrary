@@ -158,7 +158,7 @@ namespace kt
 		return std::make_pair(result != -1, result);
 	}
 
-	std::pair<bool, int> UDPSocket::sendTo(const std::string& hostname, const unsigned int& port, const std::string& message, const int& flags)
+	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned int& port, const std::string& message, const int& flags)
 	{
 		addrinfo hints{};
 		hints.ai_family = AF_UNSPEC;
@@ -168,10 +168,11 @@ namespace kt
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::optional{ hostname }, port, hints);
 		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
 		{
-			return std::make_pair(false, resolvedAddresses.second);
+			return std::make_pair(false, std::make_pair(resolvedAddresses.second, kt::SocketAddress{}));
 		}
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
-		return this->sendTo(message, firstAddress, flags);
+		std::pair<bool, int> result = this->sendTo(message, firstAddress, flags);
+		return std::make_pair(result.first, std::make_pair(result.second, firstAddress));
 	}
 
 	std::pair<std::optional<std::string>, kt::SocketAddress> UDPSocket::receiveFrom(const unsigned int& receiveLength, const int& flags)
