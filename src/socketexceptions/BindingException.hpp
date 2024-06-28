@@ -7,9 +7,9 @@
 
 namespace kt
 {
-	class BindingException : public SocketException
+	class BindingException : public kt::SocketException
 	{
 		public:
-			BindingException(const std::string& s) : SocketException(s) {}
+			BindingException(const std::string& s) : kt::SocketException(s) {}
 	};
 }

@@ -34,9 +34,9 @@ namespace kt
         ASSERT_EQ(socket.getProtocol(), SocketProtocol::UDP);
         ASSERT_FALSE(socket.connected());
         ASSERT_FALSE(socket.ready());
-        ASSERT_FALSE(socket.isBound());
-        ASSERT_EQ(LOCALHOST, socket.getAddress());
-        ASSERT_EQ(std::nullopt, socket.getLastRecievedAddress());
+        ASSERT_FALSE(socket.isUdpBound());
+        ASSERT_EQ(LOCALHOST, socket.getHostname());
+        ASSERT_EQ(std::nullopt, socket.getLastUDPRecievedAddress());
     }
 
     /*
@@ -44,7 +44,7 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPBind_NotCalled)
     {
-        ASSERT_FALSE(socket.isBound());
+        ASSERT_FALSE(socket.isUdpBound());
 
         kt::Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
 
@@ -58,12 +58,12 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPBindAndBound_MultipleCalls)
     {
-        ASSERT_FALSE(socket.isBound());
+        ASSERT_FALSE(socket.isUdpBound());
         ASSERT_TRUE(socket.bind());
-        ASSERT_TRUE(socket.isBound());
+        ASSERT_TRUE(socket.isUdpBound());
 
         kt::Socket newServer(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-        ASSERT_FALSE(newServer.isBound());
+        ASSERT_FALSE(newServer.isUdpBound());
         EXPECT_THROW(newServer.bind(), BindingException);
     }
 
@@ -72,13 +72,13 @@ namespace kt
      */
     TEST_F(SocketUDPTest, UDPBind_WithoutSpecifiedPort)
     {
-        ASSERT_FALSE(socket.isBound());
+        ASSERT_FALSE(socket.isUdpBound());
 
         unsigned int port = 0;
         kt::Socket newServer(LOCALHOST, port, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-        ASSERT_FALSE(newServer.isBound());
+        ASSERT_FALSE(newServer.isUdpBound());
         newServer.bind();
-        ASSERT_TRUE(newServer.isBound());
+        ASSERT_TRUE(newServer.isUdpBound());
         ASSERT_NE(port, newServer.getPort()); // Make sure we have looked up and resolved the port number upon successful binding
 
         newServer.close();
@@ -177,7 +177,9 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(testString, received);
 
-        ASSERT_EQ(address, socket.getLastRecievedAddress());
+        ASSERT_EQ(address, socket.getLastUDPRecievedAddress());
+        kt::SocketAddress recievedAddress = socket.getLastUDPReceivedAddress().value();
+        ASSERT_EQ(InternetProtocolVersion::IPV4, kt::getInternetProtocolVersion(recievedAddress));
 
         client.close();
     }
@@ -199,7 +201,10 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(testString, received);
 
-        ASSERT_EQ(address, socket.getLastRecievedAddress());
+        ASSERT_EQ(address, socket.getLastUDPRecievedAddress());
+        ASSERT_NE(std::nullopt, socket.getLastUDPReceivedAddress());
+        kt::SocketAddress recievedAddress = socket.getLastUDPReceivedAddress().value();
+        ASSERT_EQ(InternetProtocolVersion::IPV6, kt::getInternetProtocolVersion(recievedAddress));
 
         client.close();
     }
@@ -244,5 +249,87 @@ namespace kt
 
         client.close();
     }
-    
+
+    TEST_F(SocketUDPTest, UDPSendToIPV4ThenToIPV6UsingSetUDPSendAddress)
+    {
+        ASSERT_TRUE(socket.bind());
+        Socket ipv6Socket("::1", 0, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        ASSERT_TRUE(ipv6Socket.bind(kt::InternetProtocolVersion::IPV6));
+
+        Socket client(LOCALHOST, socket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+
+        // Confirm we sent the message to the ipv4 udp socket
+        std::string testString = "testString";
+        ASSERT_TRUE(client.send(testString));
+
+        ASSERT_TRUE(socket.ready());
+        std::string response = socket.receiveAmount(testString.size());
+        ASSERT_FALSE(socket.ready()); // Parts of the message past the delimiter will be lost in UDP
+        ASSERT_EQ(response, testString);
+
+        std::optional<kt::SocketAddress> ipv4Address = client.getUDPSendAddress();
+        ASSERT_NE(std::nullopt, ipv4Address);
+        
+        // Confirm we sent the message to the ipv6 udp socket by resolving it
+        client.setUDPSendAddress("::1", ipv6Socket.getPort());
+        testString += "2";
+        ASSERT_TRUE(client.send(testString));
+
+        ASSERT_TRUE(ipv6Socket.ready());
+        response = ipv6Socket.receiveAmount(testString.size());
+        ASSERT_FALSE(ipv6Socket.ready());
+        ASSERT_EQ(response, testString);
+
+        // Switch back to the ipv4 socket using a different override and confirm we can send to that socket
+        client.setUDPSendAddress(ipv4Address.value());
+        testString += "45";
+        ASSERT_TRUE(client.send(testString));
+
+        ASSERT_TRUE(socket.ready());
+        response = socket.receiveAmount(testString.size());
+        ASSERT_FALSE(socket.ready());
+        ASSERT_EQ(response, testString);
+
+        client.close();
+        ipv6Socket.close();
+    }
+
+    TEST_F(SocketUDPTest, UDPReturnMessageToSender)
+    {
+        ASSERT_TRUE(socket.bind(kt::InternetProtocolVersion::IPV4));
+        Socket ipv6Socket(LOCALHOST, 0, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+        ASSERT_TRUE(ipv6Socket.bind(kt::InternetProtocolVersion::IPV6));
+        ipv6Socket.setUDPSendAddress(LOCALHOST, socket.getPort(), kt::InternetProtocolVersion::IPV4);
+
+        // Send from ipv6 to ipv4 (since ipv6 has solved the ipv4 host in the constructor)
+        std::string payload = "my_payload";
+        ASSERT_TRUE(ipv6Socket.send(payload));
+
+        ASSERT_TRUE(socket.ready());
+        std::string response = socket.receiveAmount(payload.size());
+        ASSERT_FALSE(socket.ready());
+        ASSERT_EQ(response, payload);
+
+        std::optional<kt::SocketAddress> receivedAddressOpt = socket.getLastUDPReceivedAddress();
+        ASSERT_NE(std::nullopt, receivedAddressOpt);
+        kt::SocketAddress receivedAddress = receivedAddressOpt.value();
+        // Because socket is an ipv4 listening socket, the receive address will also be ipv4
+        ASSERT_EQ(kt::InternetProtocolVersion::IPV4, kt::getInternetProtocolVersion(receivedAddress));
+        
+        // If we want to use the received address in the below call we need to inline edit the address to be an ipv6 address
+        // We can do this by adding: "::ffff:" as a prefix to the existing address, but would want to do it directly in the struct
+        // socket.setUDPSendAddress(receivedAddress);
+        socket.setUDPSendAddress("::1", ipv6Socket.getPort(), kt::InternetProtocolVersion::IPV6);
+
+        ASSERT_TRUE(socket.send(response));
+
+        ASSERT_TRUE(ipv6Socket.ready());
+        payload = ipv6Socket.receiveAmount(payload.size());
+        ASSERT_FALSE(ipv6Socket.ready());
+        ASSERT_EQ(response, payload);
+
+        ipv6Socket.close();
+    }
+
+    // TODO: large payload tests
 }

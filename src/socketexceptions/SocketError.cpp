@@ -1,4 +1,6 @@
 #include <string>
+#include <cstring>
+#include <cerrno>
 
 #ifdef _WIN32
 
@@ -12,8 +14,6 @@
 
 #elif __linux__
 
-#include <cstring> // std::strerror
-
 typedef int SOCKET;
 
 #endif
@@ -22,13 +22,13 @@ namespace kt
 {
 	std::string getErrorCode()
 	{
+		std::string toReturn = std::string(std::strerror(errno));
 #ifdef _WIN32
-		return std::to_string(WSAGetLastError());
-
-#elif __linux__
-		return std::string(std::strerror(errno));
+		toReturn += " " + std::to_string(WSAGetLastError());
 
 #endif
+
+		return toReturn;
 	}
 
 	SOCKET getInvalidSocketValue()

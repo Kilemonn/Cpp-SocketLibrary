@@ -9,7 +9,7 @@ project(${PROJECT_NAME} VERSION 1.0)
 set(HEADERS
         src/serversocket/ServerSocket.h
         src/socket/Socket.h
-        src/address/Address.h
+        src/address/SocketAddress.h
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
         src/socketexceptions/TimeoutException.hpp
@@ -24,6 +24,7 @@ set(SOURCE
         src/serversocket/ServerSocket.cpp
         src/socket/Socket.cpp
         src/socketexceptions/SocketError.cpp
+        src/address/SocketAddress.cpp
 )
 
 # Project Configuration - Adding as a lib

@@ -58,7 +58,7 @@ namespace kt
      * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
      * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
      */
-    ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize, const InternetProtocolVersion protocolVersion)
+    kt::ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
     {
         this->socketDescriptor = getInvalidSocketValue();
         this->port = port;
@@ -78,7 +78,7 @@ namespace kt
      * 
      * @param socket - The ServerSocket object to be copied.
      */
-    ServerSocket::ServerSocket(const ServerSocket& socket)
+    kt::ServerSocket::ServerSocket(const kt::ServerSocket& socket)
     {
         this->port = socket.port;
         this->type = socket.type;
@@ -94,7 +94,7 @@ namespace kt
      * 
      * @return the copied socket
      */
-    ServerSocket& ServerSocket::operator=(const ServerSocket& socket)
+    kt::ServerSocket& kt::ServerSocket::operator=(const kt::ServerSocket& socket)
     {
         this->port = socket.port;
         this->type = socket.type;
@@ -105,7 +105,7 @@ namespace kt
         return *this;
     }
 
-    void ServerSocket::constructSocket(const unsigned int& connectionBacklogSize)
+    void kt::ServerSocket::constructSocket(const unsigned int& connectionBacklogSize)
     {
         if (this->type == kt::SocketType::Wifi)
         {
@@ -118,10 +118,10 @@ namespace kt
         }
     }
 
-    void ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
+    void kt::ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
     {
 #ifdef _WIN32
-        throw SocketException("ServerSocket::constructBluetoothSocket(unsigned int) is not supported on Windows.");
+        throw kt::SocketException("ServerSocket::constructBluetoothSocket(unsigned int) is not supported on Windows.");
 
         /*SOCKADDR_BTH bluetoothAddress;
 
@@ -176,7 +176,7 @@ namespace kt
 
     }
 
-    void ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
+    void kt::ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
         const int socketType = SOCK_STREAM;
         const int socketProtocol = IPPROTO_TCP;
@@ -185,7 +185,7 @@ namespace kt
         WSADATA wsaData{};
         if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
         {
-            throw SocketException("WSAStartup Failed: " + std::to_string(res));
+            throw kt::SocketException("WSAStartup Failed: " + std::to_string(res));
         }
 #endif
 
@@ -194,7 +194,7 @@ namespace kt
         this->socketDescriptor = socket(static_cast<int>(this->protocolVersion), socketType, socketProtocol);
         if (isInvalidSocket(this->socketDescriptor))
         {
-            throw SocketException("Error establishing wifi server socket: " + getErrorCode());
+            throw kt::SocketException("Error establishing wifi server socket: " + getErrorCode());
         }
 
 #ifdef __linux__
@@ -206,12 +206,12 @@ namespace kt
 #endif
 
 #ifdef _WIN32
-        if (this->protocolVersion == InternetProtocolVersion::IPV6)
+        if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
         {
             const int disableOption = 0;
             if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
             {
-                throw SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
+                throw kt::SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
             }
         }
 #endif
@@ -219,7 +219,7 @@ namespace kt
         if (bind(this->socketDescriptor, &this->serverAddress.address, socketSize) == -1)
         {
             this->close();
-            throw BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
+            throw kt::BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
         }
 
         if (this->port == 0)
@@ -230,11 +230,11 @@ namespace kt
         if (listen(this->socketDescriptor, connectionBacklogSize) == -1)
         {
             this->close();
-            throw SocketException("Error Listening on port " + std::to_string(this->port) + ": " + getErrorCode());
+            throw kt::SocketException("Error Listening on port " + std::to_string(this->port) + ": " + getErrorCode());
         }
     }
 
-    size_t ServerSocket::initialiseServerAddress()
+    size_t kt::ServerSocket::initialiseServerAddress()
     {
         addrinfo hint{};
         memset(&this->serverAddress, 0, sizeof(this->serverAddress));
@@ -248,24 +248,24 @@ namespace kt
         if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hint, &addresses) != 0)
         {
             freeaddrinfo(addresses);
-            throw SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
+            throw kt::SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
         }
-        this->protocolVersion = static_cast<InternetProtocolVersion>(addresses->ai_family);
+        this->protocolVersion = static_cast<kt::InternetProtocolVersion>(addresses->ai_family);
         std::memcpy(&this->serverAddress, addresses->ai_addr, addresses->ai_addrlen);
         freeaddrinfo(addresses);
         return addresses->ai_addrlen;
     }
 
-    void ServerSocket::initialisePortNumber()
+    void kt::ServerSocket::initialisePortNumber()
     {
         socklen_t socketSize = sizeof(this->serverAddress);
         if (getsockname(this->socketDescriptor, &this->serverAddress.address, &socketSize) != 0)
         {
             this->close();
-            throw BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
+            throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
         }
 
-        if (this->protocolVersion == InternetProtocolVersion::IPV6)
+        if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
         {
             this->port = ntohs(this->serverAddress.ipv6.sin6_port);
         }
@@ -276,9 +276,9 @@ namespace kt
     }
 
 
-    void ServerSocket::setDiscoverable()
+    void kt::ServerSocket::setDiscoverable()
     {
-        throw SocketException("ServerSocket::setDiscoverable() not implemented.");
+        throw kt::SocketException("ServerSocket::setDiscoverable() not implemented.");
 
 #if __linux__
         hci_dev_req req;
@@ -296,7 +296,7 @@ namespace kt
     /**
      * @return the *kt::SocketType* for this *kt::ServerSocket*.
      */
-    kt::SocketType ServerSocket::getType() const
+    kt::SocketType kt::ServerSocket::getType() const
     {
         return this->type;
     }
@@ -305,7 +305,7 @@ namespace kt
      * Used to get the port number that the ServerSocket is listening on.
      * @return An unsigned int of the port number that the ServerSocket is listening on.
      */
-    unsigned int ServerSocket::getPort() const
+    unsigned int kt::ServerSocket::getPort() const
     {
         return this->port;
     }
@@ -313,7 +313,7 @@ namespace kt
     /**
      * @return the *kt::InternetProtocolVersion* for this *kt::ServerSocket*.
      */
-    InternetProtocolVersion ServerSocket::getInternetProtocolVersion() const
+    kt::InternetProtocolVersion kt::ServerSocket::getInternetProtocolVersion() const
     {
         return this->protocolVersion;
     }
@@ -326,23 +326,23 @@ namespace kt
      * 
      * @returns kt::Socket object of the receiver who has just connected to the kt::ServerSocket.
      */
-    Socket ServerSocket::accept(const long& timeout)
+    kt::Socket kt::ServerSocket::accept(const long& timeout)
     {
-        if (this->type == SocketType::Wifi)
+        if (this->type == kt::SocketType::Wifi)
         {
             return this->acceptWifiConnection(timeout);
         }
-        else if (this->type == SocketType::Bluetooth)
+        else if (this->type == kt::SocketType::Bluetooth)
         {
             return this->acceptBluetoothConnection(timeout);
         }
         else
         {
-            throw SocketException("Cannot accept connection with SocketType set as SocketType::None");
+            throw kt::SocketException("Cannot accept connection with SocketType set as SocketType::None");
         }  
     }
 
-    Socket ServerSocket::acceptWifiConnection(const long& timeout)
+    kt::Socket kt::ServerSocket::acceptWifiConnection(const long& timeout)
     {
         if (timeout > 0)
         {
@@ -357,25 +357,25 @@ namespace kt
             }
         }
 
-        SocketAddress acceptedAddress{};
+        kt::SocketAddress acceptedAddress{};
         socklen_t sockLen = sizeof(acceptedAddress);
         SOCKET temp = ::accept(this->socketDescriptor, &acceptedAddress.address, &sockLen);
         if (isInvalidSocket(temp))
         {
-            throw SocketException("Failed to accept connection. Socket is in an invalid state.");
+            throw kt::SocketException("Failed to accept connection. Socket is in an invalid state.");
         }
 
-        unsigned int portNum = this->getInternetProtocolVersion() == InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
-        std::optional<std::string> hostname = kt::resolveToAddress(&acceptedAddress, this->getInternetProtocolVersion());
+        unsigned int portNum = this->getInternetProtocolVersion() == kt::InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
+        std::optional<std::string> hostname = kt::resolveToAddress(acceptedAddress);
 		if (!hostname.has_value())
 		{
-            throw SocketException("Unable to resolve accepted hostname from accepted socket.");
+            throw kt::SocketException("Unable to resolve accepted hostname from accepted socket.");
 		}
 
-        return Socket(temp, this->type, kt::SocketProtocol::TCP, hostname.value(), portNum, this->getInternetProtocolVersion());
+        return kt::Socket(temp, this->type, kt::SocketProtocol::TCP, hostname.value(), portNum, this->getInternetProtocolVersion());
     }
 
-	Socket ServerSocket::acceptBluetoothConnection(const long& timeout)
+    kt::Socket kt::ServerSocket::acceptBluetoothConnection(const long& timeout)
     {
         if (timeout > 0)
         {
@@ -391,7 +391,7 @@ namespace kt
         }
 
 #ifdef __linux__
-        throw SocketException("Not yet implemented.");
+        throw kt::SocketException("Not yet implemented.");
         // Remove bluetooth related code
 
         // sockaddr_rc remoteDevice = { 0 };
