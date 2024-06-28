@@ -62,9 +62,9 @@ namespace kt
 			
 			void close() const;
 			
-			int pollSocket(SOCKET socket, const long& = 1000) const;
-			bool ready(const unsigned long = 1000) const;
-			bool connected(const unsigned long = 1000) const;
+			int pollSocket(SOCKET socket, const long& = 100) const;
+			bool ready(const unsigned long = 100) const;
+			bool connected(const unsigned long = 100) const;
 			bool send(const char*, const int&, const int& = 0) const;
 			bool send(const std::string&, const int& = 0) const;
 
@@ -77,7 +77,7 @@ namespace kt
 			std::string receiveAmount(const unsigned int, const int& = 0) const;
 			int receiveAmount(char*, const unsigned int, const int& = 0) const;
 			std::string receiveToDelimiter(const char&, const int& = 0);
-			std::string receiveAll(const unsigned long = 1000, const int& = 0);
+			std::string receiveAll(const unsigned long = 100, const int& = 0);
 	};
 
 } // End namespace kt 

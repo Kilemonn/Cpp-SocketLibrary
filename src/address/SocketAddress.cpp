@@ -92,6 +92,6 @@ namespace kt
 #endif
 	{
 		const kt::InternetProtocolVersion protocolVersion = getInternetProtocolVersion(address);
-		return protocolVersion == kt::InternetProtocolVersion::IPV6 ? INET6_ADDRSTRLEN : INET_ADDRSTRLEN;
+		return protocolVersion == kt::InternetProtocolVersion::IPV6 ? sizeof(address.ipv6) : sizeof(address.ipv4);
 	}
 }

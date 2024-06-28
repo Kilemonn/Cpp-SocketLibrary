@@ -61,7 +61,7 @@ namespace kt
 
 		bool bind(const unsigned int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		void close();
-		bool ready(const unsigned long = 1000) const;
+		bool ready(const unsigned long = 100) const;
 
 		std::pair<bool, int> sendTo(const std::string&, const kt::SocketAddress&, const int& = 0);
 		std::pair<bool, int> sendTo(const char*, const int&, const kt::SocketAddress&, const int& = 0);

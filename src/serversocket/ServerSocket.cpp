@@ -230,8 +230,6 @@ namespace kt
     void kt::ServerSocket::initialiseServerAddress()
     {
         addrinfo hints{};
-        memset(&this->serverAddress, 0, sizeof(this->serverAddress));
-
         hints.ai_flags = AI_PASSIVE;
         hints.ai_family = static_cast<int>(this->protocolVersion);
         hints.ai_socktype = SOCK_STREAM;

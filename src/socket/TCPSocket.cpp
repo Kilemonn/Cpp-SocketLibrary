@@ -11,7 +11,7 @@ namespace kt
 		this->hostname = hostname;
 		this->port = port;
 
-		memset(&this->serverAddress, '\0', sizeof(this->serverAddress));
+		memset(&this->serverAddress, 0, sizeof(this->serverAddress));
 
 		constructWifiSocket();
 	}
@@ -47,8 +47,6 @@ namespace kt
 
 	void TCPSocket::constructWifiSocket()
 	{
-		memset(&this->serverAddress, 0, sizeof(this->serverAddress));
-
 #ifdef _WIN32
 		WSADATA wsaData{};
 		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
@@ -195,7 +193,7 @@ namespace kt
 		
 		do
 		{
-			int amountReceived = recv(this->socketDescriptor, &buffer[counter], static_cast<int>(amountToReceive - counter), flags);
+			int amountReceived = ::recv(this->socketDescriptor, &buffer[counter], static_cast<int>(amountToReceive - counter), flags);
 			if (amountReceived < 1)
 			{
 				return counter;
