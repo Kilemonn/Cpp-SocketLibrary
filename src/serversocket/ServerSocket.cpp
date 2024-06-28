@@ -4,9 +4,9 @@
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
 #include "../socketexceptions/TimeoutException.hpp"
-#include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../socketexceptions/SocketError.h"
+#include "../address/SocketAddress.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -17,12 +17,6 @@
 #include <string>
 
 #ifdef _WIN32
-
-#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
-#endif
-
-#define _WIN32_WINNT 0x0600
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -58,7 +52,7 @@ namespace kt
      * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
      * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
      */
-    kt::ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
+    kt::ServerSocket::ServerSocket(const kt::SocketType type, const unsigned short& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
     {
         this->socketDescriptor = getInvalidSocketValue();
         this->port = port;
@@ -189,8 +183,7 @@ namespace kt
         }
 #endif
 
-        size_t socketSize = initialiseServerAddress();
-
+        initialiseServerAddress();
         this->socketDescriptor = socket(static_cast<int>(this->protocolVersion), socketType, socketProtocol);
         if (isInvalidSocket(this->socketDescriptor))
         {
@@ -215,7 +208,7 @@ namespace kt
             }
         }
 #endif
-
+        socklen_t socketSize = sizeof(this->serverAddress);
         if (bind(this->socketDescriptor, &this->serverAddress.address, socketSize) == -1)
         {
             this->close();
@@ -234,45 +227,35 @@ namespace kt
         }
     }
 
-    size_t kt::ServerSocket::initialiseServerAddress()
+    void kt::ServerSocket::initialiseServerAddress()
     {
-        addrinfo hint{};
-        memset(&this->serverAddress, 0, sizeof(this->serverAddress));
+        addrinfo hints{};
+        hints.ai_flags = AI_PASSIVE;
+        hints.ai_family = static_cast<int>(this->protocolVersion);
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
 
-        hint.ai_flags = AI_PASSIVE;
-        hint.ai_family = static_cast<int>(this->protocolVersion);
-        hint.ai_socktype = SOCK_STREAM;
-        hint.ai_protocol = IPPROTO_TCP;
+        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(std::nullopt, this->port, hints);
 
-        addrinfo *addresses = nullptr;
-        if (getaddrinfo(nullptr, std::to_string(this->port).c_str(), &hint, &addresses) != 0)
+        if (resolveAddresses.second != 0 || resolveAddresses.first.empty())
         {
-            freeaddrinfo(addresses);
             throw kt::SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
         }
-        this->protocolVersion = static_cast<kt::InternetProtocolVersion>(addresses->ai_family);
-        std::memcpy(&this->serverAddress, addresses->ai_addr, addresses->ai_addrlen);
-        freeaddrinfo(addresses);
-        return addresses->ai_addrlen;
+        kt::SocketAddress address = resolveAddresses.first.at(0);
+        this->protocolVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
+        std::memcpy(&this->serverAddress, &address, sizeof(this->serverAddress));
     }
 
     void kt::ServerSocket::initialisePortNumber()
     {
-        socklen_t socketSize = sizeof(this->serverAddress);
-        if (getsockname(this->socketDescriptor, &this->serverAddress.address, &socketSize) != 0)
-        {
-            this->close();
-            throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
-        }
+        std::pair<std::optional<kt::SocketAddress>, int> address = kt::socketToAddress(this->socketDescriptor);
+		if (address.second != 0 && !address.first.has_value())
+		{
+			this->close();
+			throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
+		}
 
-        if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
-        {
-            this->port = ntohs(this->serverAddress.ipv6.sin6_port);
-        }
-        else
-        {
-            this->port = ntohs(this->serverAddress.ipv4.sin_port);
-        }
+		this->port = kt::getPortNumber(address.first.value());
     }
 
 
@@ -305,7 +288,7 @@ namespace kt
      * Used to get the port number that the ServerSocket is listening on.
      * @return An unsigned int of the port number that the ServerSocket is listening on.
      */
-    unsigned int kt::ServerSocket::getPort() const
+    unsigned short kt::ServerSocket::getPort() const
     {
         return this->port;
     }
@@ -318,31 +301,7 @@ namespace kt
         return this->protocolVersion;
     }
 
-    /**
-     * Used to accept a connection on the specific port. 
-     * Upon accepting a new connection it will return a Socket object used to communicate with the receiver.
-     * 
-     * @param timeout - indicates how long (in microseconds) the socket should be polled for before assuming there is no response. Default is 0 (unlimited).
-     * 
-     * @returns kt::Socket object of the receiver who has just connected to the kt::ServerSocket.
-     */
-    kt::Socket kt::ServerSocket::accept(const long& timeout)
-    {
-        if (this->type == kt::SocketType::Wifi)
-        {
-            return this->acceptWifiConnection(timeout);
-        }
-        else if (this->type == kt::SocketType::Bluetooth)
-        {
-            return this->acceptBluetoothConnection(timeout);
-        }
-        else
-        {
-            throw kt::SocketException("Cannot accept connection with SocketType set as SocketType::None");
-        }  
-    }
-
-    kt::Socket kt::ServerSocket::acceptWifiConnection(const long& timeout)
+    kt::TCPSocket kt::ServerSocket::acceptTCPConnection(const long& timeout) const
     {
         if (timeout > 0)
         {
@@ -366,16 +325,16 @@ namespace kt
         }
 
         unsigned int portNum = this->getInternetProtocolVersion() == kt::InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
-        std::optional<std::string> hostname = kt::resolveToAddress(acceptedAddress);
+        std::optional<std::string> hostname = kt::getAddress(acceptedAddress);
 		if (!hostname.has_value())
 		{
             throw kt::SocketException("Unable to resolve accepted hostname from accepted socket.");
 		}
 
-        return kt::Socket(temp, this->type, kt::SocketProtocol::TCP, hostname.value(), portNum, this->getInternetProtocolVersion());
+        return kt::TCPSocket(temp, hostname.value(), portNum, this->getInternetProtocolVersion(), acceptedAddress);
     }
 
-    kt::Socket kt::ServerSocket::acceptBluetoothConnection(const long& timeout)
+    kt::BluetoothSocket kt::ServerSocket::acceptBluetoothConnection(const long& timeout)
     {
         if (timeout > 0)
         {
@@ -390,8 +349,8 @@ namespace kt
             }
         }
 
+        throw kt::SocketException("acceptBluetoothConnection() - Not yet implemented.");
 #ifdef __linux__
-        throw kt::SocketException("Not yet implemented.");
         // Remove bluetooth related code
 
         // sockaddr_rc remoteDevice = { 0 };
@@ -417,13 +376,7 @@ namespace kt
      */
     void ServerSocket::close()
     {
-#ifdef _WIN32
-        closesocket(this->socketDescriptor);
-
-#elif __linux__
-        ::close(this->socketDescriptor);
-
-#endif
+        kt::close(this->socketDescriptor);
     }
 
 } // End namespace kt

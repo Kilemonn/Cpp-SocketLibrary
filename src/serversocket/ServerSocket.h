@@ -4,9 +4,9 @@
 
 #include "../address/SocketAddress.h"
 
-#include "../socket/Socket.h"
+#include "../socket/BluetoothSocket.h"
+#include "../socket/TCPSocket.h"
 
-#include "../enums/SocketProtocol.h"
 #include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
 
@@ -16,7 +16,9 @@
 	#define WIN32_LEAN_AND_MEAN
 #endif
 
-#define _WIN32_WINNT 0x0600
+#ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0600
+#endif
 
 #include <WinSock2.h>
 #include <ws2bth.h>
@@ -39,7 +41,7 @@ namespace kt
 	class ServerSocket
 	{
 		protected:
-			unsigned int port;
+			unsigned short port;
 			kt::SocketType type = kt::SocketType::None;
 			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {};
@@ -50,22 +52,21 @@ namespace kt
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
 			void initialisePortNumber();
-			size_t initialiseServerAddress();
-
-			kt::Socket acceptWifiConnection(const long& = 0);
-			kt::Socket acceptBluetoothConnection(const long& = 0);
+			void initialiseServerAddress();
 
 		public:
 			ServerSocket() = default;
-			ServerSocket(const kt::SocketType, const unsigned int& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+			ServerSocket(const kt::SocketType, const unsigned short& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			ServerSocket(const kt::ServerSocket&);
 			kt::ServerSocket& operator=(const kt::ServerSocket&);
 
+			kt::TCPSocket acceptTCPConnection(const long& = 0) const;
+			kt::BluetoothSocket acceptBluetoothConnection(const long& = 0);
+
 			kt::SocketType getType() const;
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;
-			unsigned int getPort() const;
+			unsigned short getPort() const;
 
-			kt::Socket accept(const long& = 0);
 			void close();
 	};
 

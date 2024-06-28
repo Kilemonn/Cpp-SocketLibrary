@@ -5,6 +5,8 @@
 
 #include <string>
 #include <optional>
+#include <vector>
+#include <cstring>
 
 #ifdef _WIN32
 
@@ -12,7 +14,9 @@
 	#define WIN32_LEAN_AND_MEAN
 #endif
 
-#define _WIN32_WINNT 0x0600
+#ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0600
+#endif
 
 #include <WinSock2.h>
 #include <ws2bth.h>
@@ -24,6 +28,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <netdb.h>
+
+// Typedef to match the windows typedef since they are different underlying types
+typedef int SOCKET;
 
 #endif
 
@@ -41,7 +50,17 @@ namespace kt
 
     kt::InternetProtocolVersion getInternetProtocolVersion(const kt::SocketAddress&);
 
-    long getPortNumber(const kt::SocketAddress&);
+    unsigned int getPortNumber(const kt::SocketAddress&);
 
-    std::optional<std::string> resolveToAddress(const kt::SocketAddress&);
+    std::optional<std::string> getAddress(const kt::SocketAddress&);
+
+    std::pair<std::optional<kt::SocketAddress>, int> socketToAddress(const SOCKET&);
+
+    std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>&, const unsigned short&, addrinfo&);
+
+#ifdef _WIN32
+	int getAddressLength(const kt::SocketAddress&);
+#else
+	socklen_t getAddressLength(const kt::SocketAddress&);
+#endif
 }

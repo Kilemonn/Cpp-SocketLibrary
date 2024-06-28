@@ -7,16 +7,16 @@
 #include "../../src/socketexceptions/BindingException.hpp"
 #include "../../src/socketexceptions/TimeoutException.hpp"
 
-const int PORT_NUMBER = 87682;
+const unsigned short PORT_NUMBER = 47682;
 
 namespace kt
 {
-    class ServerSocketTest: public ::testing::Test
+    class ServerSocketTCPTest: public ::testing::Test
     {
     protected:
         ServerSocket serverSocket;
     protected:
-        ServerSocketTest() : serverSocket(SocketType::Wifi, PORT_NUMBER) {}
+        ServerSocketTCPTest() : serverSocket(SocketType::Wifi, PORT_NUMBER) {}
         // void SetUp() override { }
         void TearDown() override
         {
@@ -27,7 +27,7 @@ namespace kt
     /*
      * Ensure the defaults are set correctly.
      */
-    TEST_F(ServerSocketTest, TestDefaultConstructor)
+    TEST_F(ServerSocketTCPTest, TestDefaultConstructor)
     {
         ASSERT_EQ(SocketType::Wifi, serverSocket.getType());
         ASSERT_NE(InternetProtocolVersion::Any, serverSocket.getInternetProtocolVersion());
@@ -37,7 +37,7 @@ namespace kt
     /*
      * Ensure that we throw a binding exception if the port is already used.
      */
-    TEST_F(ServerSocketTest, TestConstructors)
+    TEST_F(ServerSocketTCPTest, TestConstructors)
     {
         EXPECT_THROW({
             ServerSocket server2(SocketType::Wifi, serverSocket.getPort());
@@ -47,23 +47,23 @@ namespace kt
     /*
      * Ensure thatt if a copied serversocket is closed, that it closes the copied socket too since they shared the same underlying descriptor.
      */
-    TEST_F(ServerSocketTest, TestCloseCopiedServerSocket)
+    TEST_F(ServerSocketTCPTest, TestCloseCopiedServerSocket)
     {
         ServerSocket copiedServer = serverSocket;
         serverSocket.close();
-        ASSERT_THROW(copiedServer.accept(), SocketException);
+        ASSERT_THROW(copiedServer.acceptTCPConnection(), SocketException);
     }
 
     /*
      * Ensure the copy constructed server socket is able to connect to the client and receive messages.
      */
-    TEST_F(ServerSocketTest, TestCopyConstructor)
+    TEST_F(ServerSocketTCPTest, TestCopyConstructor)
     {
         ServerSocket server2(serverSocket);
 
-        Socket client("127.0.0.1", serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+        TCPSocket client("127.0.0.1", serverSocket.getPort());
 
-        Socket serverClient = server2.accept();
+        TCPSocket serverClient = server2.acceptTCPConnection();
         const std::string testString = "test";
 
         ASSERT_TRUE(client.send(testString));
@@ -78,12 +78,12 @@ namespace kt
     /*
      * Ensure the server socket can be created using IPV6 and can accept a connection.
      */
-    TEST_F(ServerSocketTest, TestServerSocketAsIPV6)
+    TEST_F(ServerSocketTCPTest, TestServerSocketAsIPV6)
     {
         ServerSocket ipv6Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
 
-        Socket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort(), SocketType::Wifi, SocketProtocol::TCP);
-        Socket serverClient = ipv6Server.accept();
+        TCPSocket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort());
+        TCPSocket serverClient = ipv6Server.acceptTCPConnection();
 
         const std::string testString = "test";
         ASSERT_TRUE(client.send(testString));
@@ -98,7 +98,7 @@ namespace kt
     /*
      * Ensure the server socket cannot be connected to by a client using IPV4.
      */
-    TEST_F(ServerSocketTest, TestServerSocketAsIPV4ServerAndIPV4Client)
+    TEST_F(ServerSocketTCPTest, TestServerSocketAsIPV4ServerAndIPV4Client)
     {
         serverSocket.close();
 
@@ -107,12 +107,12 @@ namespace kt
 
         // Attempt to connect to a local server using a IPV6 address (which is not being hosted)
         EXPECT_THROW({
-            Socket client("::1", ipv4Server.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+            TCPSocket client("::1", ipv4Server.getPort());
         }, SocketException);
         
         // Make sure theres no incoming connections
         EXPECT_THROW({
-            ipv4Server.accept(1000);
+            ipv4Server.acceptTCPConnection(1000);
         }, TimeoutException);
 
         ipv4Server.close();
@@ -121,11 +121,11 @@ namespace kt
     /**
      * Ensure that calls to ServerSocket.accept() with a provided timeout waits for atleast the provided timeout before throwing a TimeoutException.
     */
-    TEST_F(ServerSocketTest, TestServerSocketAcceptTimeout)
+    TEST_F(ServerSocketTCPTest, TestServerSocketAcceptTimeout)
     {
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         EXPECT_THROW({
-            Socket serverClient = serverSocket.accept(1 * 1000000);
+            TCPSocket serverClient = serverSocket.acceptTCPConnection(1 * 1000000);
         }, TimeoutException);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

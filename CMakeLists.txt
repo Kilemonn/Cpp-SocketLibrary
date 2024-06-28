@@ -9,13 +9,15 @@ project(${PROJECT_NAME} VERSION 1.0)
 set(HEADERS
         src/serversocket/ServerSocket.h
         src/socket/Socket.h
+        src/socket/TCPSocket.h
+        src/socket/UDPSocket.h
+        src/socket/BluetoothSocket.h
         src/address/SocketAddress.h
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
         src/socketexceptions/TimeoutException.hpp
         src/socketexceptions/SocketError.h
 
-        src/enums/SocketProtocol.h
         src/enums/SocketType.h
         src/enums/InternetProtocolVersion.h
 )
@@ -23,6 +25,9 @@ set(HEADERS
 set(SOURCE
         src/serversocket/ServerSocket.cpp
         src/socket/Socket.cpp
+        src/socket/TCPSocket.cpp
+        src/socket/UDPSocket.cpp
+        src/socket/BluetoothSocket.cpp
         src/socketexceptions/SocketError.cpp
         src/address/SocketAddress.cpp
 )

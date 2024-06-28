@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/socket/Socket.h"
+#include "../../src/socket/TCPSocket.h"
 #include "../../src/serversocket/ServerSocket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
 
@@ -11,14 +11,14 @@ const std::string LOCALHOST = "localhost"; //"127.0.0.1";
 
 namespace kt
 {
-    class SocketTCPTest : public ::testing::Test
+    class TCPSocketTest : public ::testing::Test
     {
     protected:
         ServerSocket serverSocket;
-        Socket socket;
+        TCPSocket socket;
 
     protected:
-        SocketTCPTest() : serverSocket(SocketType::Wifi, 0), socket(LOCALHOST, serverSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP) { }
+        TCPSocketTest() : serverSocket(SocketType::Wifi, 0), socket(LOCALHOST, serverSocket.getPort()) { }
         void TearDown() override
         {
             socket.close();
@@ -29,67 +29,54 @@ namespace kt
     /*
      * Ensure that the default construtor properties are set correct when the socket connects successfully.
      */
-    TEST_F(SocketTCPTest, TCPConstructor)
+    TEST_F(TCPSocketTest, TCPConstructor)
     {
-        ASSERT_FALSE(socket.isUdpBound());
         ASSERT_TRUE(socket.connected());
-        ASSERT_EQ(socket.getType(), SocketType::Wifi);
-        ASSERT_EQ(socket.getProtocol(), SocketProtocol::TCP);
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(LOCALHOST, socket.getHostname());
-        ASSERT_EQ(std::nullopt, socket.getLastUDPRecievedAddress());
-    }
-
-    /*
-     * Ensure that a SocketException is thrown when a Wifi socket with a protocol set to None is created.
-     */
-    TEST_F(SocketTCPTest, TCPConstructor_NoProtocol)
-    {
-        ASSERT_THROW({
-            Socket failedSocket(LOCALHOST, serverSocket.getPort(), SocketType::Wifi);
-        }, SocketException);
+        ASSERT_EQ(serverSocket.getInternetProtocolVersion(), socket.getInternetProtocolVersion());
     }
 
     /*
      * Ensure that a SocketException is thrown when there is no hostname provided.
      */
-    TEST_F(SocketTCPTest, TCPConstructor_NoHostname)
+    TEST_F(TCPSocketTest, TCPConstructor_NoHostname)
     {
         ASSERT_THROW({
-            Socket failedSocket("", serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+            TCPSocket failedSocket("", serverSocket.getPort());
         }, SocketException);
     }
     
     /*
      * Ensure a SocketException is thrown when there is no listening server.
      */
-    TEST_F(SocketTCPTest, TCPConstructor_NoListeningServerSocket)
+    TEST_F(TCPSocketTest, TCPConstructor_NoListeningServerSocket)
     {
         serverSocket.close();
         socket.close();
 
         ASSERT_THROW({
-            Socket failedSocket(LOCALHOST, serverSocket.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+            TCPSocket failedSocket(LOCALHOST, serverSocket.getPort());
         }, SocketException);
     }
 
     /*
      * Ensure a SocketException is thrown if you attempt to connect to a port where no server is listening.
      */
-    TEST_F(SocketTCPTest, TCPConstructor_IncorrectPort)
+    TEST_F(TCPSocketTest, TCPConstructor_IncorrectPort)
     {
         ASSERT_THROW({
-            Socket failedSocket(LOCALHOST, serverSocket.getPort() + 1, kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+            TCPSocket failedSocket(LOCALHOST, serverSocket.getPort() + 1);
         }, SocketException);
     }
     
     /*
      * Ensure that a Socket created from the copy constructor is still able to send and receive from the copied socket.
      */
-    TEST_F(SocketTCPTest, TCPCopyConstructor)
+    TEST_F(TCPSocketTest, TCPCopyConstructor)
     {
-        Socket server = serverSocket.accept();
-        Socket copiedSocket(socket);
+        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket copiedSocket(socket);
 
         const std::string testString = "Test";
         ASSERT_TRUE(copiedSocket.send(testString));
@@ -103,18 +90,18 @@ namespace kt
     /*
      * Ensure that a connected socket and accepted socket are correcly marked as connected.
      */
-    TEST_F(SocketTCPTest, TCPConnected)
+    TEST_F(TCPSocketTest, TCPConnected)
     {
-        Socket server = serverSocket.accept();
+        TCPSocket server = serverSocket.acceptTCPConnection();
         ASSERT_TRUE(socket.connected());
         ASSERT_TRUE(server.connected());
 
         server.close();
     }
 
-    TEST_F(SocketTCPTest, TCPReceiveAmount)
+    TEST_F(TCPSocketTest, TCPReceiveAmount)
     {
-        Socket server = serverSocket.accept();
+        TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
         ASSERT_TRUE(socket.send(testString));
@@ -125,9 +112,9 @@ namespace kt
         server.close();
     }
 
-    TEST_F(SocketTCPTest, TCPReceiveAll)
+    TEST_F(TCPSocketTest, TCPReceiveAll)
     {
-        Socket server = serverSocket.accept();
+        TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
         ASSERT_TRUE(socket.send(testString + testString + testString));
@@ -138,9 +125,9 @@ namespace kt
         server.close();
     }
 
-    TEST_F(SocketTCPTest, TCPReceiveToDelimiter)
+    TEST_F(TCPSocketTest, TCPReceiveToDelimiter)
     {
-        Socket server = serverSocket.accept();
+        TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         char delimiter = '&';
         ASSERT_FALSE(socket.ready());
@@ -153,14 +140,14 @@ namespace kt
         server.close();
     }
 
-    TEST_F(SocketTCPTest, TCPReceiveToDelimiter_InvalidDelimiter)
+    TEST_F(TCPSocketTest, TCPReceiveToDelimiter_InvalidDelimiter)
     {
         ASSERT_THROW(socket.receiveToDelimiter('\0'), SocketException);
     }
 
-    TEST_F(SocketTCPTest, TCPGet)
+    TEST_F(TCPSocketTest, TCPGet)
     {
-        Socket server = serverSocket.accept();
+        TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(socket.ready());
         ASSERT_TRUE(server.send(testString));
@@ -184,23 +171,23 @@ namespace kt
         server.close();
     }
 
-    TEST_F(SocketTCPTest, TCPClose)
+    TEST_F(TCPSocketTest, TCPClose)
     {
-        Socket server = serverSocket.accept();
+        TCPSocket server = serverSocket.acceptTCPConnection();
         ASSERT_TRUE(socket.connected());
         socket.close();
         ASSERT_FALSE(socket.connected());
         server.close();
     }
 
-    TEST_F(SocketTCPTest, IPV6Address)
+    TEST_F(TCPSocketTest, IPV6Address)
     {
         ServerSocket ipv6ServerSocket(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
         
-        Socket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort(), SocketType::Wifi, SocketProtocol::TCP);
+        TCPSocket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort());
 
         // Accept ipv6 connnection
-        Socket ipv6Server = ipv6ServerSocket.accept();
+        TCPSocket ipv6Server = ipv6ServerSocket.acceptTCPConnection();
         ASSERT_TRUE(ipv6Server.connected());
 
         const std::string testString = "Test";

@@ -32,44 +32,65 @@ The following **linux** dependencies are required:
 - TCP Example using IPV6:
 
 ```cpp
-// Create a new Wifi ServerSocket
-kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20, InternetProtocolVersion::IPV6);
+void tcpExample()
+{
+    // Create a new Wifi ServerSocket
+    kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20, kt::InternetProtocolVersion::IPV6);
 
-// Create new TCP socket
-kt::Socket client("::1", server.getPort(), kt::SocketType::Wifi, kt::SocketProtocol::TCP);
+    // Create new TCP socket
+    kt::TCPSocket client("::1", server.getPort());
 
-// Accept connection to server
-kt::Socket serverSocket = server.accept();
+    // Accept the incoming connection at the server
+    kt::TCPSocket serverSocket = server.acceptTCPConnection();
 
-const std::string testString = "Test";
-serverSocket.send(testString);
-const std::string response = client.receiveAmount(testString.size());
-// Compare received and sent string values
-assert(response == testString);
+    // Send string with text before and after the delimiter
+    const std::string testString = "TCP Delimiter Test";
+    const char delimiter = '~';
+    if (!socket.send(testString + delimiter + "other string"))
+    {
+        std::cout << "Failed to send test string" << std::endl;
+        return;
+    }
 
-client.close();
-serverSocket.close();
-server.close();
+    if (serverSocket.ready())
+    {
+        std::string response = serverSocket.receiveToDelimiter(delimiter);
+        // Check that the received string is the same as the string sent by the client
+        ASSERT_EQ(response, testString);
+    }
+
+    // Close all sockets
+    client.close();
+    serverSocket.close();
+    server.close();
+}
 ```
 
 - UDP Example using IPV4 (the default protocol version - so protocol related arguments are omitted):
 
 ```cpp
-kt::Socket serverSocket("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
-// Which ever socket is acting as the "server" needs to bind, only a single process can be bound 
-// to a specific port at a time
-serverSocket.bind(InternetProtocolVersion::IPV4); // This argument can be removed as the default is `InternetProtocolVersion::IPV6`, setting arg here explicitly for clarity.
+void udpExample() 
+{
+    // The socket receiving data must first be bound
+    kt::UDPSocket socket;
+    socket.bind(87893, kt::InternetProtocolVersion::IPV4);
 
-kt::Socket client("127.0.0.1", 43567, kt::SocketType::Wifi, kt::SocketProtocol::UDP);
+    kt::UDPSocket client;
+    const std::string testString = "UDP test string";
+    if (!client.sendTo("localhost", 87893, testString).first)
+    {
+        std::cout << "Failed to send to address." << std::endl;
+        return;
+    }
 
-const std::string testString = "UDP Test";
-const char delimiter = '~';
-client.send(testString + delimiter);
-const std::string response = serverSocket.receiveToDelimiter(delimiter);
-assert(response == testString);
+    if (socket.ready())
+    {
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
+        ASSERT_EQ(testString, recieved.first.value());
+    }
 
-serverSocket.close();
-client.close();
+    socket.close();
+}
 ```
 
 ## Known Issues
@@ -92,4 +113,4 @@ signal(SIGPIPE, SIG_IGN);
 
 ### NOTE: UDP Read Sizes
 
-- Take care when reading UDP messages. If you do not read the entire length of the message the rest of the data will be lost. Try using `receiveAll()`/`recieveToDelimiter()`/`receiveAmount()` instead of `get()`, unless you know the amount of data that you are expecting.
+- Take care when reading UDP messages. If you do not read the entire length of the message the rest of the data will be lost.
