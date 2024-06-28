@@ -103,19 +103,6 @@ namespace kt
 	{
 		timeval timeOutVal{};
 		int res = kt::pollSocket(socket, timeout, &timeOutVal);
-#ifdef __linux__
-		if (res == 0)
-		{
-			if (timeOutVal.tv_usec == 0)
-			{
-				return 0;
-			}
-			else
-			{
-				return 1;
-			}
-		}
-#endif
 
 		return res;
 	}

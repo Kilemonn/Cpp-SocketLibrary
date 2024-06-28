@@ -161,7 +161,7 @@ namespace kt
 		return std::make_pair(result.first, std::make_pair(result.second, firstAddress));
 	}
 
-	std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> UDPSocket::receiveFrom(const unsigned int& receiveLength, const int& flags)
+	std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> UDPSocket::receiveFrom(const int& receiveLength, const int& flags)
 	{
 		std::string data;
 		data.resize(receiveLength);
@@ -187,7 +187,7 @@ namespace kt
 		return std::make_pair(data.empty() ? std::nullopt : std::make_optional(data), result);
 	}
 
-	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const unsigned int& receiveLength, const int& flags) const
+	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const int& receiveLength, const int& flags) const
 	{
 		kt::SocketAddress receiveAddress{};
 		if (!this->bound || receiveLength == 0 || !this->ready())
@@ -196,7 +196,7 @@ namespace kt
 		}
 
 		auto addressLength = kt::getAddressLength(receiveAddress);
-		int flag = recvfrom(this->receiveSocket, buffer, static_cast<int>(receiveLength), flags, &receiveAddress.address, &addressLength);
+		int flag = recvfrom(this->receiveSocket, buffer, receiveLength, flags, &receiveAddress.address, &addressLength);
 		return std::make_pair(flag, receiveAddress);
 	}
 
@@ -222,19 +222,6 @@ namespace kt
 	{
 		timeval timeOutVal{};
 		int res = kt::pollSocket(socket, timeout, &timeOutVal);
-#ifdef __linux__
-		if (res == 0)
-		{
-			if (timeOutVal.tv_usec == 0)
-			{
-				return 0;
-			}
-			else
-			{
-				return 1;
-			}
-		}
-#endif
 
 		return res;
 	}

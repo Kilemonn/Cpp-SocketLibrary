@@ -60,8 +60,10 @@ namespace kt
 		FD_ZERO(&sReady);
 		FD_SET(socketDescriptor, &sReady);
 
-		// Need this->socketDescriptor + 1 here
-		int result = select(socketDescriptor + 1, &sReady, nullptr, nullptr, timeOutVal);
+		// On windows: "Ignored. The nfds (the first arg) parameter is included only for compatibility with Berkeley sockets."
+		// On linux: "ndfs (the first arg) is the highest-numbered file descriptor in any of the three sets, plus 1."
+		// So we will use the linux required value since it is ignored in the windows API.
+		int result = select(static_cast<int>(socketDescriptor + 1), &sReady, nullptr, nullptr, timeOutVal);
 		return result;
 	}
 

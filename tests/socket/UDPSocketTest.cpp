@@ -43,7 +43,7 @@ namespace kt
     {
         ASSERT_FALSE(socket.isUdpBound());
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
-        ASSERT_TRUE(socket.bind(0));
+        ASSERT_TRUE(socket.bind());
         ASSERT_NE(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
         ASSERT_TRUE(socket.isUdpBound());
 
@@ -58,12 +58,10 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPBind_WithoutSpecifiedPort)
     {
-        const unsigned int port = 0;
-
         ASSERT_FALSE(socket.isUdpBound());
-        socket.bind(port);
+        socket.bind(0);
         ASSERT_TRUE(socket.isUdpBound());
-        ASSERT_NE(port, socket.getListeningPort());
+        ASSERT_NE(0, socket.getListeningPort());
     }
 
     /*
@@ -71,7 +69,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPSendTo)
     {
-        ASSERT_TRUE(socket.bind(0));
+        ASSERT_TRUE(socket.bind());
 
         UDPSocket client;
 
@@ -86,7 +84,8 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveFrom)
     {
-        ASSERT_TRUE(socket.bind(0));
+        ASSERT_TRUE(socket.bind());
+        ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
         const std::string testString = "test";
@@ -105,11 +104,11 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveAmount_NotEnoughRead)
     {
-        ASSERT_TRUE(socket.bind(0));
+        ASSERT_TRUE(socket.bind());
+        ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
         const std::string testString = "test";
-        ASSERT_FALSE(socket.ready());
         ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first);
 
         ASSERT_TRUE(socket.ready());
@@ -124,7 +123,8 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveAmount_TooMuchRead)
     {
-        ASSERT_TRUE(socket.bind(0));
+        ASSERT_TRUE(socket.bind());
+        ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
         const std::string testString = "test";
@@ -142,7 +142,8 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPSendToAddress)
     {
-        ASSERT_TRUE(socket.bind(0));
+        ASSERT_TRUE(socket.bind());
+        ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
         std::string testString = "test";
