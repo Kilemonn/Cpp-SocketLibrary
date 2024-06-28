@@ -167,16 +167,6 @@ namespace kt
 		data.resize(receiveLength);
 
 		std::pair<int, kt::SocketAddress> result = this->receiveFrom(&data[0], receiveLength, flags);
-		
-#ifdef _WIN32
-		if (result.first < 1)
-		{
-			// This is for Windows, in some scenarios Windows will return a -1 flag but the buffer is populated properly
-			// The code it is returning is 10040 this is indicating that the provided buffer is too small for the incoming
-			// message, there is probably some settings we can tweak, however I think this is okay to return for now.
-			return std::make_pair(result.first <= 0 ? std::nullopt : std::make_optional(data), result);
-		}
-#endif
 
 		// Need to substring to remove any null terminating bytes
 		if (result.first >= 0 && result.first < receiveLength)
@@ -184,7 +174,7 @@ namespace kt
 			data = data.substr(0, result.first);
 		}
 
-		return std::make_pair(result.first <= 0 ? std::nullopt : std::make_optional(data), result);
+		return std::make_pair(data.size() == 0 ? std::nullopt : std::make_optional(data), result);
 	}
 
 	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const int& receiveLength, const int& flags) const
@@ -195,6 +185,8 @@ namespace kt
 			return std::make_pair(-1, receiveAddress);
 		}
 
+		// Using auto here since the "addressLength" argument for "::recvfrom()" has differing types depending what platform
+		// we are on, so I am letting the definition of kt::getAddressLength() drive this type via auto
 		auto addressLength = kt::getAddressLength(receiveAddress);
 		int flag = ::recvfrom(this->receiveSocket, buffer, receiveLength, flags, &receiveAddress.address, &addressLength);
 		return std::make_pair(flag, receiveAddress);

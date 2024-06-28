@@ -98,6 +98,6 @@ namespace kt
 #endif
 	{
 		const kt::InternetProtocolVersion protocolVersion = getInternetProtocolVersion(address);
-		return protocolVersion == kt::InternetProtocolVersion::IPV6 ? sizeof(address.ipv6) : sizeof(address.ipv4);
+		return protocolVersion == kt::InternetProtocolVersion::IPV4 ? sizeof(address.ipv4) : sizeof(address.ipv6);
 	}
 }
