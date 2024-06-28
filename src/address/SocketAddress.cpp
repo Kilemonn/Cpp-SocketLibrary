@@ -60,10 +60,10 @@ namespace kt
 		kt::SocketAddress address{};
 		socklen_t socketSize = sizeof(address);
 		int result = getsockname(socket, &address.address, &socketSize);
-		return std::make_pair(std::make_optional(address), result);
+		return std::make_pair(result == -1 ? std::nullopt : std::make_optional(address), result);
 	}
 
-	std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>& hostname, const unsigned int& port, addrinfo& hints)
+	std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>& hostname, const unsigned short& port, addrinfo& hints)
 	{
 		std::vector<kt::SocketAddress> addresses;
 		addrinfo* resolvedAddresses = nullptr;

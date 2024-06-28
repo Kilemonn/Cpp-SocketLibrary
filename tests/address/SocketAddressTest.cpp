@@ -2,6 +2,7 @@
 #include <optional>
 #include <vector>
 
+#include "../../src/socketexceptions/SocketError.h"
 #include "../../src/address/SocketAddress.h"
 #include "../../src/enums/InternetProtocolVersion.h"
 
@@ -18,6 +19,7 @@ namespace kt
 
 	/**
 	* Ensure that a SocketAddress with socket family set to IPV4 is resolved to the IPV4 enum.
+	* Ensure the address returned is "127.0.0.1" for this test.
 	*/
 	TEST(SocketAddressTest, SocketAddressGetInternetProtocolVersionAndGetAddress_IPV4)
 	{
@@ -38,6 +40,7 @@ namespace kt
 
 	/**
 	* Ensure that a SocketAddress with socket family set to IPV6 is resolved to the IPV6 enum.
+	* Ensure the address returned is "::1" for this test.
 	*/
 	TEST(SocketAddressTest, SocketAddressGetInternetProtocolVersionAndGetAddress_IPV6)
 	{
@@ -136,12 +139,18 @@ namespace kt
 		ASSERT_EQ(port, kt::getPortNumber(address));
 	}
 
+	/**
+	* Ensure a default address gives the bigger IPV6 address size.
+	*/
 	TEST(SocketAddressTest, SocketAddressGetAddressLength_DefaultAddress)
 	{
 		kt::SocketAddress address{};
 		ASSERT_EQ(sizeof(address.ipv6), kt::getAddressLength(address));
 	}
 
+	/**
+	* Ensure an IPV6 family address returns the IPV6 address size.
+	*/
 	TEST(SocketAddressTest, SocketAddressGetAddressLength_IPV6Family)
 	{
 		kt::SocketAddress address{};
@@ -149,6 +158,9 @@ namespace kt
 		ASSERT_EQ(sizeof(address.ipv6), kt::getAddressLength(address));
 	}
 
+	/**
+	* Ensure an IPV4 family address returns the IPV4 address size.
+	*/
 	TEST(SocketAddressTest, SocketAddressGetAddressLength_IPV4Family)
 	{
 		kt::SocketAddress address{};
@@ -156,10 +168,46 @@ namespace kt
 		ASSERT_EQ(sizeof(address.ipv4), kt::getAddressLength(address));
 	}
 
+	/**
+	* Ensure a nullopt is returned with a default address.
+	*/
 	TEST(SocketAddressTest, SocketAddressGetAddress_DefaultAddress)
 	{
 		kt::SocketAddress address{};
 		std::optional<std::string> result = kt::getAddress(address);
 		ASSERT_EQ(std::nullopt, result);
+	}
+
+	/**
+	* Ensure we get nullopt when we provide an invalid socket.
+	*/
+	TEST(SocketAddressTest, SocketAddressSocketToAddress_InvalidSocket)
+	{
+		SOCKET socket = kt::getInvalidSocketValue();
+		std::pair<std::optional<kt::SocketAddress>, int> result = kt::socketToAddress(socket);
+		ASSERT_EQ(std::nullopt, result.first);
+		ASSERT_EQ(-1, result.second);
+	}
+
+	TEST(SocketAddressTest, SocketAddressResolveToAddresses_InvalidAddress)
+	{
+		std::string hostname = "cpp-socket-library.test.hostname";
+		unsigned short port = 0;
+		addrinfo hints{};
+
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(hostname), port, hints);
+		ASSERT_NE(0, results.second);
+		ASSERT_TRUE(results.first.empty());
+	}
+
+	TEST(SocketAddressTest, SocketAddressResolveToAddresses_ResolveLocalhost)
+	{
+		std::string localhost = "localhost";
+		unsigned short port = 0;
+		addrinfo hints{};
+
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), port, hints);
+		ASSERT_EQ(0, results.second);
+		ASSERT_FALSE(results.first.empty());
 	}
 }

@@ -188,6 +188,10 @@ namespace kt
 		// Using auto here since the "addressLength" argument for "::recvfrom()" has differing types depending what platform
 		// we are on, so I am letting the definition of kt::getAddressLength() drive this type via auto
 		auto addressLength = kt::getAddressLength(receiveAddress);
+
+		// In some scenarios Windows will return a -1 flag value but the buffer is populated properly with the correct length
+		// The code it is returning is 10040 this is indicating that the provided buffer is too small for the incoming
+		// message, there is probably some settings we can tweak, however I think this is okay to return for now.
 		int flag = ::recvfrom(this->receiveSocket, buffer, receiveLength, flags, &receiveAddress.address, &addressLength);
 		return std::make_pair(flag, receiveAddress);
 	}
