@@ -73,11 +73,11 @@ void udpExample()
 {
     // The socket receiving data must first be bound
     kt::UDPSocket socket;
-    socket.bind(87893, kt::InternetProtocolVersion::IPV4);
+    socket.bind(37893, kt::InternetProtocolVersion::IPV4);
 
     kt::UDPSocket client;
     const std::string testString = "UDP test string";
-    if (!client.sendTo("localhost", 87893, testString).first)
+    if (!client.sendTo("localhost", 37893, testString).first)
     {
         std::cout << "Failed to send to address." << std::endl;
         return;
