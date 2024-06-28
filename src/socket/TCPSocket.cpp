@@ -6,7 +6,7 @@
 
 namespace kt
 {
-	TCPSocket::TCPSocket(const std::string& hostname, const unsigned int& port)
+	TCPSocket::TCPSocket(const std::string& hostname, const unsigned short& port)
 	{
 		this->hostname = hostname;
 		this->port = port;
@@ -16,7 +16,7 @@ namespace kt
 		constructWifiSocket();
 	}
 
-	TCPSocket::TCPSocket(const SOCKET& socket, const std::string& hostname, const unsigned int& port, const kt::InternetProtocolVersion protocolVersion, const kt::SocketAddress& acceptedAddress)
+	TCPSocket::TCPSocket(const SOCKET& socket, const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const kt::SocketAddress& acceptedAddress)
 	{
 		this->socketDescriptor = socket;
 		this->hostname = hostname;
@@ -140,7 +140,7 @@ namespace kt
 		return this->hostname;
 	}
 
-	unsigned int TCPSocket::getPort() const
+	unsigned short TCPSocket::getPort() const
 	{
 		return this->port;
 	}

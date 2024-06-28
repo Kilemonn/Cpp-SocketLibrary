@@ -41,7 +41,7 @@ namespace kt
 	class ServerSocket
 	{
 		protected:
-			unsigned int port;
+			unsigned short port;
 			kt::SocketType type = kt::SocketType::None;
 			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {};
@@ -56,7 +56,7 @@ namespace kt
 
 		public:
 			ServerSocket() = default;
-			ServerSocket(const kt::SocketType, const unsigned int& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+			ServerSocket(const kt::SocketType, const unsigned short& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			ServerSocket(const kt::ServerSocket&);
 			kt::ServerSocket& operator=(const kt::ServerSocket&);
 
@@ -65,7 +65,7 @@ namespace kt
 
 			kt::SocketType getType() const;
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;
-			unsigned int getPort() const;
+			unsigned short getPort() const;
 
 			void close();
 	};

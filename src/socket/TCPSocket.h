@@ -46,7 +46,7 @@ namespace kt
 		protected:
 			SOCKET socketDescriptor = getInvalidSocketValue();
 			std::string hostname;
-			unsigned int port;
+			unsigned short port;
 			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {}; // The remote address that we will be connected to
 
@@ -54,8 +54,8 @@ namespace kt
 
 		public:
 			TCPSocket() = default;
-			TCPSocket(const std::string&, const unsigned int&);
-			TCPSocket(const SOCKET&, const std::string&, const unsigned int&, const kt::InternetProtocolVersion, const kt::SocketAddress&);
+			TCPSocket(const std::string&, const unsigned short&);
+			TCPSocket(const SOCKET&, const std::string&, const unsigned short&, const kt::InternetProtocolVersion, const kt::SocketAddress&);
 
 			TCPSocket(const kt::TCPSocket&);
 			kt::TCPSocket& operator=(const kt::TCPSocket&);
@@ -69,7 +69,7 @@ namespace kt
 			bool send(const std::string&, const int& = 0) const;
 
             std::string getHostname() const;
-			unsigned int getPort() const;
+			unsigned short getPort() const;
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;
 			kt::SocketAddress getSocketAddress() const;
 

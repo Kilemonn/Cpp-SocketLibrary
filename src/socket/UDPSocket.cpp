@@ -37,7 +37,7 @@ namespace kt
 	 *
 	 * @throw BindingException - if the socket fails to bind
 	 */
-	bool kt::UDPSocket::bind(const unsigned int& port, const kt::InternetProtocolVersion protocolVersion)
+	bool kt::UDPSocket::bind(const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
 	{
 		if (this->isUdpBound())
 		{
@@ -213,7 +213,7 @@ namespace kt
 		return this->protocolVersion;
 	}
 
-	std::optional<unsigned int> UDPSocket::getListeningPort() const
+	std::optional<unsigned short> UDPSocket::getListeningPort() const
 	{
 		return this->listeningPort;
 	}

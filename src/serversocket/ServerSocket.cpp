@@ -52,7 +52,7 @@ namespace kt
      * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
      * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
      */
-    kt::ServerSocket::ServerSocket(const kt::SocketType type, const unsigned int& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
+    kt::ServerSocket::ServerSocket(const kt::SocketType type, const unsigned short& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
     {
         this->socketDescriptor = getInvalidSocketValue();
         this->port = port;
@@ -288,7 +288,7 @@ namespace kt
      * Used to get the port number that the ServerSocket is listening on.
      * @return An unsigned int of the port number that the ServerSocket is listening on.
      */
-    unsigned int kt::ServerSocket::getPort() const
+    unsigned short kt::ServerSocket::getPort() const
     {
         return this->port;
     }

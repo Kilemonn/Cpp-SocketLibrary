@@ -8,7 +8,13 @@ namespace kt
 {
 	kt::InternetProtocolVersion getInternetProtocolVersion(const kt::SocketAddress& address)
 	{
-		return static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
+		kt::InternetProtocolVersion resolvedVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
+		
+		if (resolvedVersion == kt::InternetProtocolVersion::IPV4 || resolvedVersion == kt::InternetProtocolVersion::IPV6)
+		{
+			return resolvedVersion;
+		}
+		return kt::InternetProtocolVersion::Any;
 	}
 
 	unsigned int getPortNumber(const kt::SocketAddress& address)

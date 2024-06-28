@@ -7,7 +7,7 @@
 #include "../../src/socketexceptions/BindingException.hpp"
 #include "../../src/socketexceptions/TimeoutException.hpp"
 
-const int PORT_NUMBER = 87682;
+const unsigned short PORT_NUMBER = 87682;
 
 namespace kt
 {

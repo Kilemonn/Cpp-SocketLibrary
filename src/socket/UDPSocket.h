@@ -48,7 +48,7 @@ namespace kt
 		bool bound = false;
 		SOCKET receiveSocket = getInvalidSocketValue();
 		kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
-		std::optional<unsigned int> listeningPort = std::nullopt;
+		std::optional<unsigned short> listeningPort = std::nullopt;
 
 		int pollSocket(SOCKET socket, const long& = 1000) const;
 		void initialiseListeningPortNumber();
@@ -59,7 +59,7 @@ namespace kt
 		UDPSocket(const kt::UDPSocket&);
 		kt::UDPSocket& operator=(const kt::UDPSocket&);
 
-		bool bind(const unsigned int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+		bool bind(const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		void close();
 		bool ready(const unsigned long = 100) const;
 
@@ -73,7 +73,7 @@ namespace kt
 
 		bool isUdpBound() const;
 		kt::InternetProtocolVersion getInternetProtocolVersion() const;
-		std::optional<unsigned int> getListeningPort() const;
+		std::optional<unsigned short> getListeningPort() const;
 	};
 
 } // End namespace kt 

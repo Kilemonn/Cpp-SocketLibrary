@@ -23,6 +23,8 @@ set(SOURCE
         socket/TCPSocketTest.cpp
         socket/UDPSocketTest.cpp
         socket/BluetoothSocketTest.cpp
+
+        address/SocketAddressTest.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE})
