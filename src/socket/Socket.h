@@ -15,6 +15,7 @@
 #elif __linux__
 
 #include <sys/socket.h>
+#include <sys/time.h>
 
 // Typedef to match the windows typedef since they are different underlying types
 typedef int SOCKET;
