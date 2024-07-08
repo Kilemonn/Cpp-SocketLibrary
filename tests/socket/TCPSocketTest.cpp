@@ -77,6 +77,13 @@ namespace kt
     {
         TCPSocket server = serverSocket.acceptTCPConnection();
         TCPSocket copiedSocket(socket);
+        
+        ASSERT_EQ(socket.getHostname(), copiedSocket.getHostname());
+        ASSERT_EQ(socket.getPort(), copiedSocket.getPort());
+        ASSERT_EQ(socket.getInternetProtocolVersion(), copiedSocket.getInternetProtocolVersion());
+        kt::SocketAddress initialAddress = socket.getSocketAddress();
+        kt::SocketAddress copiedAddress = copiedSocket.getSocketAddress();
+        ASSERT_EQ(0, std::memcmp(&initialAddress, &copiedAddress, sizeof(initialAddress)));
 
         const std::string testString = "Test";
         ASSERT_TRUE(copiedSocket.send(testString));

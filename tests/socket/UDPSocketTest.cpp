@@ -36,6 +36,20 @@ namespace kt
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
     }
 
+    TEST_F(UDPSocketTest, UDPCopyConstructors)
+    {
+        socket.bind();
+        UDPSocket copiedSocket(socket);
+
+        ASSERT_EQ(socket.isUdpBound(), copiedSocket.isUdpBound());
+        ASSERT_NE(std::nullopt, socket.getListeningPort());
+        ASSERT_NE(std::nullopt, copiedSocket.getListeningPort());
+        ASSERT_EQ(socket.getListeningPort().value(), copiedSocket.getListeningPort().value());
+        ASSERT_EQ(socket.getInternetProtocolVersion(), copiedSocket.getInternetProtocolVersion());
+
+        copiedSocket.close();
+    }
+
     /*
      * Ensure that multiple calls to UDPSocket.bind() fails if another socket is already bound to that port.
      */
