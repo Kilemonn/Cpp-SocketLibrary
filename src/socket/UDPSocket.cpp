@@ -9,6 +9,8 @@ namespace kt
 	{
 		this->bound = socket.bound;
 		this->receiveSocket = socket.receiveSocket;
+		this->listeningPort = socket.listeningPort;
+		this->protocolVersion = socket.protocolVersion;
 
 #ifdef _WIN32
 		WSADATA wsaData{};
@@ -24,6 +26,8 @@ namespace kt
 	{
 		this->bound = socket.bound;
 		this->receiveSocket = socket.receiveSocket;
+		this->listeningPort = socket.listeningPort;
+		this->protocolVersion = socket.protocolVersion;
 
 		return *this;
 	}
