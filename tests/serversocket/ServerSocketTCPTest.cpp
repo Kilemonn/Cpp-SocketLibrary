@@ -71,7 +71,7 @@ namespace kt
         TCPSocket serverClient = server2.acceptTCPConnection();
         const std::string testString = "test";
 
-        ASSERT_TRUE(client.send(testString));
+        ASSERT_TRUE(client.send(testString).first);
         const std::string responseString = serverClient.receiveAmount(testString.size());
         ASSERT_EQ(responseString, testString);
 
@@ -91,7 +91,7 @@ namespace kt
         TCPSocket serverClient = ipv6Server.acceptTCPConnection();
 
         const std::string testString = "test";
-        ASSERT_TRUE(client.send(testString));
+        ASSERT_TRUE(client.send(testString).first);
         const std::string responseString = serverClient.receiveAmount(testString.size());
         ASSERT_EQ(responseString, testString);
 

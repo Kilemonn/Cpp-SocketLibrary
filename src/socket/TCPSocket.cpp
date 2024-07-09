@@ -124,13 +124,13 @@ namespace kt
 		return result != -1;
 	}
 
-	bool TCPSocket::send(const char* message, const int& messageLength, const int& flags) const
+	std::pair<bool, int> TCPSocket::send(const char* message, const int& messageLength, const int& flags) const
 	{
 		int result = ::send(this->socketDescriptor, message, messageLength, flags);
-		return result != -1;
+		return std::make_pair(result != -1, result);
 	}
 
-	bool TCPSocket::send(const std::string& message, const int& flags) const
+	std::pair<bool, int> TCPSocket::send(const std::string& message, const int& flags) const
 	{
 		return this->send(message.c_str(), message.size(), flags);
 	}

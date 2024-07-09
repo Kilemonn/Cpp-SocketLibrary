@@ -89,7 +89,7 @@ namespace kt
         ASSERT_EQ(0, std::memcmp(&initialAddress, &copiedAddress, sizeof(initialAddress)));
 
         const std::string testString = "Test";
-        ASSERT_TRUE(copiedSocket.send(testString));
+        ASSERT_TRUE(copiedSocket.send(testString).first);
         const std::string response = server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
 
@@ -114,7 +114,7 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
-        ASSERT_TRUE(socket.send(testString));
+        ASSERT_TRUE(socket.send(testString).first);
         ASSERT_TRUE(server.ready());
         std::string response = server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
@@ -127,7 +127,7 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
-        ASSERT_TRUE(socket.send(testString + testString + testString));
+        ASSERT_TRUE(socket.send(testString + testString + testString).first);
         ASSERT_TRUE(server.ready());
         std::string response = server.receiveAll();
         ASSERT_EQ(response, testString + testString + testString);
@@ -141,7 +141,7 @@ namespace kt
         const std::string testString = "test";
         char delimiter = '&';
         ASSERT_FALSE(socket.ready());
-        ASSERT_TRUE(server.send(testString + testString + delimiter + testString));
+        ASSERT_TRUE(server.send(testString + testString + delimiter + testString).first);
         ASSERT_TRUE(socket.ready());
         std::string response = socket.receiveToDelimiter(delimiter);
         ASSERT_TRUE(socket.ready());
@@ -160,7 +160,7 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(socket.ready());
-        ASSERT_TRUE(server.send(testString));
+        ASSERT_TRUE(server.send(testString).first);
         ASSERT_TRUE(socket.ready());
         std::optional<char> response = socket.get();
         ASSERT_EQ(*response, 't');
@@ -201,7 +201,7 @@ namespace kt
         ASSERT_TRUE(ipv6Server.connected());
 
         const std::string testString = "Test";
-        ASSERT_TRUE(ipv6Socket.send(testString));
+        ASSERT_TRUE(ipv6Socket.send(testString).first);
         const std::string response = ipv6Server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
 
