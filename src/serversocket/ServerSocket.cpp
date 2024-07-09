@@ -293,6 +293,16 @@ namespace kt
         return this->port;
     }
 
+    SOCKET ServerSocket::getSocket() const
+    {
+        return this->socketDescriptor;
+    }
+
+    kt::SocketAddress ServerSocket::getSocketAddress() const
+    {
+        return this->serverAddress;
+    }
+
     /**
      * @return the *kt::InternetProtocolVersion* for this *kt::ServerSocket*.
      */

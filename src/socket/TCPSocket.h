@@ -68,6 +68,7 @@ namespace kt
 			bool send(const char*, const int&, const int& = 0) const;
 			bool send(const std::string&, const int& = 0) const;
 
+			SOCKET getSocket() const;
             std::string getHostname() const;
 			unsigned short getPort() const;
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;

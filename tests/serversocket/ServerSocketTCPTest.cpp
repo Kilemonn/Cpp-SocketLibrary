@@ -32,6 +32,7 @@ namespace kt
         ASSERT_EQ(SocketType::Wifi, serverSocket.getType());
         ASSERT_NE(InternetProtocolVersion::Any, serverSocket.getInternetProtocolVersion());
         ASSERT_EQ(PORT_NUMBER, serverSocket.getPort());
+        ASSERT_FALSE(kt::isInvalidSocket(serverSocket.getSocket()));
     }
 
     /*
@@ -60,6 +61,10 @@ namespace kt
     TEST_F(ServerSocketTCPTest, TestCopyConstructor)
     {
         ServerSocket server2(serverSocket);
+        ASSERT_EQ(serverSocket.getInternetProtocolVersion(), server2.getInternetProtocolVersion());
+        ASSERT_EQ(serverSocket.getPort(), server2.getPort());
+        ASSERT_EQ(serverSocket.getSocket(), server2.getSocket());
+        ASSERT_EQ(serverSocket.getType(), server2.getType());
 
         TCPSocket client("127.0.0.1", serverSocket.getPort());
 

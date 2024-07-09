@@ -66,6 +66,8 @@ namespace kt
 			kt::SocketType getType() const;
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;
 			unsigned short getPort() const;
+			SOCKET getSocket() const;
+			kt::SocketAddress getSocketAddress() const;
 
 			void close();
 	};

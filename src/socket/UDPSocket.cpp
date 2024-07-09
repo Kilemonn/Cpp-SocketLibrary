@@ -200,8 +200,13 @@ namespace kt
 		return std::make_pair(flag, receiveAddress);
 	}
 
-	bool UDPSocket::isUdpBound() const
-	{
+    SOCKET UDPSocket::getListeningSocket() const
+    {
+        return this->receiveSocket;
+    }
+
+    bool UDPSocket::isUdpBound() const
+    {
 		return this->bound;
 	}
 

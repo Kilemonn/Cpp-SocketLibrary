@@ -135,8 +135,13 @@ namespace kt
 		return this->send(message.c_str(), message.size(), flags);
 	}
 
-	std::string TCPSocket::getHostname() const
-	{
+    SOCKET TCPSocket::getSocket() const
+    {
+        return this->socketDescriptor;
+    }
+
+    std::string TCPSocket::getHostname() const
+    {
 		return this->hostname;
 	}
 

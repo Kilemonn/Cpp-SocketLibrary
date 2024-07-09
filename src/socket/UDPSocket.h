@@ -71,6 +71,7 @@ namespace kt
 		std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> receiveFrom(const int&, const int& = 0);
 		std::pair<int, kt::SocketAddress> receiveFrom(char*, const int&, const int& = 0) const;
 
+		SOCKET getListeningSocket() const;
 		bool isUdpBound() const;
 		kt::InternetProtocolVersion getInternetProtocolVersion() const;
 		std::optional<unsigned short> getListeningPort() const;

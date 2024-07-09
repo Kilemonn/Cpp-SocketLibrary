@@ -6,6 +6,7 @@
 #include "../../src/socket/TCPSocket.h"
 #include "../../src/serversocket/ServerSocket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
+#include "../../src/socketexceptions/SocketError.h"
 
 const std::string LOCALHOST = "localhost"; //"127.0.0.1";
 
@@ -35,6 +36,7 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(LOCALHOST, socket.getHostname());
         ASSERT_EQ(serverSocket.getInternetProtocolVersion(), socket.getInternetProtocolVersion());
+        ASSERT_FALSE(kt::isInvalidSocket(socket.getSocket()));
     }
 
     /*
@@ -78,6 +80,7 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         TCPSocket copiedSocket(socket);
         
+        ASSERT_EQ(socket.getSocket(), copiedSocket.getSocket());
         ASSERT_EQ(socket.getHostname(), copiedSocket.getHostname());
         ASSERT_EQ(socket.getPort(), copiedSocket.getPort());
         ASSERT_EQ(socket.getInternetProtocolVersion(), copiedSocket.getInternetProtocolVersion());

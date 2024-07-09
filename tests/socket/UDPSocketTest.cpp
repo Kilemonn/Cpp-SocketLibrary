@@ -34,6 +34,7 @@ namespace kt
         ASSERT_FALSE(socket.isUdpBound());
         ASSERT_EQ(std::nullopt, socket.getListeningPort());
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
+        ASSERT_TRUE(kt::isInvalidSocket(socket.getListeningSocket()));
     }
 
     TEST_F(UDPSocketTest, UDPCopyConstructors)
@@ -41,6 +42,7 @@ namespace kt
         socket.bind();
         UDPSocket copiedSocket(socket);
 
+        ASSERT_EQ(socket.getListeningSocket(), copiedSocket.getListeningSocket());
         ASSERT_EQ(socket.isUdpBound(), copiedSocket.isUdpBound());
         ASSERT_NE(std::nullopt, socket.getListeningPort());
         ASSERT_NE(std::nullopt, copiedSocket.getListeningPort());
