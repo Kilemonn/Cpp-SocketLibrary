@@ -182,7 +182,33 @@ namespace kt
         ASSERT_EQ(testString, recieved.first.value());
     }
 
-    // TODO: large payload tests
+    /**
+     * This test is focused on prooving that you can re-use an existing address that you received data from and reply as long as you set the recieving port correctly.
+     * 
+     * Write test to re-use the received address + new port to send back to the senders
+     */
+    TEST_F(UDPSocketTest, UDPManipulateAddress)
+    {
+        ASSERT_TRUE(socket.bind());
 
-    // TODO: Write test to re-use the received address + new port to send back to the sender
+        kt::UDPSocket client;
+        ASSERT_TRUE(client.bind());
+
+        std::string message = std::to_string(client.getListeningPort().value());
+        ASSERT_TRUE(client.sendTo("127.0.0.1", socket.getListeningPort().value(), message).first);
+
+        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> result = socket.receiveFrom(50);
+        ASSERT_NE(result.second.first, -1);
+        kt::SocketAddress address = result.second.second;
+
+        message = "UDPManipulateAddress";
+        address.ipv4.sin_port = htons(client.getListeningPort().value());
+
+        ASSERT_TRUE(socket.sendTo(message, address).first);
+
+        result = client.receiveFrom(message.size());
+        ASSERT_EQ(message, result.first.value());
+    }
+
+    // TODO: large payload tests
 }
