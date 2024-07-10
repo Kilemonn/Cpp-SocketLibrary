@@ -114,3 +114,9 @@ signal(SIGPIPE, SIG_IGN);
 ### NOTE: UDP Read Sizes
 
 - Take care when reading UDP messages. If you do not read the entire length of the message the rest of the data will be lost.
+
+## Running the tests Dockerfile
+
+The dockerfile is aimed at testing the socket behaviour across a few different flavours of linux to check it is functioning correctly. Especially since development is being done on WSL and there could be some slight differences.
+
+`docker build -f Environment-Test-Dockerfile .`

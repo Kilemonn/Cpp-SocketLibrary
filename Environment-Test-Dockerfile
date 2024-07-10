@@ -1,0 +1,38 @@
+FROM alpine:3.20.0 AS alpine
+
+WORKDIR /alpine
+
+RUN apk update && apk upgrade && apk add g++ cmake make git bluez-dev glib-dev bluez
+
+COPY ./src ./src
+COPY ./tests ./tests
+COPY ./CMakeLists.txt ./CMakeLists.txt
+
+RUN ["cmake", "-B", "build", "."]
+
+WORKDIR /alpine/build
+RUN ["make", "all"]
+
+WORKDIR /alpine/build/tests
+RUN ["./CppSocketLibraryTests"]
+
+FROM ubuntu:24.10 AS ubuntu
+
+WORKDIR /ubuntu
+
+RUN apt update && apt upgrade -y && apt install g++ make cmake git libbluetooth-dev libglib2.0-dev bluez -y
+
+COPY ./src ./src
+COPY ./tests ./tests
+COPY ./CMakeLists.txt ./CMakeLists.txt
+
+# Do a fake copy to make sure it runs both stages
+COPY --from=alpine /alpine/build/test/CppSocketLibraryTests /ubuntu/CppSocketLibraryTests
+
+RUN ["cmake", "-B", "build", "."]
+
+WORKDIR /ubuntu/build
+RUN ["make", "all"]
+
+WORKDIR /ubuntu/build/tests
+RUN ["./CppSocketLibraryTests"]
