@@ -1,5 +1,6 @@
 #include <string>
 #include <optional>
+#include <climits>
 
 #include <gtest/gtest.h>
 
@@ -210,8 +211,10 @@ namespace kt
         ipv6ServerSocket.close();
     }
     
-    // TODO: large payload tests
-    TEST_F(TCPSocketTest, LargePayloadRecv)
+    /**
+     * Sending a payload larger than the send buffer capacity to determine the behaviour and limit.
+     */
+    TEST_F(TCPSocketTest, LargePayloadSendAndRecv)
     {
         TCPSocket server = serverSocket.acceptTCPConnection();
 
@@ -235,19 +238,25 @@ namespace kt
             return;
         }
 
-        ASSERT_GT(sendBufferSize / 2, receiveBufferSize);
+#ifdef _WIN32
+        // From my testing Windows must do some additional buffering and has no integer limit to how much it sends and receives via TCP.
+        int upperBound = INT_MAX; // sendBufferSize * 1000;
+#elif __linux__
 
         // Sending a string that is 98.5+% the size of the send buffer will cause the send to hang
         // So we will send a string the size of 98.4% the size of the buffer limit
-        std::string message((sendBufferSize * 0.984), 'c');
+        int upperBound = sendBufferSize * 0.984;
+#endif
+
+        std::string message(upperBound, 'c');
+        ASSERT_GT(message.size(), receiveBufferSize);
+
         std::pair<bool, int> sendResult = socket.send(message);
         
         ASSERT_EQ(message.size(), sendResult.second);
-        ASSERT_FALSE(socket.ready());
-    }
+        ASSERT_TRUE(server.ready());
 
-    TEST_F(TCPSocketTest, LargePayloadSend)
-    {
-        
+        std::string recieved = server.receiveAmount(upperBound);
+        ASSERT_EQ(message, recieved);
     }
 }
