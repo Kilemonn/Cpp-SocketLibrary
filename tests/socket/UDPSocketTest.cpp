@@ -105,8 +105,17 @@ namespace kt
         UDPSocket client;
         ASSERT_FALSE(socket.ready());
         const std::string message = "test";
+        
+        // This test is used to document behaviour and differences between the OS' and how they resolve "" hostnames
+#ifdef _WIN32
+        ASSERT_TRUE(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first.first);
+        // Looks like windows resolves an address, but it is not received
+        ASSERT_FALSE(socket.ready());
+#elif __linux__
         ASSERT_FALSE(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first.first);
         ASSERT_FALSE(socket.ready());
+#endif
+        
     }
 
     /*
@@ -262,6 +271,11 @@ namespace kt
         ASSERT_TRUE(socket.ready());
     }
 
+    /**
+     * Send a message larger than the send buffer to determine behaviour.
+     * 
+     * The message doesn't seem to be set and is not picked up by the receiver.
+     */
     TEST_F(UDPSocketTest, LargePayloadSend)
     {
         std::pair<bool, kt::SocketAddress> bindResult = socket.bind(0, kt::InternetProtocolVersion::IPV4);
@@ -291,13 +305,18 @@ namespace kt
         ASSERT_EQ(sendBufferSize, receiveBufferSize);
 
         // Creating a message 2 times bigger than the send size
-        std::string message(sendBufferSize * 2, 'c');
+        std::string message(sendBufferSize / 2, 'c');
         std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         
         ASSERT_EQ(-1, sendResult.first.second);
         ASSERT_FALSE(socket.ready());
     }
 
+    /**
+     * If the send and recieve buffers are the same, we increase the size of the send buffer and we send a message larger than the recieve buffer.
+     * 
+     * If we are able to increase the size of the send buffer, we can see that the message is 
+     */
     TEST_F(UDPSocketTest, LargePayloadRecieve_AndPreSendSocketOperation)
     {
         std::pair<bool, kt::SocketAddress> bindResult = socket.bind(0, kt::InternetProtocolVersion::IPV4);
@@ -350,15 +369,32 @@ namespace kt
             sendBufferSize = updatedBufferSize;
         });
 
-        std::string message(initialSendBufferSize, 'c');
-        std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
+#ifdef _WIN32
+        int upperBound = initialSendBufferSize * 0.31;
+        int lowerBound = initialSendBufferSize * 0.30;
+        
+#elif __linux__
 
+        // On linux I see 2 scenarios, sending a message that is 30% of the buffer size is sent, but the receiver DOES receive it
+        // If we sent a message that is 31% of the buffer size then we fail to send
+        // We are checking if there is a scenario the packet is sent but not received at the remote
+        int upperBound = initialSendBufferSize * 0.31;
+        int lowerBound = initialSendBufferSize * 0.30;
+#endif
+        std::string message(upperBound, 'c');
+        std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         if (sendBufferSize > initialSendBufferSize)
         {
             ASSERT_GT(sendBufferSize, receiveBufferSize);
 
             ASSERT_EQ(-1, sendResult.first.second);
             ASSERT_FALSE(socket.ready());
+
+            message = std::string(lowerBound, 'c');
+            sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
+
+            ASSERT_NE(-1, sendResult.first.second);
+            ASSERT_TRUE(socket.ready());
         }
         else
         {

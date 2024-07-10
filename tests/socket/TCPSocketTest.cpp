@@ -210,4 +210,44 @@ namespace kt
         ipv6ServerSocket.close();
     }
     
+    // TODO: large payload tests
+    TEST_F(TCPSocketTest, LargePayloadRecv)
+    {
+        TCPSocket server = serverSocket.acceptTCPConnection();
+
+        int receiveBufferSize = 0;
+        socklen_t size = sizeof(receiveBufferSize);
+        int result = getsockopt(socket.getSocket(), SOL_SOCKET, SO_RCVBUF, (char*)&receiveBufferSize, &size);
+        if (result == -1)
+        {
+            std::cout << "Unable to get recv buffer size, skipping test." << std::endl;
+            GTEST_SKIP();
+            return;
+        }
+
+        int sendBufferSize = 0;
+        size = sizeof(sendBufferSize);
+        result = getsockopt(socket.getSocket(), SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, &size);
+        if (result == -1)
+        {
+            std::cout << "Unable to get send buffer size, skipping test." << std::endl;
+            GTEST_SKIP();
+            return;
+        }
+
+        ASSERT_GT(sendBufferSize / 2, receiveBufferSize);
+
+        // Sending a string that is 98.5+% the size of the send buffer will cause the send to hang
+        // So we will send a string the size of 98.4% the size of the buffer limit
+        std::string message((sendBufferSize * 0.984), 'c');
+        std::pair<bool, int> sendResult = socket.send(message);
+        
+        ASSERT_EQ(message.size(), sendResult.second);
+        ASSERT_FALSE(socket.ready());
+    }
+
+    TEST_F(TCPSocketTest, LargePayloadSend)
+    {
+        
+    }
 }

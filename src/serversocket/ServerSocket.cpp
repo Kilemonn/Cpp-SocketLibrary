@@ -226,6 +226,7 @@ namespace kt
         if (this->port == 0)
         {
             this->initialisePortNumber();
+            this->serverAddress.ipv4.sin_port = htons(this->port);
         }
 
         if (listen(this->socketDescriptor, connectionBacklogSize) == -1)
