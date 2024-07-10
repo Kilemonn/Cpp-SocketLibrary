@@ -304,18 +304,35 @@ namespace kt
         kt::UDPSocket client;
         ASSERT_EQ(sendBufferSize, receiveBufferSize);
 
+#ifdef _WIN32
+        int upperBound = sendBufferSize * 1;
+        int lowerBound = sendBufferSize * 0.99;
+#elif __linux__
+
         // Creating a message 2 times bigger than the send size
-        std::string message(sendBufferSize / 2, 'c');
+        // 0.30 sends successfuly
+        // 0.31 does not send
+        int upperBound = sendBufferSize * 0.31;
+        int lowerBound = sendBufferSize * 0.30;
+#endif
+
+        std::string message(upperBound, 'c');
         std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         
         ASSERT_EQ(-1, sendResult.first.second);
         ASSERT_FALSE(socket.ready());
+
+        message = std::string(lowerBound, 'c');
+        sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
+
+        ASSERT_NE(-1, sendResult.first.second);
+        ASSERT_TRUE(socket.ready());   
     }
 
     /**
      * If the send and recieve buffers are the same, we increase the size of the send buffer and we send a message larger than the recieve buffer.
      * 
-     * If we are able to increase the size of the send buffer, we can see that the message is 
+     * Even if the send buffer is much greater than the recv buffer we still get the whole message if its successfully sent by the sender.
      */
     TEST_F(UDPSocketTest, LargePayloadRecieve_AndPreSendSocketOperation)
     {
@@ -345,9 +362,9 @@ namespace kt
         kt::UDPSocket sender;
         int initialSendBufferSize = sendBufferSize;
         ASSERT_EQ(sendBufferSize, receiveBufferSize);
-        sender.setPreSendSocketOperation([&sendBufferSize](SOCKET& sendSocket)
+        sender.setPreSendSocketOperation([&sendBufferSize, &initialSendBufferSize](SOCKET& sendSocket)
         {
-            int doubledSendBufferSize = sendBufferSize * 2;
+            int doubledSendBufferSize = initialSendBufferSize * 2;
             socklen_t size = sizeof(doubledSendBufferSize);
             int result = setsockopt(sendSocket, SOL_SOCKET, SO_SNDBUF, (char*)&doubledSendBufferSize, size);
             if (result == -1)
@@ -356,10 +373,10 @@ namespace kt
                 return;
             }
 
-            int updatedBufferSize = sendBufferSize;
+            int updatedBufferSize = initialSendBufferSize;
             result = getsockopt(sendSocket, SOL_SOCKET, SO_SNDBUF, (char*)&updatedBufferSize, &size);
 
-            if (updatedBufferSize <= sendBufferSize)
+            if (initialSendBufferSize == updatedBufferSize)
             {
                 // Buffer size unchanged so we can leave this test
                 std::cout << "Unable to change send buffer size [" << sendBufferSize << "]." << std::endl;
@@ -370,8 +387,8 @@ namespace kt
         });
 
 #ifdef _WIN32
-        int upperBound = initialSendBufferSize * 0.31;
-        int lowerBound = initialSendBufferSize * 0.30;
+        int upperBound = initialSendBufferSize * 1;
+        int lowerBound = initialSendBufferSize * 0.99;
         
 #elif __linux__
 
@@ -386,6 +403,7 @@ namespace kt
         if (sendBufferSize > initialSendBufferSize)
         {
             ASSERT_GT(sendBufferSize, receiveBufferSize);
+            ASSERT_GE(sendBufferSize, receiveBufferSize * 2);
 
             ASSERT_EQ(-1, sendResult.first.second);
             ASSERT_FALSE(socket.ready());
@@ -395,6 +413,10 @@ namespace kt
 
             ASSERT_NE(-1, sendResult.first.second);
             ASSERT_TRUE(socket.ready());
+            
+            std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recvResult = socket.receiveFrom(receiveBufferSize * 2);
+            ASSERT_EQ(recvResult.second.first, message.size());
+            ASSERT_EQ(message, recvResult.first.value());
         }
         else
         {
