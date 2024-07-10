@@ -52,7 +52,7 @@ namespace kt
 			asString = asString.substr(0, delimiterIndex);
 		}
 		// Since we zero out the address, we need to check its not default initialised
-		return !asString.empty() && asString != "0.0.0.0" && asString != "::" ? std::optional<std::string>{asString} : std::nullopt;
+		return !asString.empty() && asString != getEmptyAddress(protocolVersion) ? std::optional<std::string>{asString} : std::nullopt;
 	}
 
 	std::pair<std::optional<kt::SocketAddress>, int> socketToAddress(const SOCKET& socket)
@@ -63,12 +63,12 @@ namespace kt
 		return std::make_pair(result == -1 ? std::nullopt : std::make_optional(address), result);
 	}
 
-	std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>& hostname, const unsigned short& port, addrinfo& hints)
+	std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::string& hostname, const unsigned short& port, addrinfo& hints)
 	{
 		std::vector<kt::SocketAddress> addresses;
 		addrinfo* resolvedAddresses = nullptr;
 
-		int result = getaddrinfo(hostname.has_value() ? hostname.value().c_str() : nullptr, std::to_string(port).c_str(), &hints, &resolvedAddresses);
+		int result = getaddrinfo(hostname.c_str(), std::to_string(port).c_str(), &hints, &resolvedAddresses);
 		if (result != 0 || resolvedAddresses == nullptr)
 		{
 			if (resolvedAddresses != nullptr)
@@ -91,7 +91,7 @@ namespace kt
 		return std::make_pair(addresses, result);
 	}
 
-	addrinfo createUdpHints(kt::InternetProtocolVersion protocolVersion, const int aiFlags)
+	addrinfo createUdpHints(const kt::InternetProtocolVersion protocolVersion, const int aiFlags)
 	{
 		addrinfo hints{};
 		hints.ai_family = static_cast<int>(protocolVersion);
@@ -102,7 +102,7 @@ namespace kt
 		return hints;
 	}
 
-    addrinfo createTcpHints(kt::InternetProtocolVersion protocolVersion, const int aiFlags)
+    addrinfo createTcpHints(const kt::InternetProtocolVersion protocolVersion, const int aiFlags)
 	{
 		addrinfo hints{};
 		hints.ai_family = static_cast<int>(protocolVersion);
@@ -111,6 +111,34 @@ namespace kt
 		hints.ai_flags = aiFlags;
 
 		return hints;
+	}
+
+	std::optional<std::string> getEmptyAddress(const kt::InternetProtocolVersion protocolVersion)
+	{
+		if (protocolVersion == kt::InternetProtocolVersion::IPV4)
+		{
+			return std::make_optional("0.0.0.0");
+		}
+		else if (protocolVersion == kt::InternetProtocolVersion::IPV6)
+		{
+			return std::make_optional("::");
+		}
+
+		return std::nullopt;
+	}
+
+	std::string getLocalAddress(const kt::InternetProtocolVersion protocolVersion)
+	{
+		if (protocolVersion == kt::InternetProtocolVersion::IPV4)
+		{
+			return "127.0.0.1";
+		}
+		else if (protocolVersion == kt::InternetProtocolVersion::IPV6)
+		{
+			return "::1";
+		}
+
+		return "localhost";
 	}
 
 #ifdef _WIN32

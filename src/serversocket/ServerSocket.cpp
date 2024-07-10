@@ -182,7 +182,7 @@ namespace kt
 #endif
 
         addrinfo hints = kt::createTcpHints(this->protocolVersion, AI_PASSIVE);
-        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(std::nullopt, this->port, hints);
+        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(kt::getLocalAddress(protocolVersion), this->port, hints);
 
         if (resolveAddresses.second != 0 || resolveAddresses.first.empty())
         {

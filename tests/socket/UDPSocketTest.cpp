@@ -96,31 +96,17 @@ namespace kt
     }
 
     /**
-     * Ensure that the empty hostname resolves to localhost and the IPV4 hint helps to resolve it.
+     * Ensure that sending with an empty hostname failed to resolve the address and fail.
      */
-    TEST_F(UDPSocketTest, TestEmptyHostname_IPV4)
+    TEST_F(UDPSocketTest, TestEmptyHostname)
     {
-        ASSERT_TRUE(socket.bind(0, kt::InternetProtocolVersion::IPV4).first);
+        ASSERT_TRUE(socket.bind().first);
         
         UDPSocket client;
         ASSERT_FALSE(socket.ready());
         const std::string message = "test";
-        ASSERT_TRUE(client.sendTo("", socket.getListeningPort().value(), message, 0, kt::InternetProtocolVersion::IPV4).first.first);
-        ASSERT_TRUE(socket.ready());
-    }
-
-    /**
-     * Ensure that the empty hostname resolves to localhost and the IPV6 hint helps to resolve it.
-     */
-    TEST_F(UDPSocketTest, TestEmptyHostname_IPV6)
-    {
-        ASSERT_TRUE(socket.bind(0, kt::InternetProtocolVersion::IPV6).first);
-        
-        UDPSocket client;
+        ASSERT_FALSE(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first.first);
         ASSERT_FALSE(socket.ready());
-        const std::string message = "test";
-        ASSERT_TRUE(client.sendTo("", socket.getListeningPort().value(), message, 0, kt::InternetProtocolVersion::IPV6).first.first);
-        ASSERT_TRUE(socket.ready());
     }
 
     /*
@@ -260,6 +246,20 @@ namespace kt
 
         result = client.receiveFrom(message.size());
         ASSERT_EQ(message, result.first.value());
+    }
+
+    // Use the returned .bind() address to use as the socket address that is used to send a message
+    TEST_F(UDPSocketTest, SendToBoundAddress)
+    {
+        // Setting IP version here for windows as its seems to be biasing towards different IP versions
+        std::pair<bool, kt::SocketAddress> bindResult = socket.bind(0, kt::InternetProtocolVersion::IPV4);
+        ASSERT_TRUE(bindResult.first);
+
+        UDPSocket client;
+        ASSERT_FALSE(socket.ready());
+        const std::string message = "SendToBoundAddress";
+        ASSERT_TRUE(client.sendTo(message, bindResult.second).first);
+        ASSERT_TRUE(socket.ready());
     }
 
     TEST_F(UDPSocketTest, LargePayloadSend)

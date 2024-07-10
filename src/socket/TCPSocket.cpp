@@ -56,7 +56,7 @@ namespace kt
 #endif
 
 		addrinfo hints = kt::createTcpHints(this->protocolVersion);
-		std::pair<std::vector<kt::SocketAddress>, int> addresses = kt::resolveToAddresses(this->hostname.empty() ? std::nullopt : std::make_optional(this->hostname), this->port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> addresses = kt::resolveToAddresses(this->hostname, this->port, hints);
 		if (addresses.second != 0)
 		{
 			// std::cout << "Look up response code: [" <<gai_strerror(addresses.second) << "]" << std::endl;

@@ -53,7 +53,7 @@ namespace kt
 			void constructWifiSocket();
 
 		public:
-			TCPSocket() = default;
+			TCPSocket() = delete;
 			TCPSocket(const std::string&, const unsigned short&, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			TCPSocket(const SOCKET&, const std::string&, const unsigned short&, const kt::InternetProtocolVersion, const kt::SocketAddress&);
 

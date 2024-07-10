@@ -28,7 +28,7 @@ namespace kt
 		kt::InternetProtocolVersion version = kt::InternetProtocolVersion::IPV4;
 
 		addrinfo hints = kt::createTcpHints(version);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
 		
 		ASSERT_FALSE(results.first.empty());
 		kt::SocketAddress firstAddress = results.first.at(0);
@@ -48,7 +48,7 @@ namespace kt
 		kt::InternetProtocolVersion version = kt::InternetProtocolVersion::IPV6;
 
 		addrinfo hints = kt::createUdpHints(version);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
 		
 		ASSERT_FALSE(results.first.empty());
 		kt::SocketAddress firstAddress = results.first.at(0);
@@ -193,7 +193,7 @@ namespace kt
 		unsigned short port = 0;
 
 		addrinfo hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(hostname), port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(hostname, port, hints);
 		
 		ASSERT_NE(0, results.second);
 		ASSERT_TRUE(results.first.empty());
@@ -205,17 +205,46 @@ namespace kt
 		unsigned short port = 0;
 
 		addrinfo hints = kt::createUdpHints(kt::InternetProtocolVersion::Any);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
 		
 		ASSERT_EQ(0, results.second);
 		ASSERT_FALSE(results.first.empty());
+	}
+
+	TEST(SocketAddressTest, SocketAddressResolveToAddresses_ResolveEmptyString)
+	{
+		unsigned short port = 0;
+
+		addrinfo hints = kt::createUdpHints(kt::InternetProtocolVersion::Any);
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses("", port, hints);
+
+		// Ideally we shouldn't make the behaviour consistent, but I don't want to override how the OS handles name resolution
+		// Leaving this test here to "document" the OS behaviour
+#ifdef _WIN32
+		ASSERT_EQ(0, results.second);
+		ASSERT_FALSE(results.first.empty());
+#elif __linux__
+		ASSERT_NE(0, results.second);
+		ASSERT_TRUE(results.first.empty());
+#endif
+
+		hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
+		results = kt::resolveToAddresses("", port, hints);
+
+#ifdef _WIN32
+		ASSERT_EQ(0, results.second);
+		ASSERT_FALSE(results.first.empty());
+#elif __linux__
+		ASSERT_NE(0, results.second);
+		ASSERT_TRUE(results.first.empty());
+#endif
 	}
 
 	TEST(SocketAddressTest, TestAssignmentOperator)
 	{
 		std::string localhost = "localhost";
 		addrinfo hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), 0, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, 0, hints);
 		
 		ASSERT_EQ(0, results.second);
 		ASSERT_FALSE(results.first.empty());

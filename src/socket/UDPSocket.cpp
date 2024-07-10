@@ -58,7 +58,7 @@ namespace kt
 #endif
 
 		addrinfo hints = kt::createUdpHints(protocolVersion, AI_PASSIVE);
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::nullopt, port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(kt::getLocalAddress(protocolVersion), port, hints);
 		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
 		{
 			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(port));
@@ -94,6 +94,7 @@ namespace kt
 		if (port == 0)
 		{
 			this->initialiseListeningPortNumber();
+			firstAddress.ipv4.sin_port = htons(this->listeningPort.value());
 		}
 		else
 		{
@@ -149,7 +150,7 @@ namespace kt
 	std::pair<std::pair<bool, int>, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const char* buffer, const int& bufferLength, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
 		addrinfo hints = kt::createUdpHints(protocolVersion);
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname.empty() ? std::nullopt : std::make_optional(hostname), port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname, port, hints);
 		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
 		{
 			return std::make_pair(std::make_pair(false, resolvedAddresses.second), kt::SocketAddress{});

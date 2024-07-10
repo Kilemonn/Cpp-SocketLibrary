@@ -56,11 +56,15 @@ namespace kt
 
     std::pair<std::optional<kt::SocketAddress>, int> socketToAddress(const SOCKET&);
 
-    std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>&, const unsigned short&, addrinfo&);
+    std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::string&, const unsigned short&, addrinfo&);
 
-    addrinfo createUdpHints(kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const int = 0);
+    addrinfo createUdpHints(const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const int = 0);
 
-    addrinfo createTcpHints(kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const int = 0);
+    addrinfo createTcpHints(const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const int = 0);
+
+    std::optional<std::string> getEmptyAddress(const kt::InternetProtocolVersion);
+
+    std::string getLocalAddress(const kt::InternetProtocolVersion);
 
 #ifdef _WIN32
 	int getAddressLength(const kt::SocketAddress&);

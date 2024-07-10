@@ -7,8 +7,6 @@
 #include "../../src/socketexceptions/BindingException.hpp"
 #include "../../src/socketexceptions/TimeoutException.hpp"
 
-const unsigned short PORT_NUMBER = 47682;
-
 namespace kt
 {
     class ServerSocketTCPTest: public ::testing::Test
@@ -16,7 +14,7 @@ namespace kt
     protected:
         ServerSocket serverSocket;
     protected:
-        ServerSocketTCPTest() : serverSocket(SocketType::Wifi, PORT_NUMBER) {}
+        ServerSocketTCPTest() : serverSocket(SocketType::Wifi) {}
         // void SetUp() override { }
         void TearDown() override
         {
@@ -31,7 +29,7 @@ namespace kt
     {
         ASSERT_EQ(SocketType::Wifi, serverSocket.getType());
         ASSERT_NE(InternetProtocolVersion::Any, serverSocket.getInternetProtocolVersion());
-        ASSERT_EQ(PORT_NUMBER, serverSocket.getPort());
+        ASSERT_NE(0, serverSocket.getPort());
         ASSERT_FALSE(kt::isInvalidSocket(serverSocket.getSocket()));
     }
 
@@ -66,7 +64,7 @@ namespace kt
         ASSERT_EQ(serverSocket.getSocket(), server2.getSocket());
         ASSERT_EQ(serverSocket.getType(), server2.getType());
 
-        TCPSocket client("127.0.0.1", serverSocket.getPort());
+        TCPSocket client(kt::getLocalAddress(serverSocket.getInternetProtocolVersion()), serverSocket.getPort());
 
         TCPSocket serverClient = server2.acceptTCPConnection();
         const std::string testString = "test";
