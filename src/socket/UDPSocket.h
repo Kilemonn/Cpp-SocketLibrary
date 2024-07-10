@@ -59,14 +59,14 @@ namespace kt
 		UDPSocket(const kt::UDPSocket&);
 		kt::UDPSocket& operator=(const kt::UDPSocket&);
 
-		bool bind(const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+		std::pair<bool, kt::SocketAddress> bind(const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		void close();
 		bool ready(const unsigned long = 100) const;
 
 		std::pair<bool, int> sendTo(const std::string&, const kt::SocketAddress&, const int& = 0);
 		std::pair<bool, int> sendTo(const char*, const int&, const kt::SocketAddress&, const int& = 0);
-		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const std::string&, const int& = 0);
-		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned int&, const char*, const int&, const int& = 0);
+		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned short&, const std::string&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned short&, const char*, const int&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		
 		std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> receiveFrom(const int&, const int& = 0);
 		std::pair<int, kt::SocketAddress> receiveFrom(char*, const int&, const int& = 0) const;

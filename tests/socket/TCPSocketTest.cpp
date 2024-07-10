@@ -40,13 +40,12 @@ namespace kt
     }
 
     /*
-     * Ensure that a SocketException is thrown when there is no hostname provided.
+     * Ensure that an empty hostname is transformed into a std::nullopt and is resolved to local host.
      */
     TEST_F(TCPSocketTest, TCPConstructor_NoHostname)
     {
-        ASSERT_THROW({
-            TCPSocket failedSocket("", serverSocket.getPort());
-        }, SocketException);
+        TCPSocket emptyHostname("", serverSocket.getPort());
+        ASSERT_TRUE(socket.connected());
     }
     
     /*

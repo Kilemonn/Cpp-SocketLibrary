@@ -6,12 +6,11 @@
 
 namespace kt
 {
-	TCPSocket::TCPSocket(const std::string& hostname, const unsigned short& port)
+	TCPSocket::TCPSocket(const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
 	{
 		this->hostname = hostname;
 		this->port = port;
-
-		memset(&this->serverAddress, 0, sizeof(this->serverAddress));
+		this->protocolVersion = protocolVersion;
 
 		constructWifiSocket();
 	}
@@ -22,7 +21,7 @@ namespace kt
 		this->hostname = hostname;
 		this->port = port;
 		this->protocolVersion = protocolVersion;
-		std::memcpy(&this->serverAddress, &acceptedAddress, sizeof(this->serverAddress));
+		this->serverAddress = acceptedAddress;
 	}
 
 	TCPSocket::TCPSocket(const kt::TCPSocket& socket)
@@ -31,7 +30,7 @@ namespace kt
 		this->hostname = socket.hostname;
 		this->port = socket.port;
 		this->protocolVersion = socket.protocolVersion;
-		std::memcpy(&this->serverAddress, &socket.serverAddress, sizeof(this->serverAddress));
+		this->serverAddress = socket.serverAddress;
 	}
 
 	TCPSocket& TCPSocket::operator=(const kt::TCPSocket& socket)
@@ -40,7 +39,7 @@ namespace kt
 		this->hostname = socket.hostname;
 		this->port = socket.port;
 		this->protocolVersion = socket.protocolVersion;
-		std::memcpy(&this->serverAddress, &socket.serverAddress, sizeof(this->serverAddress));
+		this->serverAddress = socket.serverAddress;
 
 		return *this;
 	}
@@ -56,35 +55,26 @@ namespace kt
 
 #endif
 
-		addrinfo* resolvedAddresses = nullptr;
-		addrinfo hints{};
-		hints.ai_family = static_cast<int>(this->protocolVersion);
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
-		int res = getaddrinfo(this->hostname.c_str(), std::to_string(this->port).c_str(), &hints, &resolvedAddresses);
-		if (res != 0 || this->hostname.empty() || resolvedAddresses == nullptr)
+		addrinfo hints = kt::createTcpHints(this->protocolVersion);
+		std::pair<std::vector<kt::SocketAddress>, int> addresses = kt::resolveToAddresses(this->hostname.empty() ? std::nullopt : std::make_optional(this->hostname), this->port, hints);
+		if (addresses.second != 0)
 		{
-			if (resolvedAddresses != nullptr)
-			{
-				freeaddrinfo(resolvedAddresses);
-			}
-
-			throw kt::SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + ":" + std::to_string(this->port) + "]. Look up response code: [" + std::to_string(res) + "]. " + getErrorCode());
+			// std::cout << "Look up response code: [" <<gai_strerror(addresses.second) << "]" << std::endl;
+			throw kt::SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + ":" + std::to_string(this->port) + "]. Look up response code: [" + std::to_string(addresses.second) + "]. " + getErrorCode());
 		}
 
 		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
 		// we will return, otherwise we will throw is we are unable to connect to any.
-		for (addrinfo* addr = resolvedAddresses; addr != nullptr; addr = addr->ai_next)
+		for (kt::SocketAddress address : addresses.first)
 		{
-			this->socketDescriptor = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+			this->socketDescriptor = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);
 			if (!isInvalidSocket(this->socketDescriptor))
 			{
-				int connectionResult = connect(this->socketDescriptor, addr->ai_addr, addr->ai_addrlen);
+				int connectionResult = connect(this->socketDescriptor, &address.address, sizeof(address));
 				if (connectionResult == 0)
 				{
-					std::memcpy(&this->serverAddress, addr->ai_addr, addr->ai_addrlen);
-					this->protocolVersion = static_cast<kt::InternetProtocolVersion>(addr->ai_family);
-					freeaddrinfo(resolvedAddresses);
+					this->serverAddress = address;
+					this->protocolVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
 					// Return once we successfully connect to one
 					return;
 				}
@@ -93,8 +83,8 @@ namespace kt
 			this->close();
 			this->socketDescriptor = getInvalidSocketValue();
 		}
-		freeaddrinfo(resolvedAddresses);
-		throw kt::SocketException("Error connecting to TCP server: [" + std::to_string(res) + "] " + getErrorCode());
+		
+		throw kt::SocketException("Unable to connect to resolved addresses for provided hostname [" + this->hostname + ":" + std::to_string(this->port) + "] " + getErrorCode());
 	}
 
 	int TCPSocket::pollSocket(SOCKET socket, const long& timeout) const

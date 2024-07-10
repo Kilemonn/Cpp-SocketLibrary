@@ -27,10 +27,9 @@ namespace kt
 		const unsigned int port = 0;
 		kt::InternetProtocolVersion version = kt::InternetProtocolVersion::IPV4;
 
-		addrinfo hints{};
-		hints.ai_family = static_cast<int>(version);
-
+		addrinfo hints = kt::createTcpHints(version);
 		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), port, hints);
+		
 		ASSERT_FALSE(results.first.empty());
 		kt::SocketAddress firstAddress = results.first.at(0);
 		ASSERT_EQ(version, kt::getInternetProtocolVersion(firstAddress));
@@ -48,10 +47,9 @@ namespace kt
 		const unsigned int port = 0;
 		kt::InternetProtocolVersion version = kt::InternetProtocolVersion::IPV6;
 
-		addrinfo hints{};
-		hints.ai_family = static_cast<int>(version);
-
+		addrinfo hints = kt::createUdpHints(version);
 		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), port, hints);
+		
 		ASSERT_FALSE(results.first.empty());
 		kt::SocketAddress firstAddress = results.first.at(0);
 		ASSERT_EQ(version, kt::getInternetProtocolVersion(firstAddress));
@@ -193,9 +191,10 @@ namespace kt
 	{
 		std::string hostname = "cpp-socket-library.test.hostname";
 		unsigned short port = 0;
-		addrinfo hints{};
 
+		addrinfo hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
 		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(hostname), port, hints);
+		
 		ASSERT_NE(0, results.second);
 		ASSERT_TRUE(results.first.empty());
 	}
@@ -204,10 +203,26 @@ namespace kt
 	{
 		std::string localhost = "localhost";
 		unsigned short port = 0;
-		addrinfo hints{};
 
+		addrinfo hints = kt::createUdpHints(kt::InternetProtocolVersion::Any);
 		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), port, hints);
+		
 		ASSERT_EQ(0, results.second);
 		ASSERT_FALSE(results.first.empty());
+	}
+
+	TEST(SocketAddressTest, TestAssignmentOperator)
+	{
+		std::string localhost = "localhost";
+		addrinfo hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
+		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(std::make_optional(localhost), 0, hints);
+		
+		ASSERT_EQ(0, results.second);
+		ASSERT_FALSE(results.first.empty());
+
+		kt::SocketAddress address = results.first[0];
+		kt::SocketAddress copiedAddress = address;
+		ASSERT_NE(&address, &copiedAddress);
+		ASSERT_EQ(0, std::memcmp(&address, &copiedAddress, sizeof(address)));
 	}
 }

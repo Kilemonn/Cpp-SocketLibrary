@@ -41,7 +41,7 @@ namespace kt
 	 *
 	 * @throw BindingException - if the socket fails to bind
 	 */
-	bool kt::UDPSocket::bind(const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<bool, kt::SocketAddress> kt::UDPSocket::bind(const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
 	{
 		if (this->isUdpBound())
 		{
@@ -57,15 +57,7 @@ namespace kt
 
 #endif
 
-		const int socketType = SOCK_DGRAM;
-		const int socketProtocol = IPPROTO_UDP;
-
-		addrinfo hints{};
-		hints.ai_flags = AI_PASSIVE;
-		hints.ai_family = static_cast<int>(protocolVersion);
-		hints.ai_socktype = socketType;
-		hints.ai_protocol = socketProtocol;
-
+		addrinfo hints = kt::createUdpHints(protocolVersion, AI_PASSIVE);
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::nullopt, port, hints);
 		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
 		{
@@ -74,7 +66,7 @@ namespace kt
 
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
 		this->protocolVersion = static_cast<kt::InternetProtocolVersion>(firstAddress.address.sa_family);
-		this->receiveSocket = socket(firstAddress.address.sa_family, socketType, socketProtocol);
+		this->receiveSocket = socket(firstAddress.address.sa_family, hints.ai_socktype, hints.ai_protocol);
 		if (kt::isInvalidSocket(this->receiveSocket))
 		{
 			throw kt::SocketException("Unable to construct socket from local host details. " + getErrorCode());
@@ -108,7 +100,7 @@ namespace kt
 			this->listeningPort = std::make_optional(port);
 		}
 
-		return this->bound;
+		return std::make_pair(this->bound, firstAddress);
 	}
 
 	void UDPSocket::close()
@@ -143,19 +135,15 @@ namespace kt
 		return std::make_pair(result != -1, result);
 	}
 
-	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned int& port, const std::string& message, const int& flags)
+	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
-		return this->sendTo(hostname, port, &message[0], message.size(), flags);
+		return this->sendTo(hostname, port, &message[0], message.size(), flags, protocolVersion);
 	}
 
-	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned int& port, const char* buffer, const int& bufferLength, const int& flags)
+	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const char* buffer, const int& bufferLength, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
-		addrinfo hints{};
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_protocol = IPPROTO_UDP;
-
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(std::make_optional(hostname), port, hints);
+		addrinfo hints = kt::createUdpHints(protocolVersion);
+		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname.empty() ? std::nullopt : std::make_optional(hostname), port, hints);
 		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
 		{
 			return std::make_pair(false, std::make_pair(resolvedAddresses.second, kt::SocketAddress{}));

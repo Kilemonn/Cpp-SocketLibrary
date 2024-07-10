@@ -54,7 +54,7 @@ namespace kt
 
 		public:
 			TCPSocket() = default;
-			TCPSocket(const std::string&, const unsigned short&);
+			TCPSocket(const std::string&, const unsigned short&, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			TCPSocket(const SOCKET&, const std::string&, const unsigned short&, const kt::InternetProtocolVersion, const kt::SocketAddress&);
 
 			TCPSocket(const kt::TCPSocket&);

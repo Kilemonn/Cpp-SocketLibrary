@@ -39,7 +39,7 @@ namespace kt
 
     TEST_F(UDPSocketTest, UDPCopyConstructors)
     {
-        socket.bind();
+        ASSERT_TRUE(socket.bind().first);
         UDPSocket copiedSocket(socket);
 
         ASSERT_EQ(socket.getListeningSocket(), copiedSocket.getListeningSocket());
@@ -59,7 +59,7 @@ namespace kt
     {
         ASSERT_FALSE(socket.isUdpBound());
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
-        ASSERT_TRUE(socket.bind());
+        ASSERT_TRUE(socket.bind().first);
         ASSERT_NE(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
         ASSERT_TRUE(socket.isUdpBound());
 
@@ -75,7 +75,7 @@ namespace kt
     TEST_F(UDPSocketTest, UDPBind_WithoutSpecifiedPort)
     {
         ASSERT_FALSE(socket.isUdpBound());
-        socket.bind(0);
+        ASSERT_TRUE(socket.bind(0).first);
         ASSERT_TRUE(socket.isUdpBound());
         ASSERT_NE(0, socket.getListeningPort());
     }
@@ -85,7 +85,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPSendTo)
     {
-        ASSERT_TRUE(socket.bind());
+        ASSERT_TRUE(socket.bind().first);
 
         UDPSocket client;
 
@@ -96,11 +96,39 @@ namespace kt
     }
 
     /*
+     * 
+     */
+    TEST_F(UDPSocketTest, TestEmptyHostname_IPV4)
+    {
+        ASSERT_TRUE(socket.bind(0, kt::InternetProtocolVersion::IPV4).first);
+        
+        UDPSocket client;
+        ASSERT_FALSE(socket.ready());
+        const std::string message = "test";
+        ASSERT_TRUE(client.sendTo("", socket.getListeningPort().value(), message, 0, kt::InternetProtocolVersion::IPV4).first);
+        ASSERT_TRUE(socket.ready());
+    }
+
+    /*
+     * 
+     */
+    TEST_F(UDPSocketTest, TestEmptyHostname_IPV6)
+    {
+        ASSERT_TRUE(socket.bind(0, kt::InternetProtocolVersion::IPV6).first);
+        
+        UDPSocket client;
+        ASSERT_FALSE(socket.ready());
+        const std::string message = "test";
+        ASSERT_TRUE(client.sendTo("", socket.getListeningPort().value(), message, 0, kt::InternetProtocolVersion::IPV6).first);
+        ASSERT_TRUE(socket.ready());
+    }
+
+    /*
      * Call UDPSocket.receiveFrom() to make sure the correct amount of data is read.
      */
     TEST_F(UDPSocketTest, UDPReceiveFrom)
     {
-        ASSERT_TRUE(socket.bind());
+        ASSERT_TRUE(socket.bind().first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
@@ -120,7 +148,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveAmount_NotEnoughRead)
     {
-        ASSERT_TRUE(socket.bind());
+        ASSERT_TRUE(socket.bind().first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
@@ -139,7 +167,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveAmount_TooMuchRead)
     {
-        ASSERT_TRUE(socket.bind());
+        ASSERT_TRUE(socket.bind().first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
@@ -158,7 +186,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPSendToAddress)
     {
-        ASSERT_TRUE(socket.bind());
+        ASSERT_TRUE(socket.bind().first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
@@ -187,12 +215,12 @@ namespace kt
      * 
      * Write test to re-use the received address + new port to send back to the senders
      */
-    TEST_F(UDPSocketTest, UDPManipulateAddress)
+    TEST_F(UDPSocketTest, UDPManipulateAddress_IPV4)
     {
-        ASSERT_TRUE(socket.bind());
+        ASSERT_TRUE(socket.bind(0, kt::InternetProtocolVersion::IPV4).first);
 
         kt::UDPSocket client;
-        ASSERT_TRUE(client.bind());
+        ASSERT_TRUE(client.bind(0, kt::InternetProtocolVersion::IPV4).first);
 
         std::string message = std::to_string(client.getListeningPort().value());
         ASSERT_TRUE(client.sendTo("127.0.0.1", socket.getListeningPort().value(), message).first);
@@ -208,6 +236,11 @@ namespace kt
 
         result = client.receiveFrom(message.size());
         ASSERT_EQ(message, result.first.value());
+    }
+
+    TEST_F(UDPSocketTest, UDPManipulateAddress_IPV6)
+    {
+
     }
 
     // TODO: large payload tests

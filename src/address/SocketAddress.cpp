@@ -91,6 +91,28 @@ namespace kt
 		return std::make_pair(addresses, result);
 	}
 
+	addrinfo createUdpHints(kt::InternetProtocolVersion protocolVersion, const int aiFlags)
+	{
+		addrinfo hints{};
+		hints.ai_family = static_cast<int>(protocolVersion);
+        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_protocol = IPPROTO_UDP;
+		hints.ai_flags = aiFlags;
+
+		return hints;
+	}
+
+    addrinfo createTcpHints(kt::InternetProtocolVersion protocolVersion, const int aiFlags)
+	{
+		addrinfo hints{};
+		hints.ai_family = static_cast<int>(protocolVersion);
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = IPPROTO_TCP;
+		hints.ai_flags = aiFlags;
+
+		return hints;
+	}
+
 #ifdef _WIN32
 	int getAddressLength(const kt::SocketAddress& address)
 #else

@@ -58,6 +58,10 @@ namespace kt
 
     std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::optional<std::string>&, const unsigned short&, addrinfo&);
 
+    addrinfo createUdpHints(kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const int = 0);
+
+    addrinfo createTcpHints(kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const int = 0);
+
 #ifdef _WIN32
 	int getAddressLength(const kt::SocketAddress&);
 #else

@@ -41,7 +41,7 @@ namespace kt
 	class ServerSocket
 	{
 		protected:
-			unsigned short port;
+			unsigned short port = 0;
 			kt::SocketType type = kt::SocketType::None;
 			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {};
@@ -52,7 +52,6 @@ namespace kt
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);
 			void initialisePortNumber();
-			void initialiseServerAddress();
 
 		public:
 			ServerSocket() = default;

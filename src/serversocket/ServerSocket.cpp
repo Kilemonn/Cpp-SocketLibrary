@@ -172,8 +172,6 @@ namespace kt
 
     void kt::ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
     {
-        const int socketType = SOCK_STREAM;
-        const int socketProtocol = IPPROTO_TCP;
 
 #ifdef _WIN32
         WSADATA wsaData{};
@@ -183,8 +181,18 @@ namespace kt
         }
 #endif
 
-        initialiseServerAddress();
-        this->socketDescriptor = socket(static_cast<int>(this->protocolVersion), socketType, socketProtocol);
+        addrinfo hints = kt::createTcpHints(this->protocolVersion, AI_PASSIVE);
+        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(std::nullopt, this->port, hints);
+
+        if (resolveAddresses.second != 0 || resolveAddresses.first.empty())
+        {
+            throw kt::SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
+        }
+        kt::SocketAddress address = resolveAddresses.first.at(0);
+        this->protocolVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
+        this->serverAddress = address;
+
+        this->socketDescriptor = socket(static_cast<int>(this->protocolVersion), hints.ai_socktype, hints.ai_protocol);
         if (isInvalidSocket(this->socketDescriptor))
         {
             throw kt::SocketException("Error establishing wifi server socket: " + getErrorCode());
@@ -225,25 +233,6 @@ namespace kt
             this->close();
             throw kt::SocketException("Error Listening on port " + std::to_string(this->port) + ": " + getErrorCode());
         }
-    }
-
-    void kt::ServerSocket::initialiseServerAddress()
-    {
-        addrinfo hints{};
-        hints.ai_flags = AI_PASSIVE;
-        hints.ai_family = static_cast<int>(this->protocolVersion);
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = IPPROTO_TCP;
-
-        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(std::nullopt, this->port, hints);
-
-        if (resolveAddresses.second != 0 || resolveAddresses.first.empty())
-        {
-            throw kt::SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
-        }
-        kt::SocketAddress address = resolveAddresses.first.at(0);
-        this->protocolVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
-        std::memcpy(&this->serverAddress, &address, sizeof(this->serverAddress));
     }
 
     void kt::ServerSocket::initialisePortNumber()
