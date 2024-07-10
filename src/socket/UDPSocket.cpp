@@ -130,27 +130,33 @@ namespace kt
 		{
 			return std::make_pair(false, -2);
 		}
+
+		if (preSendSocketOperation.has_value())
+		{
+			preSendSocketOperation.value()(tempSocket);
+		}
+
 		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
 		this->close(tempSocket);
 		return std::make_pair(result != -1, result);
 	}
 
-	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<std::pair<bool, int>, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
 		return this->sendTo(hostname, port, &message[0], message.size(), flags, protocolVersion);
 	}
 
-	std::pair<bool, std::pair<int, kt::SocketAddress>> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const char* buffer, const int& bufferLength, const int& flags, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<std::pair<bool, int>, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const char* buffer, const int& bufferLength, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
 		addrinfo hints = kt::createUdpHints(protocolVersion);
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname.empty() ? std::nullopt : std::make_optional(hostname), port, hints);
 		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
 		{
-			return std::make_pair(false, std::make_pair(resolvedAddresses.second, kt::SocketAddress{}));
+			return std::make_pair(std::make_pair(false, resolvedAddresses.second), kt::SocketAddress{});
 		}
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
 		std::pair<bool, int> result = this->sendTo(buffer, bufferLength, firstAddress, flags);
-		return std::make_pair(result.first, std::make_pair(result.second, firstAddress));
+		return std::make_pair(result, firstAddress);
 	}
 
 	std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> UDPSocket::receiveFrom(const int& receiveLength, const int& flags)
@@ -211,7 +217,12 @@ namespace kt
 		return this->listeningPort;
 	}
 
-	int UDPSocket::pollSocket(SOCKET socket, const long& timeout) const
+    void UDPSocket::setPreSendSocketOperation(std::function<void(SOCKET&)> newOperation)
+    {
+		this->preSendSocketOperation = std::make_optional(newOperation);
+    }
+
+    int UDPSocket::pollSocket(SOCKET socket, const long& timeout) const
 	{
 		timeval timeOutVal{};
 		int res = kt::pollSocket(socket, timeout, &timeOutVal);

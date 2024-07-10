@@ -46,6 +46,7 @@ namespace kt
     {
         TCPSocket emptyHostname("", serverSocket.getPort());
         ASSERT_TRUE(socket.connected());
+        emptyHostname.close();
     }
     
     /*

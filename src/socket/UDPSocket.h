@@ -4,6 +4,7 @@
 #include <vector>
 #include <utility>
 #include <optional>
+#include <functional>
 
 #include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
@@ -49,6 +50,7 @@ namespace kt
 		SOCKET receiveSocket = getInvalidSocketValue();
 		kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 		std::optional<unsigned short> listeningPort = std::nullopt;
+		std::optional<std::function<void(SOCKET&)>> preSendSocketOperation = std::nullopt;
 
 		int pollSocket(SOCKET socket, const long& = 1000) const;
 		void initialiseListeningPortNumber();
@@ -65,8 +67,8 @@ namespace kt
 
 		std::pair<bool, int> sendTo(const std::string&, const kt::SocketAddress&, const int& = 0);
 		std::pair<bool, int> sendTo(const char*, const int&, const kt::SocketAddress&, const int& = 0);
-		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned short&, const std::string&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
-		std::pair<bool, std::pair<int, kt::SocketAddress>> sendTo(const std::string&, const unsigned short&, const char*, const int&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+		std::pair<std::pair<bool, int>, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const std::string&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+		std::pair<std::pair<bool, int>, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const char*, const int&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		
 		std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> receiveFrom(const int&, const int& = 0);
 		std::pair<int, kt::SocketAddress> receiveFrom(char*, const int&, const int& = 0) const;
@@ -75,6 +77,8 @@ namespace kt
 		bool isUdpBound() const;
 		kt::InternetProtocolVersion getInternetProtocolVersion() const;
 		std::optional<unsigned short> getListeningPort() const;
+
+		void setPreSendSocketOperation(std::function<void(SOCKET&)>);
 	};
 
 } // End namespace kt 
