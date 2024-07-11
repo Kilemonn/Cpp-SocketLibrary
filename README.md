@@ -46,7 +46,7 @@ void tcpExample()
     // Send string with text before and after the delimiter
     const std::string testString = "TCP Delimiter Test";
     const char delimiter = '~';
-    if (!socket.send(testString + delimiter + "other string").first)
+    if (!client.send(testString + delimiter + "other string").first)
     {
         std::cout << "Failed to send test string" << std::endl;
         return;
@@ -77,7 +77,7 @@ void udpExample()
 
     kt::UDPSocket client;
     const std::string testString = "UDP test string";
-    if (!client.sendTo("localhost", 37893, testString).first)
+    if (!client.sendTo("localhost", 37893, testString).first.first)
     {
         std::cout << "Failed to send to address." << std::endl;
         return;
