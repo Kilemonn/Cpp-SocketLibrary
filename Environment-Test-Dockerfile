@@ -26,9 +26,6 @@ COPY ./src ./src
 COPY ./tests ./tests
 COPY ./CMakeLists.txt ./CMakeLists.txt
 
-# Do a fake copy to make sure it runs both stages
-COPY --from=alpine /alpine/build/test/CppSocketLibraryTests /ubuntu/CppSocketLibraryTests
-
 RUN ["cmake", "-B", "build", "."]
 
 WORKDIR /ubuntu/build
@@ -36,3 +33,6 @@ RUN ["make", "all"]
 
 WORKDIR /ubuntu/build/tests
 RUN ["./CppSocketLibraryTests"]
+
+# Do a fake copy to make sure it runs both stages
+COPY --from=alpine /alpine/build/tests/CppSocketLibraryTests /ubuntu/CppSocketLibraryTests

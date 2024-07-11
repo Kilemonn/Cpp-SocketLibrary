@@ -225,9 +225,13 @@ namespace kt
 
     int UDPSocket::pollSocket(SOCKET socket, const long& timeout) const
 	{
+		if (kt::isInvalidSocket(socket))
+		{
+			return -1;
+		}
+
 		timeval timeOutVal{};
 		int res = kt::pollSocket(socket, timeout, &timeOutVal);
-
 		return res;
 	}
 
