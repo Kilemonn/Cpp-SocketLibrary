@@ -24,7 +24,33 @@ namespace kt
 		this->serverAddress = acceptedAddress;
 	}
 
-	TCPSocket::TCPSocket(const kt::TCPSocket& socket)
+    TCPSocket::TCPSocket(const kt::SocketAddress address)
+    {
+		std::optional<std::string> resolvedHostname = kt::getAddress(address);
+		this->hostname = resolvedHostname.value_or("");
+		this->port = kt::getPortNumber(address);
+		this->protocolVersion = kt::getInternetProtocolVersion(address);
+
+		addrinfo hints = kt::createTcpHints();
+		this->socketDescriptor = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);
+		if (isInvalidSocket(this->socketDescriptor))
+		{
+			throw kt::SocketException("Unable to construct socket to provided addresses with hostname [" + this->hostname + ":" + std::to_string(this->port) + "] " + getErrorCode());
+		}
+
+		int connectionResult = connect(this->socketDescriptor, &address.address, sizeof(address));
+		if (connectionResult == 0)
+		{
+			this->serverAddress = address;
+			this->protocolVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
+		}
+		else
+		{
+			throw kt::SocketException("Unable to connect to provided address with hostname [" + this->hostname + ":" + std::to_string(this->port) + "] " + getErrorCode());
+		}
+    }
+
+    TCPSocket::TCPSocket(const kt::TCPSocket& socket)
 	{
 		this->socketDescriptor = socket.socketDescriptor;
 		this->hostname = socket.hostname;
