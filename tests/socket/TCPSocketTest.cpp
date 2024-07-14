@@ -72,6 +72,36 @@ namespace kt
             TCPSocket failedSocket(LOCALHOST, serverSocket.getPort() + 1);
         }, SocketException);
     }
+
+    // Ensure we can construct and connect to a server from the address it is listening on
+    TEST_F(TCPSocketTest, TCPConstructor_FromAddress)
+    {
+        // Accept current incoming connection
+        TCPSocket server = serverSocket.acceptTCPConnection();
+
+        TCPSocket fromAddress(serverSocket.getSocketAddress());
+        TCPSocket acceptedFromAddress = serverSocket.acceptTCPConnection();
+
+        std::string sentFromAddress = "sentFromAddress";
+        ASSERT_TRUE(fromAddress.send(sentFromAddress).first);
+        ASSERT_TRUE(acceptedFromAddress.ready());
+        ASSERT_EQ(sentFromAddress, acceptedFromAddress.receiveAmount(sentFromAddress.size()));
+
+        std::string sentFromServer = "sentFromServer";
+        ASSERT_TRUE(acceptedFromAddress.send(sentFromServer).first);
+        ASSERT_TRUE(fromAddress.ready());
+        ASSERT_EQ(sentFromServer, fromAddress.receiveAmount(sentFromServer.size()));
+    }
+
+    // Ensure we throw a SocketException if we cannot construct a TCP socket from the provided SocketAddress
+    TEST_F(TCPSocketTest, TCPConstructor_FromEmptyAddress)
+    {
+        // Accept the incoming connection to make sure the server is ready
+        TCPSocket server = serverSocket.acceptTCPConnection();
+
+        kt::SocketAddress address{};
+        ASSERT_THROW(TCPSocket fromEmptyAddress(address), SocketException);
+    }
     
     /*
      * Ensure that a Socket created from the copy constructor is still able to send and receive from the copied socket.
