@@ -47,7 +47,7 @@ namespace kt
 			kt::SocketAddress serverAddress = {};
 			SOCKET socketDescriptor = getInvalidSocketValue();
 
-			void setDiscoverable();
+			void setDiscoverable() const;
 			void constructSocket(const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
 			void constructWifiSocket(const unsigned int&);

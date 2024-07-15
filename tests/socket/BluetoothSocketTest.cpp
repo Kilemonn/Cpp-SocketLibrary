@@ -9,29 +9,27 @@
 
 namespace kt
 {
-    class DISABLED_BluetoothSocketTest : public ::testing::Test
+    class BluetoothSocketTest : public ::testing::Test
     {
     protected:
         ServerSocket serverSocket;
         BluetoothSocket socket;
 
     protected:
-        DISABLED_BluetoothSocketTest() : serverSocket(SocketType::Bluetooth), socket(BluetoothSocket::getLocalMACAddress().value(), serverSocket.getPort()) { }
-        // void TearDown() override
-        // {
-        //     socket.close();
-        //     serverSocket.close();
-        // }
+        BluetoothSocketTest() : serverSocket(SocketType::Bluetooth), socket(BluetoothSocket::getLocalMACAddress().value(), serverSocket.getPort()) { }
+        void TearDown() override
+        {
+            socket.close();
+            serverSocket.close();
+        }
     };
 
-    TEST_F(DISABLED_BluetoothSocketTest, BluetoothGetLocalMacAddress)
+    TEST_F(BluetoothSocketTest, BluetoothGetLocalMacAddress)
     {
-        GTEST_SKIP();
-
 	    ASSERT_NE(std::nullopt, BluetoothSocket::getLocalMACAddress());
     }
 
-    TEST_F(DISABLED_BluetoothSocketTest, BluetoothScanDevices)
+    TEST_F(BluetoothSocketTest, BluetoothScanDevices)
     {
         GTEST_SKIP();
 
@@ -42,11 +40,9 @@ namespace kt
         }
     }
 
-    TEST_F(DISABLED_BluetoothSocketTest, BluetoothSend)
+    TEST_F(BluetoothSocketTest, BluetoothSend)
     {
-        GTEST_SKIP();
-
-        BluetoothSocket server = serverSocket.acceptBluetoothConnection();
+        BluetoothSocket server = serverSocket.acceptBluetoothConnection(100);
         const std::string toSend = "TestBluetooth";
 
         ASSERT_TRUE(socket.send(toSend));

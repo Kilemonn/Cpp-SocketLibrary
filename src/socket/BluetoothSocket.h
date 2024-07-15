@@ -46,14 +46,14 @@ namespace kt
 	{
 	protected:
 		std::string hostname;
-		unsigned int port;
+		unsigned short port;
 		SOCKET socketDescriptor;
 
 #ifdef _WIN32
 		//SOCKADDR_BTH bluetoothAddress;
 
 #elif __linux__
-		sockaddr_rc bluetoothAddress; // For Bluetooth
+		sockaddr_rc bluetoothAddress{}; // For Bluetooth
 
 #endif
 
@@ -64,11 +64,11 @@ namespace kt
 
 	public:
 		BluetoothSocket() = default;
-		BluetoothSocket(const std::string&, const unsigned int&);
-		//BluetoothSocket(const SOCKET&, const kt::SocketType, const kt::SocketProtocol, const std::string&, const unsigned int&, const kt::InternetProtocolVersion);
+		BluetoothSocket(const std::string&, const unsigned short&);
+		BluetoothSocket(const SOCKET&, const std::string&, const unsigned short&);
 
 		//BluetoothSocket(const kt::BluetoothSocket&);
-		//kt::BluetoothSocket& operator=(const kt::BluetoothSocket&);
+		//BluetoothSocket& operator=(const kt::BluetoothSocket&);
 
 		void close();
 
@@ -76,10 +76,10 @@ namespace kt
 		//bool connected(const unsigned long = 1000) const;
 		bool send(const std::string&, int = 0);
 
-		unsigned int getPort() const;
+		unsigned short getPort() const;
 		std::string getHostname() const;
 
-		std::optional<char> get(const int&) const;
+		std::optional<char> get(const int& = 0) const;
 		std::string receiveAmount(const unsigned int&, const int& = 0) const;
 		//std::string receiveToDelimiter(const char&, unsigned int = 0);
 		//std::string receiveAll(const unsigned long = 1000);

@@ -108,16 +108,20 @@ namespace kt
         else if (this->type == kt::SocketType::Bluetooth)
         {
             this->constructBluetoothSocket(connectionBacklogSize);
-            this->setDiscoverable();
         }
     }
 
     void kt::ServerSocket::constructBluetoothSocket(const unsigned int& connectionBacklogSize)
     {
 #ifdef _WIN32
-        throw kt::SocketException("ServerSocket::constructBluetoothSocket(unsigned int) is not supported on Windows.");
+        WSADATA wsaData{};
+        if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
+        {
+            throw kt::SocketException("WSAStartup Failed: " + std::to_string(res));
+        }
 
-        /*SOCKADDR_BTH bluetoothAddress;
+        // sockaddr_rc bluetoothAddress{};
+        SOCKADDR_BTH bluetoothAddress;
 
         this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 
@@ -126,11 +130,12 @@ namespace kt
             throw SocketException("Error establishing BT server socket: " + std::string(std::strerror(errno)));
         }
 
-        this->bluetoothAddress.addressFamily = AF_BTH;
-        this->bluetoothAddress.btAddr = 0;
-        this->bluetoothAddress.port = this->port;
+        BTH_ADDR addr{};
+        bluetoothAddress.addressFamily = AF_BTH;
+        bluetoothAddress.btAddr = addr;
+        bluetoothAddress.port = this->port;
 
-        if (bind(this->socketDescriptor, (sockaddr*)&this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == -1)
+        if (bind(this->socketDescriptor, (sockaddr*)&bluetoothAddress, sizeof(bluetoothAddress)) == -1)
         {
             throw BindingException("Error binding BT connection, the port " + std::to_string(this->port) + " is already being used: " + std::string(std::strerror(errno)) + ". WSA Error: " + std::to_string(WSAGetLastError()));
         }
@@ -139,9 +144,10 @@ namespace kt
         {
             this->close();
             throw SocketException("Error Listening on port: " + std::to_string(this->port) + ": " + std::string(std::strerror(errno)));
-        }*/
+        }
 
 #elif __linux__
+        throw kt::SocketException("ServerSocket::constructBluetoothSocket(unsigned int) is not supported on Linux.");
         sockaddr_rc localAddress = {0};
         this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
@@ -166,8 +172,7 @@ namespace kt
         }
 #endif
         
-        // Make discoverable
-
+        this->setDiscoverable();
     }
 
     void kt::ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
@@ -249,11 +254,15 @@ namespace kt
     }
 
 
-    void kt::ServerSocket::setDiscoverable()
+    void kt::ServerSocket::setDiscoverable() const
     {
-        throw kt::SocketException("ServerSocket::setDiscoverable() not implemented.");
-
+        if (this->type == SocketType::Wifi)
+        {
+            return;
+        }
+        
 #if __linux__
+        throw kt::SocketException("ServerSocket::setDiscoverable() not implemented.");
         hci_dev_req req;
         req.dev_id = 0;
         // req.dev_id = hci_get_route(nullptr);
@@ -321,10 +330,10 @@ namespace kt
         SOCKET temp = ::accept(this->socketDescriptor, &acceptedAddress.address, &sockLen);
         if (isInvalidSocket(temp))
         {
-            throw kt::SocketException("Failed to accept connection. Socket is in an invalid state.");
+            throw kt::SocketException("Failed to accept wifi connection. Socket is in an invalid state.");
         }
 
-        unsigned int portNum = this->getInternetProtocolVersion() == kt::InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
+        unsigned short portNum = kt::getPortNumber(acceptedAddress);
         std::optional<std::string> hostname = kt::getAddress(acceptedAddress);
 		if (!hostname.has_value())
 		{
@@ -349,10 +358,20 @@ namespace kt
             }
         }
 
-        throw kt::SocketException("acceptBluetoothConnection() - Not yet implemented.");
+        SOCKADDR_BTH acceptedAddress{};
+        socklen_t sockLen = sizeof(acceptedAddress);
+        SOCKET temp = ::accept(this->socketDescriptor, (sockaddr*)&acceptedAddress, &sockLen);
+        if (isInvalidSocket(temp))
+        {
+            throw kt::SocketException("Failed to accept bluetooth connection. Socket is in an invalid state.");
+        }
+
+        // TODO: provide correct hostname and port
+        return BluetoothSocket(temp, "", 0);
+       
 #ifdef __linux__
         // Remove bluetooth related code
-
+        throw kt::SocketException("acceptBluetoothConnection() - Not yet implemented.");
         // sockaddr_rc remoteDevice = { 0 };
         // socklen_t socketSize = sizeof(remoteDevice);
         // SOCKET temp = ::accept(this->socketDescriptor, (sockaddr *) &remoteDevice, &socketSize);

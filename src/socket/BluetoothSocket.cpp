@@ -1,30 +1,52 @@
 #include "BluetoothSocket.h"
 #include "../socketexceptions/SocketException.hpp"
+#include <sstream>
+#include <iomanip>
+
+#ifdef _WIN32
+
+#include "Windows.h"
+#include <iphlpapi.h>
+#include <ws2bth.h>
+#include "bluetoothapis.h"
+
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "Bthprops.lib")
+
+#elif __linux__
+
+#endif
 
 namespace kt
 {
 	void BluetoothSocket::constructBluetoothSocket()
 	{
-		throw kt::SocketException("Socket:constructBluetoothSocket() is not supported.");
 #ifdef _WIN32
+		WSADATA wsaData{};
+		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
+		{
+			throw kt::SocketException("WSAStartup Failed. " + std::to_string(res));
+		}
 		
-		/*this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+		this->socketDescriptor = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
 		if (isInvalidSocket(this->socketDescriptor))
 		{
 			throw SocketException("Error establishing Bluetooth socket: " + std::string(std::strerror(errno)));
 		}
 
-		this->bluetoothAddress.addressFamily = AF_BTH;
-		this->bluetoothAddress.btAddr = std::stoull(this->hostname);
-		this->bluetoothAddress.port = this->port;
+		SOCKADDR_BTH bluetoothAddress{};
+		bluetoothAddress.addressFamily = AF_BTH;
+		bluetoothAddress.btAddr = std::stoull(this->hostname);
+		bluetoothAddress.port = this->port;
 
-		if (connect(this->socketDescriptor, (sockaddr*)&this->bluetoothAddress, sizeof(SOCKADDR_BTH)) == -1)
+		if (connect(this->socketDescriptor, (sockaddr*)&bluetoothAddress, sizeof(bluetoothAddress)) == -1)
 		{
 			throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
-		}*/
+		}
 
 #elif __linux__
-		/*this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
+		throw kt::SocketException("Socket:constructBluetoothSocket() is not supported.");
+		this->socketDescriptor = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
 
 		if (isInvalidSocket(this->socketDescriptor))
 		{
@@ -38,7 +60,7 @@ namespace kt
 		if (connect(this->socketDescriptor, (sockaddr*)&this->bluetoothAddress, sizeof(this->bluetoothAddress)) == -1)
 		{
 			throw SocketException("Error connecting to Bluetooth server: " + std::string(std::strerror(errno)));
-		}*/
+		}
 #endif
 	}
 
@@ -52,8 +74,15 @@ namespace kt
 		kt::close(socket);
 	}
 
-	BluetoothSocket::BluetoothSocket(const std::string& hostname, const unsigned int& port)
+	BluetoothSocket::BluetoothSocket(const std::string& hostname, const unsigned short& port)
 	{
+		this->hostname = hostname;
+		this->port = port;
+	}
+
+	BluetoothSocket::BluetoothSocket(const SOCKET& socket, const std::string& hostname, const unsigned short& port)
+	{
+		this->socketDescriptor = socket;
 		this->hostname = hostname;
 		this->port = port;
 	}
@@ -68,7 +97,7 @@ namespace kt
 		return false;
 	}
 
-	unsigned int BluetoothSocket::getPort() const
+	unsigned short BluetoothSocket::getPort() const
 	{
 		return this->port;
 	}
@@ -192,36 +221,53 @@ namespace kt
 
 	std::optional<std::string> kt::BluetoothSocket::getLocalMACAddress()
 	{
-		throw kt::SocketException("Socket::getLocalMACAddress() is not supported.");
-
 #ifdef _WIN32
-
-		// Up to 20 Interfaces
-		/*IP_ADAPTER_INFO AdapterInfo[20];
-		DWORD dwBufLen = sizeof(AdapterInfo);
-		DWORD dwStatus = GetAdaptersInfo(AdapterInfo, &dwBufLen);
-		PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
-
-		while (std::string(pAdapterInfo->Description).find("Bluetooth") == std::string::npos)
+		WSADATA wsaData{};
+		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
 		{
-			pAdapterInfo = pAdapterInfo->Next;
+			throw kt::SocketException("WSAStartup Failed: " + std::to_string(res));
 		}
 
-		std::stringstream ss;
-		for (int i = 0; i < 6; i++)
-		{
-			ss << std::hex << std::setfill('0');
-			ss << std::setw(2) << static_cast<unsigned>(pAdapterInfo->Address[i]);
+		BLUETOOTH_FIND_RADIO_PARAMS btfrp;
+		btfrp.dwSize = sizeof(btfrp);
+		HANDLE hRadio;
+		HBLUETOOTH_RADIO_FIND hFind = BluetoothFindFirstRadio(&btfrp, &hRadio);
 
-			if (i != 5)
+		if (hFind == NULL)
+		{
+			DWORD err = GetLastError();
+			switch (err)
 			{
-				ss << ":";
+				case ERROR_NO_MORE_ITEMS:
+					// No bluetooth radio found
+					break;
+				default:
+					// Error finding radios
+					break;
 			}
+
+			return std::nullopt;
 		}
 
-		return ss.str();*/
+		do
+		{
+			BLUETOOTH_RADIO_INFO radioInfo{};
+			radioInfo.dwSize = sizeof(radioInfo);
+			DWORD err = BluetoothGetRadioInfo(hRadio, &radioInfo);
+			if (err != ERROR_SUCCESS)
+			{
+				// Error during BluetoothGetRadioInfo
+				continue;
+			}
+			// The mac address is in radioInfo.address
+			return std::to_string(radioInfo.address.ullLong);
+
+		} while (BluetoothFindNextRadio(hFind, &hRadio));
+
+		return std::nullopt;
 
 #elif __linux__
+		throw kt::SocketException("Socket::getLocalMACAddress() is not supported.");
 		// int id;
 		// bdaddr_t btaddr;
 		// char localMACAddress[18];
