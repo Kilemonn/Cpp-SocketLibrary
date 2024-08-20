@@ -114,7 +114,7 @@ std::signal(SIGPIPE, SIG_IGN);
 ...
 kt::TCPSocket socket; // Initialise properly
 ...
-if (!socket.send(received, MSG_NOSIGNAL).first)
+if (!socket.send(std::string(message), MSG_NOSIGNAL).first)
 {
     // Remote has closed connection, you can chose to close it here too
 }
