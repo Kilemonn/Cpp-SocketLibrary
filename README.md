@@ -116,7 +116,7 @@ kt::TCPSocket socket; // Initialise properly
 ...
 if (!socket.send(std::string(message), MSG_NOSIGNAL).first)
 {
-    // Remote has closed connection, you can chose to close it here too
+    // Remote has closed connection, you can choose to close the current socket or any other work that is required when the connection is broken
 }
 ...
 ```
