@@ -93,25 +93,35 @@ void udpExample()
 }
 ```
 
-## Known Issues
+## SIGPIPE Errors
 
-### SIGPIPE Error
+`SIGPIPE` is a signal error raised by UNIX when you attempt to write data to a closed linux socket (closed by the remote). There are a few ways to work around this signal. **Note:** that in both cases, the `TCPSocket.send()` function will return `false` in the result pair so you can detect that the send has failed.
 
-- There is a known issue regarding SIGPIPE crashing the programming when send() is called after the remote process has already closed the socket.
-- A way to resolve this is to remove the SIGPIPE handler, since we can detect this disconnection when the send() function returns false.
-
-- Disable the SIGPIPE handler using the following code:
-
+1. Ignore SIGPIPE signals completely:
 ```cpp
-#include <signal.h>
+#include <csignal>
 
 ...
-signal(SIGPIPE, SIG_IGN);
+std::signal(SIGPIPE, SIG_IGN);
 ...
 
 ```
 
-### NOTE: UDP Read Sizes
+2. Provide `MSG_NOSIGNAL` as the `flag` argument to the `kt::TCPSocket.send()` function which will ensure no signals are raised during the `send()` call.
+```cpp
+#include <csignal>
+
+...
+kt::TCPSocket socket; // Initialise properly
+...
+if (!socket.send(received, MSG_NOSIGNAL).first)
+{
+    // Remote has closed connection, you can chose to close it here too
+}
+...
+```
+
+## NOTE: UDP Read Sizes
 
 - Take care when reading UDP messages. If you do not read the entire length of the message the rest of the data will be lost.
 

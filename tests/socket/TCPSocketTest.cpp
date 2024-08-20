@@ -1,6 +1,9 @@
 #include <string>
 #include <optional>
 #include <climits>
+#include <chrono>
+#include <thread>
+#include <csignal>
 
 #include <gtest/gtest.h>
 
@@ -220,6 +223,63 @@ namespace kt
         ASSERT_FALSE(socket.connected());
         server.close();
     }
+
+#ifdef __linux__
+    bool sigPipeHandlerWasCalled = false;
+    void handleSignal(int signal)
+    {
+        if (signal == SIGPIPE)
+        {
+            sigPipeHandlerWasCalled = true;
+        }
+    }
+
+    TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_CustomHandlerFunction)
+    {
+        ASSERT_NE(std::signal(SIGPIPE, handleSignal), SIG_ERR);
+
+        TCPSocket server = serverSocket.acceptTCPConnection();
+        server.close();
+
+        ASSERT_FALSE(sigPipeHandlerWasCalled);
+
+        // The first send does not detect the disconnection?
+        std::pair<bool, int> result = socket.send("TestSendToClosedSocket");
+        ASSERT_TRUE(result.first);
+        
+        result = socket.send("TestSendToClosedSocket");
+        ASSERT_FALSE(result.first);
+
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(100ms);
+        ASSERT_TRUE(sigPipeHandlerWasCalled);
+
+        // Revert the sigpipe handler
+        ASSERT_NE(std::signal(SIGPIPE, SIG_DFL), SIG_ERR);
+    }
+
+    TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_MSG_NOSIGNALFlag)
+    {
+        TCPSocket server = serverSocket.acceptTCPConnection();
+        server.close();
+
+        std::cout << "About to send first????" << std::endl;
+        std::pair<bool, int> result = socket.send("TestSendToClosedSocket", MSG_NOSIGNAL);
+        ASSERT_TRUE(result.first);
+        std::cout << "Sent first????" << std::endl;
+        result = socket.send("TestSendToClosedSocket", MSG_NOSIGNAL);
+        ASSERT_FALSE(result.first);
+    }
+#endif
+
+    // TEST_F(TCPSocketTest, TestRemoteClosed)
+    // {
+    //     TCPSocket server = serverSocket.acceptTCPConnection();
+    //     ASSERT_TRUE(socket.connected());
+    //     server.close();
+    //     ASSERT_FALSE(socket.connected());
+    //     server.close();
+    // }
 
     TEST_F(TCPSocketTest, IPV6Address)
     {
