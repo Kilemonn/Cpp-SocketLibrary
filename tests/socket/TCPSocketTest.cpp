@@ -243,11 +243,12 @@ namespace kt
 
         ASSERT_FALSE(sigPipeHandlerWasCalled);
 
+        const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_CustomHandlerFunction";
         // The first send does not detect the disconnection?
-        std::pair<bool, int> result = socket.send("TestSendToClosedSocket");
+        std::pair<bool, int> result = socket.send(message);
         ASSERT_TRUE(result.first);
         
-        result = socket.send("TestSendToClosedSocket");
+        result = socket.send(message);
         ASSERT_FALSE(result.first);
 
         using namespace std::chrono_literals;
@@ -263,23 +264,36 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         server.close();
 
-        std::cout << "About to send first????" << std::endl;
-        std::pair<bool, int> result = socket.send("TestSendToClosedSocket", MSG_NOSIGNAL);
+        const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_MSG_NOSIGNALFlag";
+        // Make sure you call the correct override of the method
+        std::pair<bool, int> result = socket.send(message, MSG_NOSIGNAL);
         ASSERT_TRUE(result.first);
-        std::cout << "Sent first????" << std::endl;
-        result = socket.send("TestSendToClosedSocket", MSG_NOSIGNAL);
+        
+        result = socket.send(message, MSG_NOSIGNAL);
         ASSERT_FALSE(result.first);
     }
-#endif
 
-    // TEST_F(TCPSocketTest, TestRemoteClosed)
-    // {
-    //     TCPSocket server = serverSocket.acceptTCPConnection();
-    //     ASSERT_TRUE(socket.connected());
-    //     server.close();
-    //     ASSERT_FALSE(socket.connected());
-    //     server.close();
-    // }
+    TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_IgnoreSignals)
+    {
+        // Ignore SIGPIPE signals
+        ASSERT_NE(std::signal(SIGPIPE, SIG_IGN), SIG_ERR);
+
+        TCPSocket server = serverSocket.acceptTCPConnection();
+        server.close();
+
+        const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_IgnoreSignals";
+        // Make sure you call the correct override of the method
+        std::pair<bool, int> result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_TRUE(result.first);
+        
+        result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_FALSE(result.first);
+
+        // Revert behaviour for other tests
+        ASSERT_NE(std::signal(SIGPIPE, SIG_DFL), SIG_ERR);
+    }
+
+#endif
 
     TEST_F(TCPSocketTest, IPV6Address)
     {

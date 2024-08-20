@@ -95,7 +95,7 @@ void udpExample()
 
 ## SIGPIPE Errors
 
-`SIGPIPE` is a signal error raised by UNIX when you attempt to write data to a closed linux socket (closed by the remote). There are a few ways to work around this signal. **Note:** that in both cases, the `TCPSocket.send()` function will return `false` in the result pair so you can detect that the send has failed.
+`SIGPIPE` is a signal error raised by UNIX when you attempt to write data to a closed linux socket (closed by the remote). There are a few ways to work around this signal. **Note:** that in both cases, the `TCPSocket.send()` function will return `false` in the result pair so you can detect that the send has failed. *(You can refer to the TCPSocketTest.cpp file and the "...Linux..." related tests to do with "SIGPIPE" to find examples of the below).*
 
 1. Ignore SIGPIPE signals completely:
 ```cpp
