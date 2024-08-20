@@ -95,19 +95,22 @@ void udpExample()
 
 ## SIGPIPE Errors
 
-`SIGPIPE` is a signal error raised by UNIX when you attempt to write data to a closed linux socket (closed by the remote). There are a few ways to work around this signal. **Note:** that in both cases, the `TCPSocket.send()` function will return `false` in the result pair so you can detect that the send has failed. *(You can refer to the TCPSocketTest.cpp file and the "...Linux..." related tests to do with "SIGPIPE" to find examples of the below).*
+`SIGPIPE` is a signal error raised by UNIX when you attempt to write data to a closed linux socket (closed by the remote). There are a few ways to work around this signal. **Note:** that in both cases, the `kt::TCPSocket.send()` function will return `false` in the result pair so you can detect that the send has failed. *(You can refer to the TCPSocketTest.cpp file and the "...Linux..." related tests to do with "SIGPIPE" to find examples of the below).*
 
 1. Ignore SIGPIPE signals completely:
 ```cpp
 #include <csignal>
 
-...
-std::signal(SIGPIPE, SIG_IGN);
-...
+int main()
+{
+    std::signal(SIGPIPE, SIG_IGN);
+
+    ...
+}
 
 ```
 
-2. Provide `MSG_NOSIGNAL` as the `flag` argument to the `kt::TCPSocket.send()` function which will ensure no signals are raised during the `send()` call.
+2. Provide `MSG_NOSIGNAL` as the `flag` argument to the `kt::TCPSocket.send()` function which will ensure no signals are raised during the `kt::TCPSocket.send()` call.
 ```cpp
 #include <csignal>
 
@@ -119,6 +122,29 @@ if (!socket.send(std::string(message), MSG_NOSIGNAL).first)
     // Remote has closed connection, you can choose to close the current socket or any other work that is required when the connection is broken
 }
 ...
+```
+
+3. Setup a handler function to be called with the `SIGPIPE` signal is raised.
+```cpp
+#include <csignal>
+
+void handleSignal(int signal)
+{
+    if (signal == SIGPIPE)
+    {
+        ...
+    }
+}
+
+int main()
+{
+    // Set your handler function to be called when the signal is raised
+    std::signal(SIGPIPE, handleSignal);
+    ...
+
+    // If you want to restore the default signal handling behaviour you can do the following
+    std::signal(SIGPIPE, SIG_DFL);
+}
 ```
 
 ## NOTE: UDP Read Sizes
