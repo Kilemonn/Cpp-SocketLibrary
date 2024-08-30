@@ -39,7 +39,7 @@ namespace kt
     TEST_F(ServerSocketTCPTest, TestConstructors)
     {
         EXPECT_THROW({
-            ServerSocket server2(SocketType::Wifi, serverSocket.getPort());
+            ServerSocket server2(SocketType::Wifi, std::nullopt, serverSocket.getPort());
         }, BindingException);
     }
 
@@ -83,7 +83,7 @@ namespace kt
      */
     TEST_F(ServerSocketTCPTest, TestServerSocketAsIPV6)
     {
-        ServerSocket ipv6Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
+        ServerSocket ipv6Server(SocketType::Wifi, std::nullopt, 0, 20, InternetProtocolVersion::IPV6);
 
         TCPSocket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort());
         TCPSocket serverClient = ipv6Server.acceptTCPConnection();
@@ -105,7 +105,7 @@ namespace kt
     {
         serverSocket.close();
 
-        ServerSocket ipv4Server(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV4);
+        ServerSocket ipv4Server(SocketType::Wifi, std::nullopt, 0, 20, InternetProtocolVersion::IPV4);
         ASSERT_EQ(InternetProtocolVersion::IPV4, ipv4Server.getInternetProtocolVersion());
 
         // Attempt to connect to a local server using a IPV6 address (which is not being hosted)

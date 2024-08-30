@@ -48,14 +48,14 @@ namespace kt
 			SOCKET socketDescriptor = getInvalidSocketValue();
 
 			void setDiscoverable();
-			void constructSocket(const unsigned int&);
+			void constructSocket(const std::optional<std::string>&, const unsigned int&);
 			void constructBluetoothSocket(const unsigned int&);
-			void constructWifiSocket(const unsigned int&);
+			void constructWifiSocket(const std::optional<std::string>& localHostname, const unsigned int&);
 			void initialisePortNumber();
 
 		public:
 			ServerSocket() = default;
-			ServerSocket(const kt::SocketType, const unsigned short& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+			ServerSocket(const kt::SocketType, const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 			ServerSocket(const kt::ServerSocket&);
 			kt::ServerSocket& operator=(const kt::ServerSocket&);
 
