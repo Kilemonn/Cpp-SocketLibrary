@@ -61,7 +61,7 @@ namespace kt
 		UDPSocket(const kt::UDPSocket&);
 		kt::UDPSocket& operator=(const kt::UDPSocket&);
 
-		std::pair<bool, kt::SocketAddress> bind(const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+		std::pair<bool, kt::SocketAddress> bind(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		void close();
 		bool ready(const unsigned long = 100) const;
 

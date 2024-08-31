@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(PROJECT_NAME CppSocketLibrary)
 
-project(${PROJECT_NAME} VERSION 0.5.2)
+project(${PROJECT_NAME} VERSION 0.5.3)
 
 set(HEADERS
         src/serversocket/ServerSocket.h
