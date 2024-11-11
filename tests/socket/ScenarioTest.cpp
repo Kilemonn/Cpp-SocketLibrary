@@ -38,6 +38,7 @@ namespace kt
         kt::UDPSocket socket;
         std::pair<bool, kt::SocketAddress> bindResult = socket.bind(std::nullopt, server.getPort());
         ASSERT_TRUE(bindResult.first);
+        ASSERT_NE(std::nullopt, socket.getListeningPort());
 
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
 
@@ -51,7 +52,6 @@ namespace kt
     TEST(ScenarioTest, TwoUDPSocketsBindingToSamePort)
     {
         std::function setReuseAddrOption = [](SOCKET& s) {
-            const int enable = 1;
             const int enableOption = 1;
             ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)));
         };
