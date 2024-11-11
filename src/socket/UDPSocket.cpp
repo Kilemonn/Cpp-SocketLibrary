@@ -84,6 +84,11 @@ namespace kt
 
 #endif
 
+		if (preBindSocketOperation.has_value())
+		{
+			preBindSocketOperation.value()(this->receiveSocket);
+		}
+
 		int bindResult = ::bind(this->receiveSocket, &firstAddress.address, kt::getAddressLength(firstAddress));
 		this->bound = bindResult != -1;
 		if (!this->bound)
@@ -221,6 +226,11 @@ namespace kt
     void UDPSocket::setPreSendSocketOperation(std::function<void(SOCKET&)> newOperation)
     {
 		this->preSendSocketOperation = std::make_optional(newOperation);
+    }
+
+	void UDPSocket::setPreBindSocketOperation(std::function<void(SOCKET&)> newOperation)
+    {
+		this->preBindSocketOperation = std::make_optional(newOperation);
     }
 
     int UDPSocket::pollSocket(SOCKET socket, const long& timeout) const
