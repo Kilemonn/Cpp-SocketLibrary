@@ -68,7 +68,7 @@ namespace kt
 
         kt::UDPSocket sendSocket;
         const std::string data = "TwoUDPSocketsBindingToSamePort";
-        std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = sendSocket.sendTo("127.0.0.1", socket.getListeningPort().value(), data);
+        std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = sendSocket.sendTo("localhost", socket.getListeningPort().value(), data);
         ASSERT_TRUE(sendResult.first.first);
 
         // Make sure only one of the sockets is ready to read, not both
