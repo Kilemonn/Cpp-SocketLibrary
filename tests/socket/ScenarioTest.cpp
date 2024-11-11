@@ -23,6 +23,7 @@ namespace kt
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
 
         server.close();
+        socket.close();
     }
 
     /**
@@ -41,6 +42,7 @@ namespace kt
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
 
         server.close();
+        socket.close();
     }
 
     /**
