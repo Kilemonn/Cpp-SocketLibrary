@@ -41,7 +41,7 @@ namespace kt
 	 *
 	 * @throw BindingException - if the socket fails to bind
 	 */
-	std::pair<bool, kt::SocketAddress> kt::UDPSocket::bind(const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<bool, kt::SocketAddress> kt::UDPSocket::bind(const std::optional<std::string>& localHostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
 	{
 		if (this->isUdpBound())
 		{
@@ -58,7 +58,7 @@ namespace kt
 #endif
 
 		addrinfo hints = kt::createUdpHints(protocolVersion, AI_PASSIVE);
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(kt::getLocalAddress(protocolVersion), port, hints);
+		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname.value().c_str() : kt::getLocalAddress(protocolVersion), port, hints);
 		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
 		{
 			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(port));
@@ -83,6 +83,11 @@ namespace kt
 		}
 
 #endif
+
+		if (preBindSocketOperation.has_value())
+		{
+			preBindSocketOperation.value()(this->receiveSocket);
+		}
 
 		int bindResult = ::bind(this->receiveSocket, &firstAddress.address, kt::getAddressLength(firstAddress));
 		this->bound = bindResult != -1;
@@ -179,7 +184,7 @@ namespace kt
 	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const int& receiveLength, const int& flags) const
 	{
 		kt::SocketAddress receiveAddress{};
-		if (!this->bound || receiveLength == 0 || !this->ready())
+		if (!this->bound || receiveLength == 0)
 		{
 			return std::make_pair(-1, receiveAddress);
 		}
@@ -221,6 +226,11 @@ namespace kt
     void UDPSocket::setPreSendSocketOperation(std::function<void(SOCKET&)> newOperation)
     {
 		this->preSendSocketOperation = std::make_optional(newOperation);
+    }
+
+	void UDPSocket::setPreBindSocketOperation(std::function<void(SOCKET&)> newOperation)
+    {
+		this->preBindSocketOperation = std::make_optional(newOperation);
     }
 
     int UDPSocket::pollSocket(SOCKET socket, const long& timeout) const

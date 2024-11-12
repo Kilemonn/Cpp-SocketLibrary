@@ -52,7 +52,7 @@ namespace kt
      * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
      * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
      */
-    kt::ServerSocket::ServerSocket(const kt::SocketType type, const unsigned short& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
+    kt::ServerSocket::ServerSocket(const kt::SocketType type, const std::optional<std::string>& localHostname, const unsigned short& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
     {
         this->socketDescriptor = getInvalidSocketValue();
         this->port = port;
@@ -64,7 +64,7 @@ namespace kt
             throw SocketException("Failed to create ServerSocket with 'None' SocketType.");
         }
 
-        this->constructSocket(connectionBacklogSize);
+        this->constructSocket(localHostname, connectionBacklogSize);
     }
 
     /**
@@ -99,11 +99,11 @@ namespace kt
         return *this;
     }
 
-    void kt::ServerSocket::constructSocket(const unsigned int& connectionBacklogSize)
+    void kt::ServerSocket::constructSocket(const std::optional<std::string>& localHostname, const unsigned int& connectionBacklogSize)
     {
         if (this->type == kt::SocketType::Wifi)
         {
-            this->constructWifiSocket(connectionBacklogSize);
+            this->constructWifiSocket(localHostname, connectionBacklogSize);
         }
         else if (this->type == kt::SocketType::Bluetooth)
         {
@@ -175,7 +175,7 @@ namespace kt
         this->setDiscoverable();
     }
 
-    void kt::ServerSocket::constructWifiSocket(const unsigned int& connectionBacklogSize)
+    void kt::ServerSocket::constructWifiSocket(const std::optional<std::string>& localHostname, const unsigned int& connectionBacklogSize)
     {
 
 #ifdef _WIN32
@@ -187,7 +187,7 @@ namespace kt
 #endif
 
         addrinfo hints = kt::createTcpHints(this->protocolVersion, AI_PASSIVE);
-        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(kt::getLocalAddress(protocolVersion), this->port, hints);
+        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname.value().c_str() : kt::getLocalAddress(protocolVersion), this->port, hints);
 
         if (resolveAddresses.second != 0 || resolveAddresses.first.empty())
         {
@@ -254,7 +254,7 @@ namespace kt
     }
 
 
-    void kt::ServerSocket::setDiscoverable() const
+    void kt::ServerSocket::setDiscoverable()
     {
         if (this->type == SocketType::Wifi)
         {

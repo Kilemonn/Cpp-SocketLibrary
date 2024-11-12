@@ -206,8 +206,7 @@ namespace kt
 	int TCPSocket::receiveAmount(char* buffer, const unsigned int amountToReceive, const int& flags) const
 	{
 		int counter = 0;
-
-		if (amountToReceive == 0 || !this->ready())
+		if (amountToReceive == 0)
 		{
 			return counter;
 		}

@@ -1,6 +1,9 @@
 #include <string>
 #include <optional>
 #include <climits>
+#include <chrono>
+#include <thread>
+#include <csignal>
 
 #include <gtest/gtest.h>
 
@@ -20,7 +23,7 @@ namespace kt
         TCPSocket socket;
 
     protected:
-        TCPSocketTest() : serverSocket(SocketType::Wifi, 0), socket(LOCALHOST, serverSocket.getPort()) { }
+        TCPSocketTest() : serverSocket(SocketType::Wifi), socket(LOCALHOST, serverSocket.getPort()) { }
         void TearDown() override
         {
             socket.close();
@@ -221,9 +224,80 @@ namespace kt
         server.close();
     }
 
+#ifdef __linux__
+    bool sigPipeHandlerWasCalled = false;
+    void handleSignal(int signal)
+    {
+        if (signal == SIGPIPE)
+        {
+            sigPipeHandlerWasCalled = true;
+        }
+    }
+
+    TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_CustomHandlerFunction)
+    {
+        ASSERT_NE(std::signal(SIGPIPE, handleSignal), SIG_ERR);
+
+        TCPSocket server = serverSocket.acceptTCPConnection();
+        server.close();
+
+        ASSERT_FALSE(sigPipeHandlerWasCalled);
+
+        const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_CustomHandlerFunction";
+        // The first send does not detect the disconnection?
+        std::pair<bool, int> result = socket.send(message);
+        ASSERT_TRUE(result.first);
+        
+        result = socket.send(message);
+        ASSERT_FALSE(result.first);
+
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(100ms);
+        ASSERT_TRUE(sigPipeHandlerWasCalled);
+
+        // Revert the sigpipe handler
+        ASSERT_NE(std::signal(SIGPIPE, SIG_DFL), SIG_ERR);
+    }
+
+    TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_MSG_NOSIGNALFlag)
+    {
+        TCPSocket server = serverSocket.acceptTCPConnection();
+        server.close();
+
+        const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_MSG_NOSIGNALFlag";
+        // Make sure you call the correct override of the method
+        std::pair<bool, int> result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_TRUE(result.first);
+        
+        result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_FALSE(result.first);
+    }
+
+    TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_IgnoreSignals)
+    {
+        // Ignore SIGPIPE signals
+        ASSERT_NE(std::signal(SIGPIPE, SIG_IGN), SIG_ERR);
+
+        TCPSocket server = serverSocket.acceptTCPConnection();
+        server.close();
+
+        const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_IgnoreSignals";
+        // Make sure you call the correct override of the method
+        std::pair<bool, int> result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_TRUE(result.first);
+        
+        result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_FALSE(result.first);
+
+        // Revert behaviour for other tests
+        ASSERT_NE(std::signal(SIGPIPE, SIG_DFL), SIG_ERR);
+    }
+
+#endif
+
     TEST_F(TCPSocketTest, IPV6Address)
     {
-        ServerSocket ipv6ServerSocket(SocketType::Wifi, 0, 20, InternetProtocolVersion::IPV6);
+        ServerSocket ipv6ServerSocket(SocketType::Wifi, std::nullopt, 0, 20, InternetProtocolVersion::IPV6);
         
         TCPSocket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort());
 
