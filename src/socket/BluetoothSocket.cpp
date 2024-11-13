@@ -156,16 +156,17 @@ namespace kt
 		}
 
 		DWORD dwSize = sizeof(WSAQUERYSET);
-		char buf[4096];
-		LPWSAQUERYSET pQuerySet = (LPWSAQUERYSET)buf;
-		pQuerySet->dwSize = dwSize;
-		pQuerySet->dwNameSpace = NS_BTH;
-		pQuerySet->lpBlob = nullptr;
+		WSAQUERYSET pQuerySet{};
+		pQuerySet.dwSize = dwSize;
+		pQuerySet.dwNameSpace = NS_BTH;
+		pQuerySet.lpBlob = nullptr;
 
-		while (WSALookupServiceNext(lookUpHandle, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, pQuerySet) == 0)
+		res = WSALookupServiceNext(lookUpHandle, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, &pQuerySet);
+		while (res == 0)
 		{
-			BTH_ADDR tempAddress = ((SOCKADDR_BTH*) pQuerySet->lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
-			std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
+			BTH_ADDR tempAddress = ((SOCKADDR_BTH*) pQuerySet.lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
+			std::cout << pQuerySet.lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet.dwNameSpace << std::endl;
+			res = WSALookupServiceNext(lookUpHandle, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, &pQuerySet);
 		}
 
 		WSALookupServiceEnd(lookUpHandle);
