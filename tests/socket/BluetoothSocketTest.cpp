@@ -31,9 +31,7 @@ namespace kt
 
     TEST_F(BluetoothSocketTest, BluetoothScanDevices)
     {
-        GTEST_SKIP();
-
-        std::vector<std::pair<std::string, std::string> > devices = BluetoothSocket::scanDevices();
+        std::vector<std::pair<std::string, std::string>> devices = BluetoothSocket::scanDevices();
         for (const std::pair<std::string, std::string>& p : devices)
         {
             std::cout << p.first << " - " << p.second << std::endl;

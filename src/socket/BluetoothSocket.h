@@ -58,9 +58,9 @@ namespace kt
 #endif
 
 		void constructBluetoothSocket();
-		int pollSocket(SOCKET socket, const long& = 1000) const;
+		int pollSocket(SOCKET, const long& = 1000) const;
 
-		void close(SOCKET socket);
+		void close(SOCKET);
 
 	public:
 		BluetoothSocket() = default;
@@ -84,7 +84,7 @@ namespace kt
 		//std::string receiveToDelimiter(const char&, unsigned int = 0);
 		//std::string receiveAll(const unsigned long = 1000);
 
-		static std::vector<std::pair<std::string, std::string> > scanDevices(unsigned int = 5);
+		static std::vector<std::pair<std::string, std::string>> scanDevices(unsigned int = 5);
 		static std::optional<std::string> getLocalMACAddress();
 	};
 

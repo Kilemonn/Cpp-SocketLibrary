@@ -131,47 +131,50 @@ namespace kt
 	 *
 	 * @return A std::vector&lt;std::pair&lt;std::string, std::string>> where .first is the devices address, and .second is the device name.
 	 */
-	std::vector<std::pair<std::string, std::string> > BluetoothSocket::scanDevices(unsigned int duration)
+	std::vector<std::pair<std::string, std::string>> BluetoothSocket::scanDevices(unsigned int duration)
 	{
-		throw kt::SocketException("Socket::scanDevices(int) is not supported.");
-
+		std::vector<std::pair<std::string, std::string>> devices;
 #ifdef _WIN32
 
-		/*WSADATA wsaData;
+		WSADATA wsaData{};
 		int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (res != 0)
 		{
 			throw SocketException("WSAStartup Failed: " + std::to_string(res));
-		}*/
+		}
 
-		/*WSAQUERYSET wsaQuery;
-		HANDLE hLoopUp;
-		LPWSAQUERYSET pQuerySet = nullptr;
-		SOCKADDR_BTH tempAddress;
-		DWORD dwSize = 5000 * sizeof(unsigned char);
-		memset(&wsaQuery, 0, sizeof(WSAQUERYSET));
+		WSAQUERYSET wsaQuery{};
+		HANDLE lookUpHandle{};
 		wsaQuery.dwSize = sizeof(WSAQUERYSET);
 		wsaQuery.dwNameSpace = NS_BTH;
 		wsaQuery.lpcsaBuffer = nullptr;
 
-		int res = WSALookupServiceBegin(&wsaQuery, LUP_CONTAINERS, &hLoopUp);
+		res = WSALookupServiceBegin(&wsaQuery, LUP_CONTAINERS, &lookUpHandle);
 		if (res == -1)
 		{
-			throw SocketException("Unable to search for devices. Could not begin search.");
+			throw SocketException("Unable to search for devices. Could not begin search. Error code: " + std::to_string(res));
 		}
 
-		memset(&pQuerySet, 0, sizeof(WSAQUERYSET));
-		pQuerySet->dwSize = sizeof(WSAQUERYSET);
+		DWORD dwSize = sizeof(WSAQUERYSET);
+		char buf[4096];
+		LPWSAQUERYSET pQuerySet = (LPWSAQUERYSET)buf;
+		pQuerySet->dwSize = dwSize;
 		pQuerySet->dwNameSpace = NS_BTH;
 		pQuerySet->lpBlob = nullptr;
 
-		while (WSALookupServiceNext(hLoopUp, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, pQuerySet) == 0)
+		while (WSALookupServiceNext(lookUpHandle, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, pQuerySet) == 0)
 		{
-			tempAddress = ((SOCKADDR_BTH*) pQuerySet->lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
-			// std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
-		}*/
+			BTH_ADDR tempAddress = ((SOCKADDR_BTH*) pQuerySet->lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
+			std::cout << pQuerySet->lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet->dwNameSpace << std::endl;
+		}
+
+		WSALookupServiceEnd(lookUpHandle);
+
+		return devices;
 
 #elif __linux__
+
+		throw kt::SocketException("Socket::scanDevices(int) is not supported.");
 
 		/*std::vector<std::pair<std::string, std::string> > devices;
 		std::pair<std::string, std::string> tempPair;
