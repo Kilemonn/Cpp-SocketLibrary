@@ -92,7 +92,7 @@ namespace kt
 		this->close(this->socketDescriptor);
 	}
 
-	bool BluetoothSocket::send(const std::string&, int)
+	bool BluetoothSocket::send(const std::string& s, int i)
 	{
 		return false;
 	}
@@ -143,33 +143,31 @@ namespace kt
 			throw SocketException("WSAStartup Failed: " + std::to_string(res));
 		}
 
-		WSAQUERYSET wsaQuery{};
-		HANDLE lookUpHandle{};
-		wsaQuery.dwSize = sizeof(WSAQUERYSET);
-		wsaQuery.dwNameSpace = NS_BTH;
-		wsaQuery.lpcsaBuffer = nullptr;
-
-		res = WSALookupServiceBegin(&wsaQuery, LUP_CONTAINERS, &lookUpHandle);
-		if (res == -1)
+		BLUETOOTH_DEVICE_SEARCH_PARAMS params{};
+		params.dwSize = sizeof(params);
+		params.fReturnAuthenticated = false;
+		params.fReturnRemembered = false;
+		params.fReturnConnected = true;
+		params.fReturnUnknown = true;
+		params.fIssueInquiry = true;
+		params.cTimeoutMultiplier = duration;
+		BLUETOOTH_DEVICE_INFO device{};
+		HBLUETOOTH_DEVICE_FIND deviceFind = BluetoothFindFirstDevice(&params, &device);
+		if (deviceFind == nullptr)
 		{
-			throw SocketException("Unable to search for devices. Could not begin search. Error code: " + std::to_string(res));
+			return devices;
 		}
 
-		DWORD dwSize = sizeof(WSAQUERYSET);
-		WSAQUERYSET pQuerySet{};
-		pQuerySet.dwSize = dwSize;
-		pQuerySet.dwNameSpace = NS_BTH;
-		pQuerySet.lpBlob = nullptr;
-
-		res = WSALookupServiceNext(lookUpHandle, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, &pQuerySet);
-		while (res == 0)
+		do
 		{
-			BTH_ADDR tempAddress = ((SOCKADDR_BTH*) pQuerySet.lpcsaBuffer->RemoteAddr.lpSockaddr)->btAddr;
-			std::cout << pQuerySet.lpszServiceInstanceName << " : " << GET_NAP(tempAddress) << " - " << GET_SAP(tempAddress) << " ~ " << pQuerySet.dwNameSpace << std::endl;
-			res = WSALookupServiceNext(lookUpHandle, LUP_RETURN_NAME | LUP_RETURN_ADDR, &dwSize, &pQuerySet);
-		}
+			std::string address = std::to_string(device.Address.ullLong);
+			std::wstring name = std::wstring(device.szName);
+			std::wcout << "Name: " << name << " address: " << std::flush;
+			std::cout << address << std::endl;
+			
+		} while (BluetoothFindNextDevice(deviceFind, &device));
 
-		WSALookupServiceEnd(lookUpHandle);
+		BluetoothFindDeviceClose(deviceFind);
 
 		return devices;
 
@@ -232,24 +230,22 @@ namespace kt
 			throw kt::SocketException("WSAStartup Failed: " + std::to_string(res));
 		}
 
-		BLUETOOTH_FIND_RADIO_PARAMS btfrp;
+		BLUETOOTH_FIND_RADIO_PARAMS btfrp{};
 		btfrp.dwSize = sizeof(btfrp);
-		HANDLE hRadio;
+		HANDLE hRadio{};
 		HBLUETOOTH_RADIO_FIND hFind = BluetoothFindFirstRadio(&btfrp, &hRadio);
-
-		if (hFind == NULL)
+		if (hFind == nullptr)
 		{
-			DWORD err = GetLastError();
-			switch (err)
-			{
-				case ERROR_NO_MORE_ITEMS:
-					// No bluetooth radio found
-					break;
-				default:
-					// Error finding radios
-					break;
-			}
-
+			//DWORD err = GetLastError();
+			//switch (err)
+			//{
+			//case ERROR_NO_MORE_ITEMS:
+			//	// No bluetooth radio found
+			//	break;
+			//default:
+			//	// Error finding radios
+			//	break;
+			//}
 			return std::nullopt;
 		}
 
@@ -257,16 +253,16 @@ namespace kt
 		{
 			BLUETOOTH_RADIO_INFO radioInfo{};
 			radioInfo.dwSize = sizeof(radioInfo);
-			DWORD err = BluetoothGetRadioInfo(hRadio, &radioInfo);
-			if (err != ERROR_SUCCESS)
+			DWORD res = BluetoothGetRadioInfo(hRadio, &radioInfo);
+			if (res == ERROR_SUCCESS)
 			{
-				// Error during BluetoothGetRadioInfo
-				continue;
+				// The mac address is in radioInfo.address
+				BluetoothFindRadioClose(hFind);
+				return std::to_string(radioInfo.address.ullLong);
 			}
-			// The mac address is in radioInfo.address
-			return std::to_string(radioInfo.address.ullLong);
-
 		} while (BluetoothFindNextRadio(hFind, &hRadio));
+
+		BluetoothFindRadioClose(hFind);
 
 		return std::nullopt;
 
