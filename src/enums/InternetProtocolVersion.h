@@ -4,7 +4,7 @@
 
 #include <winsock2.h>
 
-#elif __linux__
+#else
 
 #include <arpa/inet.h>
 

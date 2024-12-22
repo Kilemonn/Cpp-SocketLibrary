@@ -350,6 +350,9 @@ namespace kt
         // Sending a string that is 98.5+% the size of the send buffer will cause the send to hang
         // So we will send a string the size of 98.4% the size of the buffer limit
         int upperBound = sendBufferSize * 0.984;
+#else
+        // Mac OS specific, please update
+        int upperBound = sendBufferSize * 0.984;
 #endif
 
         std::string message(upperBound, 'c');

@@ -25,7 +25,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-#elif __linux__
+#else
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -72,7 +72,7 @@ namespace kt
 #ifdef _WIN32
 		closesocket(socket);
 
-#elif __linux__
+#else
 		::close(socket);
 #endif
 	}

@@ -111,7 +111,7 @@ namespace kt
         ASSERT_TRUE(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first.first);
         // Looks like windows resolves an address, but it is not received
         ASSERT_FALSE(socket.ready());
-#elif __linux__
+#else
         ASSERT_FALSE(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first.first);
         ASSERT_FALSE(socket.ready());
 #endif
@@ -314,6 +314,13 @@ namespace kt
         // 0.31 does not send
         int upperBound = sendBufferSize * 0.31;
         int lowerBound = sendBufferSize * 0.30;
+
+#else
+
+        // Mac OS, please update
+        int upperBound = sendBufferSize * 0.31;
+        int lowerBound = sendBufferSize * 0.30;
+
 #endif
 
         std::string message(upperBound, 'c');
@@ -397,6 +404,13 @@ namespace kt
         // We are checking if there is a scenario the packet is sent but not received at the remote
         int upperBound = initialSendBufferSize * 0.31;
         int lowerBound = initialSendBufferSize * 0.30;
+
+#else
+
+        // Mac OS, please update
+        int upperBound = initialSendBufferSize * 0.31;
+        int lowerBound = initialSendBufferSize * 0.30;
+
 #endif
         std::string message(upperBound, 'c');
         std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);

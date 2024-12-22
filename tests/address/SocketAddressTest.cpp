@@ -223,7 +223,7 @@ namespace kt
 #ifdef _WIN32
 		ASSERT_EQ(0, results.second);
 		ASSERT_FALSE(results.first.empty());
-#elif __linux__
+#else
 		ASSERT_NE(0, results.second);
 		ASSERT_TRUE(results.first.empty());
 #endif
@@ -234,7 +234,7 @@ namespace kt
 #ifdef _WIN32
 		ASSERT_EQ(0, results.second);
 		ASSERT_FALSE(results.first.empty());
-#elif __linux__
+#else
 		ASSERT_NE(0, results.second);
 		ASSERT_TRUE(results.first.empty());
 #endif

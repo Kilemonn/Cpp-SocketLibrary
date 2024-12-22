@@ -27,7 +27,7 @@
 #include <ws2bth.h>
 #include <ws2tcpip.h>
 
-#elif __linux__
+#else
 
 #include <sys/socket.h>
 #include <unistd.h>

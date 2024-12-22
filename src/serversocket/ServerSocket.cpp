@@ -28,7 +28,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-#elif __linux__
+#else
 
 #include <sys/socket.h>
 #include <netinet/in.h>

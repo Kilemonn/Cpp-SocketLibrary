@@ -12,7 +12,7 @@
 
 #include <WinSock2.h>
 
-#elif __linux__
+#else
 
 #include <sys/socket.h>
 #include <sys/time.h>
