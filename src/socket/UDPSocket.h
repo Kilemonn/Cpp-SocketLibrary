@@ -6,7 +6,6 @@
 #include <optional>
 #include <functional>
 
-#include "../enums/SocketType.h"
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"
 #include "../socketexceptions/SocketError.h"
@@ -32,9 +31,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/rfcomm.h>
-#include <bluetooth/hci.h>
 
 // Typedef to match the windows typedef since they are different underlying types
 typedef int SOCKET;

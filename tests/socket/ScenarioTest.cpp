@@ -18,7 +18,7 @@ namespace kt
         ASSERT_TRUE(bindResult.first);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
-        kt::ServerSocket server(SocketType::Wifi, std::nullopt, socket.getListeningPort().value());
+        kt::ServerSocket server(std::nullopt, socket.getListeningPort().value());
 
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
 
@@ -33,7 +33,7 @@ namespace kt
      */
     TEST(ScenarioTest, TCPThenUDPBindSamePort)
     {
-        kt::ServerSocket server(SocketType::Wifi);
+        kt::ServerSocket server;
 
         kt::UDPSocket socket;
         std::pair<bool, kt::SocketAddress> bindResult = socket.bind(std::nullopt, server.getPort());

@@ -11,14 +11,12 @@ set(HEADERS
         src/socket/Socket.h
         src/socket/TCPSocket.h
         src/socket/UDPSocket.h
-        src/socket/BluetoothSocket.h
         src/address/SocketAddress.h
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
         src/socketexceptions/TimeoutException.hpp
         src/socketexceptions/SocketError.h
 
-        src/enums/SocketType.h
         src/enums/InternetProtocolVersion.h
 )
 
@@ -27,7 +25,6 @@ set(SOURCE
         src/socket/Socket.cpp
         src/socket/TCPSocket.cpp
         src/socket/UDPSocket.cpp
-        src/socket/BluetoothSocket.cpp
         src/socketexceptions/SocketError.cpp
         src/address/SocketAddress.cpp
 )
