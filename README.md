@@ -32,7 +32,7 @@ A ServerSocket and Socket library for Windows and Linux that supports Wifi commu
 void tcpExample()
 {
     // Create a new Wifi ServerSocket
-    kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20, kt::InternetProtocolVersion::IPV6);
+    kt::ServerSocket server(std::nullopt, 56756, 20, kt::InternetProtocolVersion::IPV6);
 
     // Create new TCP socket
     kt::TCPSocket client("::1", server.getPort());
@@ -70,7 +70,7 @@ void udpExample()
 {
     // The socket receiving data must first be bound
     kt::UDPSocket socket;
-    socket.bind(37893, kt::InternetProtocolVersion::IPV4);
+    socket.bind(std::nullopt, 37893, kt::InternetProtocolVersion::IPV4);
 
     kt::UDPSocket client;
     const std::string testString = "UDP test string";
