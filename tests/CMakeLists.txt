@@ -22,7 +22,6 @@ set(SOURCE
         serversocket/ServerSocketTCPTest.cpp
         socket/TCPSocketTest.cpp
         socket/UDPSocketTest.cpp
-        socket/BluetoothSocketTest.cpp
 
         address/SocketAddressTest.cpp
 
@@ -43,7 +42,7 @@ if(CMAKE_HOST_UNIX)
    target_link_libraries(${PROJECT_NAME} PUBLIC
         gtest_main
         gtest
-        bluetooth
+        # bluetooth
         CppSocketLibrary # Parent project
     )
 endif()

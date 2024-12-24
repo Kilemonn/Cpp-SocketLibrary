@@ -2,7 +2,6 @@
 #include "Socket.h"
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
-#include "../enums/SocketType.h"
 #include "../socketexceptions/SocketError.h"
 
 #include <iostream>
@@ -30,10 +29,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/rfcomm.h>
-#include <bluetooth/hci.h>
-#include <bluetooth/hci_lib.h>
 #include <ifaddrs.h>
 #include <netpacket/packet.h>
 #include <netinet/in.h>

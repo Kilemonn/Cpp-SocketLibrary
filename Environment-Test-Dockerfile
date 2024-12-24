@@ -4,7 +4,8 @@ FROM alpine:3.20.0 AS alpine
 
 WORKDIR /alpine
 
-RUN apk update && apk upgrade && apk add g++ cmake make git bluez-dev glib-dev bluez
+# bluez-dev bluez
+RUN apk update && apk upgrade && apk add g++ cmake make git glib-dev
 
 COPY ./src ./src
 COPY ./tests ./tests
@@ -22,7 +23,7 @@ FROM ubuntu:24.10 AS ubuntu
 
 WORKDIR /ubuntu
 
-RUN apt update && apt upgrade -y && apt install g++ make cmake git libbluetooth-dev libglib2.0-dev bluez -y
+RUN apt update && apt upgrade -y && apt install g++ make cmake git libglib2.0-dev -y
 
 COPY ./src ./src
 COPY ./tests ./tests
