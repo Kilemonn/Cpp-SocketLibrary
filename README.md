@@ -1,6 +1,6 @@
 # Cpp-SocketLibrary
 
-A ServerSocket and Socket library for Windows and Linux aiming to support both Wifi and Bluetooth communication.
+A ServerSocket and Socket library for Windows and Linux that supports Wifi communication.
 
 ## Getting Started
 
@@ -8,12 +8,9 @@ A ServerSocket and Socket library for Windows and Linux aiming to support both W
 
 - [CMake](https://cmake.org/download/) and `make`
 
-The following **linux** dependencies are required:
-- `libbluetooth-dev`
-- `libglib2.0-dev`
-- `bluez`
-
 ### Building the Library and Running the Tests - Linux
+
+- Make sure `libglib2.0-dev` is installed
 
 1. To build the library, firstly run cmake: `cmake . -B build-linux` in the root directory of the repository (`CppSocketLibrary/`).
 2. Then move into the new `build-linux` folder: `cd build-linux`.
@@ -35,7 +32,7 @@ The following **linux** dependencies are required:
 void tcpExample()
 {
     // Create a new Wifi ServerSocket
-    kt::ServerSocket server(kt::SocketType::Wifi, 56756, 20, kt::InternetProtocolVersion::IPV6);
+    kt::ServerSocket server(std::nullopt, 56756, 20, kt::InternetProtocolVersion::IPV6);
 
     // Create new TCP socket
     kt::TCPSocket client("::1", server.getPort());
@@ -73,7 +70,7 @@ void udpExample()
 {
     // The socket receiving data must first be bound
     kt::UDPSocket socket;
-    socket.bind(37893, kt::InternetProtocolVersion::IPV4);
+    socket.bind(std::nullopt, 37893, kt::InternetProtocolVersion::IPV4);
 
     kt::UDPSocket client;
     const std::string testString = "UDP test string";

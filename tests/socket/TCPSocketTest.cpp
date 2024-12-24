@@ -23,7 +23,7 @@ namespace kt
         TCPSocket socket;
 
     protected:
-        TCPSocketTest() : serverSocket(SocketType::Wifi), socket(LOCALHOST, serverSocket.getPort()) { }
+        TCPSocketTest() : serverSocket(), socket(LOCALHOST, serverSocket.getPort()) { }
         void TearDown() override
         {
             socket.close();
@@ -297,7 +297,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, IPV6Address)
     {
-        ServerSocket ipv6ServerSocket(SocketType::Wifi, std::nullopt, 0, 20, InternetProtocolVersion::IPV6);
+        ServerSocket ipv6ServerSocket(std::nullopt, 0, 20, InternetProtocolVersion::IPV6);
         
         TCPSocket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort());
 
