@@ -42,7 +42,6 @@ if(CMAKE_HOST_UNIX)
    target_link_libraries(${PROJECT_NAME} PUBLIC
         gtest_main
         gtest
-        # bluetooth
         CppSocketLibrary # Parent project
     )
 endif()
