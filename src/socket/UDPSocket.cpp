@@ -124,17 +124,17 @@ namespace kt
 		return result > 0;
 	}
 
-	std::pair<bool, int> UDPSocket::sendTo(const std::string& message, const kt::SocketAddress& address, const int& flags)
+	int UDPSocket::sendTo(const std::string& message, const kt::SocketAddress& address, const int& flags)
 	{
 		return this->sendTo(&message[0], message.size(), address, flags);
 	}
 
-	std::pair<bool, int> UDPSocket::sendTo(const char* buffer, const int& bufferLength, const kt::SocketAddress& address, const int& flags)
+	int UDPSocket::sendTo(const char* buffer, const int& bufferLength, const kt::SocketAddress& address, const int& flags)
 	{
 		SOCKET tempSocket = socket(address.address.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 		if (kt::isInvalidSocket(tempSocket))
 		{
-			return std::make_pair(false, -2);
+			return -2;
 		}
 
 		if (preSendSocketOperation.has_value())
@@ -144,24 +144,24 @@ namespace kt
 
 		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
 		this->close(tempSocket);
-		return std::make_pair(result != -1, result);
+		return result;
 	}
 
-	std::pair<std::pair<bool, int>, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
 		return this->sendTo(hostname, port, &message[0], message.size(), flags, protocolVersion);
 	}
 
-	std::pair<std::pair<bool, int>, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const char* buffer, const int& bufferLength, const int& flags, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const char* buffer, const int& bufferLength, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
 		addrinfo hints = kt::createUdpHints(protocolVersion);
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname, port, hints);
 		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
 		{
-			return std::make_pair(std::make_pair(false, resolvedAddresses.second), kt::SocketAddress{});
+			return std::make_pair(0, kt::SocketAddress{});
 		}
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
-		std::pair<bool, int> result = this->sendTo(buffer, bufferLength, firstAddress, flags);
+		int result = this->sendTo(buffer, bufferLength, firstAddress, flags);
 		return std::make_pair(result, firstAddress);
 	}
 

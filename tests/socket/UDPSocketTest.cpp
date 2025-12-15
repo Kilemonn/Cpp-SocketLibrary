@@ -91,7 +91,7 @@ namespace kt
 
         ASSERT_FALSE(socket.ready());
         const std::string testString = "test";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first.first);
+        ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
         ASSERT_TRUE(socket.ready());
     }
 
@@ -108,11 +108,11 @@ namespace kt
         
         // This test is used to document behaviour and differences between the OS' and how they resolve "" hostnames
 #ifdef _WIN32
-        ASSERT_TRUE(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first.first);
+        ASSERT_EQ(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first, message.size());
         // Looks like windows resolves an address, but it is not received
         ASSERT_FALSE(socket.ready());
-#elif __linux__
-        ASSERT_FALSE(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first.first);
+#else
+        ASSERT_EQ(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first, 0);
         ASSERT_FALSE(socket.ready());
 #endif
         
@@ -128,7 +128,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first.first);
+        ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
@@ -148,7 +148,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first.first);
+        ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() - 1);
@@ -167,7 +167,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
-        ASSERT_TRUE(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first.first);
+        ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() + 1);
@@ -186,8 +186,8 @@ namespace kt
 
         UDPSocket client;
         std::string testString = "test";
-        std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString);
-        ASSERT_TRUE(sendResult.first.first);
+        std::pair<int, kt::SocketAddress> sendResult = client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString);
+        ASSERT_EQ(sendResult.first, testString.size());
 
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
@@ -197,7 +197,7 @@ namespace kt
 
         testString += testString + testString;
         // Now send using the address resolved and returned from the first call to sendTo()
-        ASSERT_TRUE(client.sendTo(testString, sendResult.second).first);
+        ASSERT_EQ(client.sendTo(testString, sendResult.second), testString.size());
         ASSERT_TRUE(socket.ready());
         recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
@@ -218,7 +218,7 @@ namespace kt
         ASSERT_TRUE(client.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV4).first);
 
         std::string message = std::to_string(client.getListeningPort().value());
-        ASSERT_TRUE(client.sendTo("127.0.0.1", socket.getListeningPort().value(), message).first.first);
+        ASSERT_EQ(client.sendTo("127.0.0.1", socket.getListeningPort().value(), message).first, message.size());
 
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> result = socket.receiveFrom(50);
         ASSERT_NE(result.second.first, -1);
@@ -227,7 +227,7 @@ namespace kt
         message = "UDPManipulateAddress";
         address.ipv4.sin_port = htons(client.getListeningPort().value());
 
-        ASSERT_TRUE(socket.sendTo(message, address).first);
+        ASSERT_EQ(socket.sendTo(message, address), message.size());
 
         result = client.receiveFrom(message.size());
         ASSERT_EQ(message, result.first.value());
@@ -241,7 +241,7 @@ namespace kt
         ASSERT_TRUE(client.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV6).first);
 
         std::string message = std::to_string(client.getListeningPort().value());
-        ASSERT_TRUE(client.sendTo("::1", socket.getListeningPort().value(), message).first.first);
+        ASSERT_EQ(client.sendTo("::1", socket.getListeningPort().value(), message).first, message.size());
 
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> result = socket.receiveFrom(50);
         ASSERT_NE(result.second.first, -1);
@@ -251,7 +251,7 @@ namespace kt
         // We can set the ipv4 address since its in the same position and data type in both ipv4 address and ipv6 address
         address.ipv4.sin_port = htons(client.getListeningPort().value());
 
-        ASSERT_TRUE(socket.sendTo(message, address).first);
+        ASSERT_EQ(socket.sendTo(message, address), message.size());
 
         result = client.receiveFrom(message.size());
         ASSERT_EQ(message, result.first.value());
@@ -267,7 +267,7 @@ namespace kt
         UDPSocket client;
         ASSERT_FALSE(socket.ready());
         const std::string message = "SendToBoundAddress";
-        ASSERT_TRUE(client.sendTo(message, bindResult.second).first);
+        ASSERT_EQ(client.sendTo(message, bindResult.second), message.size());
         ASSERT_TRUE(socket.ready());
     }
 
@@ -317,15 +317,15 @@ namespace kt
 #endif
 
         std::string message(upperBound, 'c');
-        std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
+        std::pair<int, kt::SocketAddress> sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         
-        ASSERT_EQ(-1, sendResult.first.second);
+        ASSERT_EQ(-1, sendResult.first);
         ASSERT_FALSE(socket.ready());
 
         message = std::string(lowerBound, 'c');
         sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
 
-        ASSERT_NE(-1, sendResult.first.second);
+        ASSERT_NE(-1, sendResult.first);
         ASSERT_TRUE(socket.ready());   
     }
 
@@ -399,19 +399,19 @@ namespace kt
         int lowerBound = initialSendBufferSize * 0.30;
 #endif
         std::string message(upperBound, 'c');
-        std::pair<std::pair<bool, int>, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
+        std::pair<int, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         if (sendBufferSize > initialSendBufferSize)
         {
             ASSERT_GT(sendBufferSize, receiveBufferSize);
             ASSERT_GE(sendBufferSize, receiveBufferSize * 2);
 
-            ASSERT_EQ(-1, sendResult.first.second);
+            ASSERT_EQ(-1, sendResult.first);
             ASSERT_FALSE(socket.ready());
 
             message = std::string(lowerBound, 'c');
             sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
 
-            ASSERT_NE(-1, sendResult.first.second);
+            ASSERT_NE(-1, sendResult.first);
             ASSERT_TRUE(socket.ready());
             
             std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recvResult = socket.receiveFrom(receiveBufferSize * 2);

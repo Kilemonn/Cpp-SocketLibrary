@@ -86,12 +86,12 @@ namespace kt
         TCPSocket acceptedFromAddress = serverSocket.acceptTCPConnection();
 
         std::string sentFromAddress = "sentFromAddress";
-        ASSERT_TRUE(fromAddress.send(sentFromAddress).first);
+        ASSERT_EQ(fromAddress.send(sentFromAddress), sentFromAddress.size());
         ASSERT_TRUE(acceptedFromAddress.ready());
         ASSERT_EQ(sentFromAddress, acceptedFromAddress.receiveAmount(sentFromAddress.size()));
 
         std::string sentFromServer = "sentFromServer";
-        ASSERT_TRUE(acceptedFromAddress.send(sentFromServer).first);
+        ASSERT_EQ(acceptedFromAddress.send(sentFromServer), sentFromServer.size());
         ASSERT_TRUE(fromAddress.ready());
         ASSERT_EQ(sentFromServer, fromAddress.receiveAmount(sentFromServer.size()));
     }
@@ -123,7 +123,7 @@ namespace kt
         ASSERT_EQ(0, std::memcmp(&initialAddress, &copiedAddress, sizeof(initialAddress)));
 
         const std::string testString = "Test";
-        ASSERT_TRUE(copiedSocket.send(testString).first);
+        ASSERT_EQ(copiedSocket.send(testString), testString.size());
         const std::string response = server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
 
@@ -148,7 +148,7 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
-        ASSERT_TRUE(socket.send(testString).first);
+        ASSERT_EQ(socket.send(testString), testString.size());
         ASSERT_TRUE(server.ready());
         std::string response = server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
@@ -161,7 +161,7 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
-        ASSERT_TRUE(socket.send(testString + testString + testString).first);
+        ASSERT_EQ(socket.send(testString + testString + testString), testString.size() * 3);
         ASSERT_TRUE(server.ready());
         std::string response = server.receiveAll();
         ASSERT_EQ(response, testString + testString + testString);
@@ -175,7 +175,7 @@ namespace kt
         const std::string testString = "test";
         char delimiter = '&';
         ASSERT_FALSE(socket.ready());
-        ASSERT_TRUE(server.send(testString + testString + delimiter + testString).first);
+        ASSERT_EQ(server.send(testString + testString + delimiter + testString), (testString.size() * 3) + 1);
         ASSERT_TRUE(socket.ready());
         std::string response = socket.receiveToDelimiter(delimiter);
         ASSERT_TRUE(socket.ready());
@@ -194,7 +194,7 @@ namespace kt
         TCPSocket server = serverSocket.acceptTCPConnection();
         const std::string testString = "test";
         ASSERT_FALSE(socket.ready());
-        ASSERT_TRUE(server.send(testString).first);
+        ASSERT_EQ(server.send(testString), testString.size());
         ASSERT_TRUE(socket.ready());
         std::optional<char> response = socket.get();
         ASSERT_EQ(*response, 't');
@@ -245,11 +245,11 @@ namespace kt
 
         const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_CustomHandlerFunction";
         // The first send does not detect the disconnection?
-        std::pair<bool, int> result = socket.send(message);
-        ASSERT_TRUE(result.first);
+        int result = socket.send(message);
+        ASSERT_EQ(result, message.size());
         
         result = socket.send(message);
-        ASSERT_FALSE(result.first);
+        ASSERT_EQ(-1, result);
 
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(100ms);
@@ -266,11 +266,11 @@ namespace kt
 
         const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_MSG_NOSIGNALFlag";
         // Make sure you call the correct override of the method
-        std::pair<bool, int> result = socket.send(message, MSG_NOSIGNAL);
-        ASSERT_TRUE(result.first);
+        int result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_EQ(result, message.size());
         
         result = socket.send(message, MSG_NOSIGNAL);
-        ASSERT_FALSE(result.first);
+        ASSERT_EQ(-1, result);
     }
 
     TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_IgnoreSignals)
@@ -283,11 +283,11 @@ namespace kt
 
         const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_IgnoreSignals";
         // Make sure you call the correct override of the method
-        std::pair<bool, int> result = socket.send(message, MSG_NOSIGNAL);
-        ASSERT_TRUE(result.first);
+        int result = socket.send(message, MSG_NOSIGNAL);
+        ASSERT_EQ(result, message.size());
         
         result = socket.send(message, MSG_NOSIGNAL);
-        ASSERT_FALSE(result.first);
+        ASSERT_EQ(-1, result);
 
         // Revert behaviour for other tests
         ASSERT_NE(std::signal(SIGPIPE, SIG_DFL), SIG_ERR);
@@ -306,7 +306,7 @@ namespace kt
         ASSERT_TRUE(ipv6Server.connected());
 
         const std::string testString = "Test";
-        ASSERT_TRUE(ipv6Socket.send(testString).first);
+        ASSERT_EQ(ipv6Socket.send(testString), testString.size());
         const std::string response = ipv6Server.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
 
@@ -354,10 +354,8 @@ namespace kt
 
         std::string message(upperBound, 'c');
         ASSERT_GT(message.size(), receiveBufferSize);
-
-        std::pair<bool, int> sendResult = socket.send(message);
         
-        ASSERT_EQ(message.size(), sendResult.second);
+        ASSERT_EQ(socket.send(message), message.size());
         ASSERT_TRUE(server.ready());
 
         std::string recieved = server.receiveAmount(upperBound);

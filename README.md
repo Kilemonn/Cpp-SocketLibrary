@@ -43,7 +43,7 @@ void tcpExample()
     // Send string with text before and after the delimiter
     const std::string testString = "TCP Delimiter Test";
     const char delimiter = '~';
-    if (!client.send(testString + delimiter + "other string").first)
+    if (client.send(testString + delimiter + "other string") == 0)
     {
         std::cout << "Failed to send test string" << std::endl;
         return;
@@ -74,7 +74,7 @@ void udpExample()
 
     kt::UDPSocket client;
     const std::string testString = "UDP test string";
-    if (!client.sendTo("localhost", 37893, testString).first.first)
+    if (client.sendTo("localhost", 37893, testString).first == 0)
     {
         std::cout << "Failed to send to address." << std::endl;
         return;
@@ -114,7 +114,7 @@ int main()
 ...
 kt::TCPSocket socket; // Initialise properly
 ...
-if (!socket.send(std::string(message), MSG_NOSIGNAL).first)
+if (socket.send(std::string(message), MSG_NOSIGNAL) == 0)
 {
     // Remote has closed connection, you can choose to close the current socket or any other work that is required when the connection is broken
 }

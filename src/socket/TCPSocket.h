@@ -62,8 +62,8 @@ namespace kt
 			int pollSocket(SOCKET socket, const long& = 100) const;
 			bool ready(const unsigned long = 100) const;
 			bool connected(const unsigned long = 100) const;
-			std::pair<bool, int> send(const char*, const int&, const int& = 0) const;
-			std::pair<bool, int> send(const std::string&, const int& = 0) const;
+			int send(const char*, const int&, const int& = 0) const;
+			int send(const std::string&, const int& = 0) const;
 
 			SOCKET getSocket() const;
             std::string getHostname() const;

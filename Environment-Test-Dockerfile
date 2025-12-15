@@ -1,6 +1,6 @@
 # docker build -f .\Environment-Test-Dockerfile .
 
-FROM alpine:3.20.0 AS alpine
+FROM alpine:3.23.0 AS alpine
 
 WORKDIR /alpine
 
