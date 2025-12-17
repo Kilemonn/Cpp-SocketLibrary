@@ -19,7 +19,7 @@ RUN ["make", "all"]
 WORKDIR /alpine/build/tests
 RUN ["./CppSocketLibraryTests"]
 
-FROM ubuntu:24.10 AS ubuntu
+FROM ubuntu:24.04 AS ubuntu
 
 WORKDIR /ubuntu
 
