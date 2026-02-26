@@ -54,6 +54,10 @@ namespace kt
         std::function setReuseAddrOption = [](SOCKET& s) {
             const int enableOption = 1;
             ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)));
+#ifdef __APPLE__
+            // SO_REUSEPORT is not available in Windows and only required for MacOS
+            ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (const char*)&enableOption, sizeof(enableOption)));
+#endif
         };
 
         kt::UDPSocket socket;

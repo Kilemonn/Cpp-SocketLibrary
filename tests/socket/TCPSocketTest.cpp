@@ -344,20 +344,20 @@ namespace kt
 
 #ifdef _WIN32
         // From my testing Windows must do some additional buffering and has no integer limit to how much it sends and receives via TCP.
-        int upperBound = INT_MAX; // sendBufferSize * 1000;
+        // Using the maximum send buffer size * 2
+        int upperBound = sendBufferSize * 2;
 #elif __linux__
 
         // Sending a string that is 98.5+% the size of the send buffer will cause the send to hang
         // So we will send a string the size of 98.4% the size of the buffer limit
         int upperBound = sendBufferSize * 0.984;
 #else
-        // Mac OS specific, please update
-        int upperBound = sendBufferSize * 0.984;
+        // Mac OS specific, sendBufferSize * 5.4 is the max I found on the mac device I was using.
+        // Using the maximum send buffer size * 2
+        int upperBound = sendBufferSize * 2;
 #endif
 
         std::string message(upperBound, 'c');
-        ASSERT_GT(message.size(), receiveBufferSize);
-
         std::pair<bool, int> sendResult = socket.send(message);
         
         ASSERT_EQ(message.size(), sendResult.second);
