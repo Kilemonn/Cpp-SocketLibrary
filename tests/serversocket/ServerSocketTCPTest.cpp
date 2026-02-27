@@ -124,12 +124,13 @@ namespace kt
     */
     TEST_F(ServerSocketTCPTest, TestServerSocketAcceptTimeout)
     {
+        const int seconds = 5;
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         EXPECT_THROW({
-            TCPSocket serverClient = serverSocket.acceptTCPConnection(1 * 1000000);
+            TCPSocket serverClient = serverSocket.acceptTCPConnection(seconds * 1000000);
         }, TimeoutException);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        ASSERT_GE(1, std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
+        ASSERT_GE(seconds, std::chrono::duration_cast<std::chrono::seconds>(end - start).count());
     }
 }

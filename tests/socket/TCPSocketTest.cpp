@@ -46,11 +46,23 @@ namespace kt
     /*
      * Ensure that an empty hostname throws an exception.
      */
-    TEST_F(TCPSocketTest, TCPConstructor_NoHostname)
+    TEST_F(TCPSocketTest, TCPConstructor_EmptyHostname)
     {
+        const unsigned short serverPort = serverSocket.getPort();
+        std::function<void()> testFunction = [serverPort]() {
+            TCPSocket emptyHostname("", serverPort);
+        };
+
+        // Mac OS is able to resolve the "" hostname correctly
+#if defined(__APPLE__)
+        ASSERT_NO_THROW({
+            testFunction();
+        });
+#else
         ASSERT_THROW({
-            TCPSocket emptyHostname("", serverSocket.getPort());
+            testFunction();
         }, SocketException);
+#endif
     }
     
     /*

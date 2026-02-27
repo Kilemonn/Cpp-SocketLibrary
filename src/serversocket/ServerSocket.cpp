@@ -142,7 +142,7 @@ namespace kt
         if (bind(this->socketDescriptor, &this->serverAddress.address, socketSize) == -1)
         {
             this->close();
-            throw kt::BindingException("Error binding connection, the port " + std::to_string(this->port) + " is already being used: " + getErrorCode());
+            throw kt::BindingException("Error binding connection, the port " + std::to_string(kt::getPortNumber(this->serverAddress)) + " is already being used: " + getErrorCode());
         }
 
         if (this->port == 0)

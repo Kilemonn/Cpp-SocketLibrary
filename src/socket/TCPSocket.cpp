@@ -91,7 +91,7 @@ namespace kt
 
 		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
 		// we will return, otherwise we will throw is we are unable to connect to any.
-		for (kt::SocketAddress address : addresses.first)
+		for (const kt::SocketAddress& address : addresses.first)
 		{
 			this->socketDescriptor = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);
 			if (!isInvalidSocket(this->socketDescriptor))
@@ -205,7 +205,7 @@ namespace kt
 
 	int TCPSocket::receiveAmount(char* buffer, const unsigned int amountToReceive, const int& flags) const
 	{
-		int counter = 0;
+		unsigned int counter = 0;
 		if (amountToReceive == 0)
 		{
 			return counter;
