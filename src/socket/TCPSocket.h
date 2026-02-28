@@ -57,7 +57,7 @@ namespace kt
 			TCPSocket(const kt::TCPSocket&);
 			kt::TCPSocket& operator=(const kt::TCPSocket&);
 			
-			void close() const;
+			void close();
 			
 			int pollSocket(SOCKET socket, const long& = 100) const;
 			bool ready(const unsigned long = 100) const;

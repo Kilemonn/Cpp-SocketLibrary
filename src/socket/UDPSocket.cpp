@@ -37,11 +37,11 @@ namespace kt
 	 * The socket that is listening for new connections will need to call this before they begin listening (accepting connections).
 	 * This ensures the socket is bound to the port and can receive new connections. *Only a single process can be bound to a single port at one time*.
 	 *
-	 * @return bool - true if the socket was bound successfully, otherwise false
+	 * @return the int result of the call to bind(), if this is -1 then there was an error. Along with the bound address if the result code is not an error.
 	 *
 	 * @throw BindingException - if the socket fails to bind
 	 */
-	std::pair<bool, kt::SocketAddress> kt::UDPSocket::bind(const std::optional<std::string>& localHostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const std::optional<std::function<void(SOCKET&)>>& preBindSocketOperation)
+	std::pair<int, kt::SocketAddress> kt::UDPSocket::bind(const std::optional<std::string>& localHostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const std::optional<std::function<void(SOCKET&)>>& preBindSocketOperation)
 	{
 		if (this->isUdpBound())
 		{
@@ -93,7 +93,7 @@ namespace kt
 		this->bound = bindResult != -1;
 		if (!this->bound)
 		{
-			throw kt::BindingException("Error binding connection, the port " + std::to_string(port) + " is already being used. Response code from ::bind()" + std::to_string(bindResult) + ". Latest Error code: " + getErrorCode());
+			return std::make_pair(bindResult, kt::SocketAddress{});
 		}
 
 		if (port == 0)
@@ -106,12 +106,13 @@ namespace kt
 			this->listeningPort = std::make_optional(port);
 		}
 
-		return std::make_pair(this->bound, firstAddress);
+		return std::make_pair(bindResult, firstAddress);
 	}
 
 	void UDPSocket::close()
 	{
-		this->close(this->receiveSocket);
+		kt::close(this->receiveSocket);
+		this->receiveSocket = kt::getInvalidSocketValue();
 		
 		this->bound = false;
 		this->listeningPort = std::nullopt;
@@ -143,7 +144,7 @@ namespace kt
 		}
 
 		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
-		this->close(tempSocket);
+		kt::close(tempSocket);
 		return result;
 	}
 
@@ -251,11 +252,5 @@ namespace kt
 
 		this->listeningPort = std::make_optional(kt::getPortNumber(address.first.value()));
 	}
-
-	void UDPSocket::close(SOCKET socket)
-	{
-		kt::close(socket);
-	}
-	
 }
 

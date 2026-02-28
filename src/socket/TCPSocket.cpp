@@ -107,7 +107,6 @@ namespace kt
 			}
 
 			this->close();
-			this->socketDescriptor = getInvalidSocketValue();
 		}
 		
 		throw kt::SocketException("Unable to connect to resolved addresses for provided hostname [" + this->hostname + ":" + std::to_string(this->port) + "] " + getErrorCode());
@@ -121,9 +120,10 @@ namespace kt
 		return res;
 	}
 
-	void TCPSocket::close() const
+	void TCPSocket::close()
 	{
 		kt::close(this->socketDescriptor);
+		this->socketDescriptor = getInvalidSocketValue();
 	}
 
 	bool TCPSocket::ready(const unsigned long timeout) const

@@ -94,6 +94,10 @@ namespace kt
         ASSERT_EQ(acceptedFromAddress.send(sentFromServer), sentFromServer.size());
         ASSERT_TRUE(fromAddress.ready());
         ASSERT_EQ(sentFromServer, fromAddress.receiveAmount(sentFromServer.size()));
+
+        server.close();
+        fromAddress.close();
+        acceptedFromAddress.close();
     }
 
     // Ensure we throw a SocketException if we cannot construct a TCP socket from the provided SocketAddress
@@ -104,6 +108,8 @@ namespace kt
 
         kt::SocketAddress address{};
         ASSERT_THROW(TCPSocket fromEmptyAddress(address), SocketException);
+
+        server.close();
     }
     
     /*
@@ -360,5 +366,7 @@ namespace kt
 
         std::string recieved = server.receiveAmount(upperBound);
         ASSERT_EQ(message, recieved);
+
+        server.close();
     }
 }

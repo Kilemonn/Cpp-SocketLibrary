@@ -43,6 +43,11 @@ namespace kt
 	 */
 	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal)
 	{
+		if (kt::isInvalidSocket(socketDescriptor))
+		{
+			return -1;
+		}
+
 		fd_set sReady{};
 		timeval timeoutVal{};
 		if (timeOutVal == nullptr)

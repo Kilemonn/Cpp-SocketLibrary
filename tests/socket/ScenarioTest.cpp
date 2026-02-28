@@ -14,8 +14,8 @@ namespace kt
     TEST(ScenarioTest, UDPThenTCPBindSamePort)
     {
         kt::UDPSocket socket;
-        std::pair<bool, kt::SocketAddress> bindResult = socket.bind();
-        ASSERT_TRUE(bindResult.first);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind();
+        ASSERT_EQ(0, bindResult.first);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
         kt::ServerSocket server(std::nullopt, socket.getListeningPort().value());
@@ -36,8 +36,8 @@ namespace kt
         kt::ServerSocket server;
 
         kt::UDPSocket socket;
-        std::pair<bool, kt::SocketAddress> bindResult = socket.bind(std::nullopt, server.getPort());
-        ASSERT_TRUE(bindResult.first);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, server.getPort());
+        ASSERT_EQ(0, bindResult.first);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
@@ -57,12 +57,12 @@ namespace kt
         };
 
         kt::UDPSocket socket;
-        std::pair<bool, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::Any, setReuseAddrOption);
-        ASSERT_TRUE(bindResult.first);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::Any, setReuseAddrOption);
+        ASSERT_EQ(0, bindResult.first);
 
         kt::UDPSocket socket2;
         bindResult = socket2.bind(std::nullopt, socket.getListeningPort().value(), kt::InternetProtocolVersion::Any, setReuseAddrOption);
-        ASSERT_TRUE(bindResult.first);
+        ASSERT_EQ(0, bindResult.first);
 
         ASSERT_EQ(socket.getListeningPort().value(), socket2.getListeningPort().value());
 
