@@ -80,10 +80,10 @@ namespace kt
     TEST_F(TCPSocketTest, TCPConstructor_FromAddress)
     {
         // Accept current incoming connection
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
 
         TCPSocket fromAddress(serverSocket.getSocketAddress());
-        TCPSocket acceptedFromAddress = serverSocket.acceptTCPConnection();
+        TCPSocket acceptedFromAddress = serverSocket.accept();
 
         std::string sentFromAddress = "sentFromAddress";
         ASSERT_EQ(fromAddress.send(sentFromAddress), sentFromAddress.size());
@@ -100,7 +100,7 @@ namespace kt
     TEST_F(TCPSocketTest, TCPConstructor_FromEmptyAddress)
     {
         // Accept the incoming connection to make sure the server is ready
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
 
         kt::SocketAddress address{};
         ASSERT_THROW(TCPSocket fromEmptyAddress(address), SocketException);
@@ -111,7 +111,7 @@ namespace kt
      */
     TEST_F(TCPSocketTest, TCPCopyConstructor)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         TCPSocket copiedSocket(socket);
         
         ASSERT_EQ(socket.getSocket(), copiedSocket.getSocket());
@@ -136,7 +136,7 @@ namespace kt
      */
     TEST_F(TCPSocketTest, TCPConnected)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         ASSERT_TRUE(socket.connected());
         ASSERT_TRUE(server.connected());
 
@@ -145,7 +145,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, TCPReceiveAmount)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
         ASSERT_EQ(socket.send(testString), testString.size());
@@ -158,7 +158,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, TCPReceiveAll)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
         ASSERT_EQ(socket.send(testString + testString + testString), testString.size() * 3);
@@ -171,7 +171,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, TCPReceiveToDelimiter)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         const std::string testString = "test";
         char delimiter = '&';
         ASSERT_FALSE(socket.ready());
@@ -191,7 +191,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, TCPGet)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         const std::string testString = "test";
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(server.send(testString), testString.size());
@@ -217,7 +217,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, TCPClose)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         ASSERT_TRUE(socket.connected());
         socket.close();
         ASSERT_FALSE(socket.connected());
@@ -238,7 +238,7 @@ namespace kt
     {
         ASSERT_NE(std::signal(SIGPIPE, handleSignal), SIG_ERR);
 
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         server.close();
 
         ASSERT_FALSE(sigPipeHandlerWasCalled);
@@ -261,7 +261,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, TestLinuxSendToClosedSocket_SIGPIPE_MSG_NOSIGNALFlag)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         server.close();
 
         const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_MSG_NOSIGNALFlag";
@@ -278,7 +278,7 @@ namespace kt
         // Ignore SIGPIPE signals
         ASSERT_NE(std::signal(SIGPIPE, SIG_IGN), SIG_ERR);
 
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
         server.close();
 
         const std::string message = "TestLinuxSendToClosedSocket_SIGPIPE_IgnoreSignals";
@@ -302,7 +302,7 @@ namespace kt
         TCPSocket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort());
 
         // Accept ipv6 connnection
-        TCPSocket ipv6Server = ipv6ServerSocket.acceptTCPConnection();
+        TCPSocket ipv6Server = ipv6ServerSocket.accept();
         ASSERT_TRUE(ipv6Server.connected());
 
         const std::string testString = "Test";
@@ -320,7 +320,7 @@ namespace kt
      */
     TEST_F(TCPSocketTest, LargePayloadSendAndRecv)
     {
-        TCPSocket server = serverSocket.acceptTCPConnection();
+        TCPSocket server = serverSocket.accept();
 
         int receiveBufferSize = 0;
         socklen_t size = sizeof(receiveBufferSize);

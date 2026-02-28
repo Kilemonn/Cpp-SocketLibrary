@@ -41,7 +41,7 @@ namespace kt
 	 *
 	 * @throw BindingException - if the socket fails to bind
 	 */
-	std::pair<bool, kt::SocketAddress> kt::UDPSocket::bind(const std::optional<std::string>& localHostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<bool, kt::SocketAddress> kt::UDPSocket::bind(const std::optional<std::string>& localHostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const std::optional<std::function<void(SOCKET&)>>& preBindSocketOperation)
 	{
 		if (this->isUdpBound())
 		{
@@ -226,11 +226,6 @@ namespace kt
     void UDPSocket::setPreSendSocketOperation(std::function<void(SOCKET&)> newOperation)
     {
 		this->preSendSocketOperation = std::make_optional(newOperation);
-    }
-
-	void UDPSocket::setPreBindSocketOperation(std::function<void(SOCKET&)> newOperation)
-    {
-		this->preBindSocketOperation = std::make_optional(newOperation);
     }
 
     int UDPSocket::pollSocket(SOCKET socket, const long& timeout) const

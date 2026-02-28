@@ -47,7 +47,6 @@ namespace kt
 		kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 		std::optional<unsigned short> listeningPort = std::nullopt;
 		std::optional<std::function<void(SOCKET&)>> preSendSocketOperation = std::nullopt;
-		std::optional<std::function<void(SOCKET&)>> preBindSocketOperation = std::nullopt;
 
 		int pollSocket(SOCKET socket, const long& = 1000) const;
 		void initialiseListeningPortNumber();
@@ -58,7 +57,7 @@ namespace kt
 		UDPSocket(const kt::UDPSocket&);
 		kt::UDPSocket& operator=(const kt::UDPSocket&);
 
-		std::pair<bool, kt::SocketAddress> bind(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+		std::pair<bool, kt::SocketAddress> bind(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 		void close();
 		bool ready(const unsigned long = 100) const;
 
@@ -76,7 +75,6 @@ namespace kt
 		std::optional<unsigned short> getListeningPort() const;
 
 		void setPreSendSocketOperation(std::function<void(SOCKET&)>);
-		void setPreBindSocketOperation(std::function<void(SOCKET&)>);
 	};
 
 } // End namespace kt 
