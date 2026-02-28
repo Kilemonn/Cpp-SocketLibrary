@@ -46,7 +46,7 @@ namespace kt
 			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {}; // The remote address that we will be connected to
 
-			void constructWifiSocket();
+			void constructSocket();
 
 		public:
 			TCPSocket() = delete;

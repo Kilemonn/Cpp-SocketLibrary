@@ -49,7 +49,7 @@ namespace kt
     {
         ServerSocket copiedServer = serverSocket;
         serverSocket.close();
-        ASSERT_THROW(copiedServer.acceptTCPConnection(), SocketException);
+        ASSERT_THROW(copiedServer.accept(), SocketException);
     }
 
     /*
@@ -64,7 +64,7 @@ namespace kt
 
         TCPSocket client(kt::getLocalAddress(serverSocket.getInternetProtocolVersion()), serverSocket.getPort());
 
-        TCPSocket serverClient = server2.acceptTCPConnection();
+        TCPSocket serverClient = server2.accept();
         const std::string testString = "test";
 
         ASSERT_EQ(client.send(testString), testString.size());
@@ -84,7 +84,7 @@ namespace kt
         ServerSocket ipv6Server(std::nullopt, 0, 20, InternetProtocolVersion::IPV6);
 
         TCPSocket client("0000:0000:0000:0000:0000:0000:0000:0001", ipv6Server.getPort());
-        TCPSocket serverClient = ipv6Server.acceptTCPConnection();
+        TCPSocket serverClient = ipv6Server.accept();
 
         const std::string testString = "test";
         ASSERT_EQ(client.send(testString), testString.size());
@@ -113,7 +113,7 @@ namespace kt
         
         // Make sure theres no incoming connections
         EXPECT_THROW({
-            ipv4Server.acceptTCPConnection(1000);
+            ipv4Server.accept(1000);
         }, TimeoutException);
 
         ipv4Server.close();
@@ -126,7 +126,7 @@ namespace kt
     {
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         EXPECT_THROW({
-            TCPSocket serverClient = serverSocket.acceptTCPConnection(1 * 1000000);
+            TCPSocket serverClient = serverSocket.accept(1 * 1000000);
         }, TimeoutException);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

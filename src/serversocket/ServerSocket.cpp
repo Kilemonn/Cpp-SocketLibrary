@@ -48,13 +48,13 @@ namespace kt
      * @throw SocketException - If the ServerSocket is unable to be instanciated or begin listening.
      * @throw BindingException - If the ServerSocket is unable to bind to the specific port specified.
      */
-    kt::ServerSocket::ServerSocket(const std::optional<std::string>& localHostname, const unsigned short& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion)
+    kt::ServerSocket::ServerSocket(const std::optional<std::string>& localHostname, const unsigned short& port, const unsigned int& connectionBacklogSize, const kt::InternetProtocolVersion protocolVersion, const std::optional<std::function<void(SOCKET&)>>& preBindSocketOperation)
     {
         this->socketDescriptor = getInvalidSocketValue();
         this->port = port;
         this->protocolVersion = protocolVersion;
 
-        this->constructSocket(localHostname, connectionBacklogSize);
+        this->constructSocket(localHostname, connectionBacklogSize, preBindSocketOperation);
     }
 
     /**
@@ -87,12 +87,7 @@ namespace kt
         return *this;
     }
 
-    void kt::ServerSocket::constructSocket(const std::optional<std::string>& localHostname, const unsigned int& connectionBacklogSize)
-    {
-        this->constructWifiSocket(localHostname, connectionBacklogSize);
-    }
-
-    void kt::ServerSocket::constructWifiSocket(const std::optional<std::string>& localHostname, const unsigned int& connectionBacklogSize)
+    void kt::ServerSocket::constructSocket(const std::optional<std::string>& localHostname, const unsigned int& connectionBacklogSize, const std::optional<std::function<void(SOCKET&)>>& preBindSocketOperation)
     {
 
 #ifdef _WIN32
@@ -138,6 +133,11 @@ namespace kt
             }
         }
 #endif
+        if (preBindSocketOperation.has_value())
+        {
+            preBindSocketOperation.value()(this->socketDescriptor);
+        }
+
         socklen_t socketSize = sizeof(this->serverAddress);
         if (bind(this->socketDescriptor, &this->serverAddress.address, socketSize) == -1)
         {
@@ -197,7 +197,7 @@ namespace kt
         return this->protocolVersion;
     }
 
-    kt::TCPSocket kt::ServerSocket::acceptTCPConnection(const long& timeout) const
+    kt::TCPSocket kt::ServerSocket::accept(const long& timeout) const
     {
         if (timeout > 0)
         {

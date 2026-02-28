@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <functional>
 
 #include "../address/SocketAddress.h"
 #include "../socket/TCPSocket.h"
@@ -42,16 +43,15 @@ namespace kt
 			kt::SocketAddress serverAddress = {};
 			SOCKET socketDescriptor = getInvalidSocketValue();
 
-			void constructSocket(const std::optional<std::string>&, const unsigned int&);
-			void constructWifiSocket(const std::optional<std::string>& localHostname, const unsigned int&);
+			void constructSocket(const std::optional<std::string>& localHostname, const unsigned int&, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 			void initialisePortNumber();
 
 		public:
-			ServerSocket(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+			ServerSocket(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const unsigned int& = 20, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 			ServerSocket(const kt::ServerSocket&);
 			kt::ServerSocket& operator=(const kt::ServerSocket&);
 
-			kt::TCPSocket acceptTCPConnection(const long& = 0) const;
+			kt::TCPSocket accept(const long& = 0) const;
 
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;
 			unsigned short getPort() const;

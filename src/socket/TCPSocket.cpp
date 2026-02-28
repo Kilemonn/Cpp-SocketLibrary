@@ -12,7 +12,7 @@ namespace kt
 		this->port = port;
 		this->protocolVersion = protocolVersion;
 
-		constructWifiSocket();
+		constructSocket();
 	}
 
 	TCPSocket::TCPSocket(const SOCKET& socket, const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const kt::SocketAddress& acceptedAddress)
@@ -70,7 +70,7 @@ namespace kt
 		return *this;
 	}
 
-	void TCPSocket::constructWifiSocket()
+	void TCPSocket::constructSocket()
 	{
 #ifdef _WIN32
 		WSADATA wsaData{};
