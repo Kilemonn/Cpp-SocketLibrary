@@ -57,13 +57,11 @@ namespace kt
         };
 
         kt::UDPSocket socket;
-        socket.setPreBindSocketOperation(setReuseAddrOption);
-        std::pair<bool, kt::SocketAddress> bindResult = socket.bind();
+        std::pair<bool, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::Any, setReuseAddrOption);
         ASSERT_TRUE(bindResult.first);
 
         kt::UDPSocket socket2;
-        socket2.setPreBindSocketOperation(setReuseAddrOption);
-        bindResult = socket2.bind(std::nullopt, socket.getListeningPort().value());
+        bindResult = socket2.bind(std::nullopt, socket.getListeningPort().value(), kt::InternetProtocolVersion::Any, setReuseAddrOption);
         ASSERT_TRUE(bindResult.first);
 
         ASSERT_EQ(socket.getListeningPort().value(), socket2.getListeningPort().value());
