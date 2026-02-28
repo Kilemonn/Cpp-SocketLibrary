@@ -50,14 +50,13 @@ namespace kt
 
 		int pollSocket(SOCKET socket, const long& = 1000) const;
 		void initialiseListeningPortNumber();
-		void close(SOCKET socket);
 
 	public:
 		UDPSocket() = default;
 		UDPSocket(const kt::UDPSocket&);
 		kt::UDPSocket& operator=(const kt::UDPSocket&);
 
-		std::pair<bool, kt::SocketAddress> bind(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
+		std::pair<int, kt::SocketAddress> bind(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 		void close();
 		bool ready(const unsigned long = 100) const;
 

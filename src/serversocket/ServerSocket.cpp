@@ -238,6 +238,7 @@ namespace kt
     void ServerSocket::close()
     {
         kt::close(this->socketDescriptor);
+        this->socketDescriptor = getInvalidSocketValue();
     }
 
 } // End namespace kt
