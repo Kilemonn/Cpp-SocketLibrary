@@ -144,7 +144,7 @@ namespace kt
 		}
 
 		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
-		this->close(tempSocket);
+		kt::close(tempSocket);
 		return result;
 	}
 
