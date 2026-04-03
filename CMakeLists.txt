@@ -8,10 +8,15 @@ project(${PROJECT_NAME} VERSION 0.6.1)
 
 set(HEADERS
         src/serversocket/ServerSocket.h
+        src/serversocket/TCPServerSocket.h
         src/socket/Socket.h
+        src/socket/ConnectionLessSocket.h
+        src/socket/ConnectionOrientedSocket.h
         src/socket/TCPSocket.h
         src/socket/UDPSocket.h
         src/address/SocketAddress.h
+        src/ipc/IPCSocket.h
+        src/ipc/IPCServerSocket.h
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
         src/socketexceptions/TimeoutException.hpp
@@ -21,12 +26,15 @@ set(HEADERS
 )
 
 set(SOURCE
-        src/serversocket/ServerSocket.cpp
+        src/serversocket/TCPServerSocket.cpp
         src/socket/Socket.cpp
+        src/socket/ConnectionOrientedSocket.cpp
         src/socket/TCPSocket.cpp
         src/socket/UDPSocket.cpp
         src/socketexceptions/SocketError.cpp
         src/address/SocketAddress.cpp
+        src/ipc/IPCSocket.cpp
+        src/ipc/IPCServerSocket.cpp
 )
 
 # Project Configuration - Adding as a lib

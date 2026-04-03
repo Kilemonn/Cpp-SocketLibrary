@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "../../src/socket/UDPSocket.h"
-#include "../../src/serversocket/ServerSocket.h"
+#include "../../src/serversocket/TCPServerSocket.h"
 
 namespace kt
 {
@@ -18,7 +18,7 @@ namespace kt
         ASSERT_EQ(0, bindResult.first);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
-        kt::ServerSocket server(std::nullopt, socket.getListeningPort().value());
+        kt::TCPServerSocket server(std::nullopt, socket.getListeningPort().value());
 
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
 
@@ -33,7 +33,7 @@ namespace kt
      */
     TEST(ScenarioTest, TCPThenUDPBindSamePort)
     {
-        kt::ServerSocket server;
+        kt::TCPServerSocket server;
 
         kt::UDPSocket socket;
         std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, server.getPort());

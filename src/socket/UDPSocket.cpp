@@ -111,7 +111,7 @@ namespace kt
 
 	void UDPSocket::close()
 	{
-		kt::close(this->receiveSocket);
+		Socket::close(this->receiveSocket);
 		this->receiveSocket = kt::getInvalidSocketValue();
 		
 		this->bound = false;
@@ -144,7 +144,7 @@ namespace kt
 		}
 
 		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
-		kt::close(tempSocket);
+		Socket::close(tempSocket);
 		return result;
 	}
 
@@ -237,7 +237,7 @@ namespace kt
 		}
 
 		timeval timeOutVal{};
-		int res = kt::pollSocket(socket, timeout, &timeOutVal);
+		int res = Socket::pollSocket(socket, timeout, &timeOutVal);
 		return res;
 	}
 
