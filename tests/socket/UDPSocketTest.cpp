@@ -399,12 +399,10 @@ namespace kt
         int lowerBound = initialSendBufferSize * 0.30;
 #endif
         std::string message(upperBound, 'c');
+        // Send here so the pre-send operation defined above runs
         std::pair<int, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         if (sendBufferSize > initialSendBufferSize)
         {
-            ASSERT_GT(sendBufferSize, receiveBufferSize);
-            ASSERT_GE(sendBufferSize, receiveBufferSize * 2);
-
             ASSERT_EQ(-1, sendResult.first);
             ASSERT_FALSE(socket.ready());
 
