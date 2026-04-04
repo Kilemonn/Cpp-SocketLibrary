@@ -1,4 +1,3 @@
-
 #include "Socket.h"
 #include "../socketexceptions/SocketException.hpp"
 #include "../socketexceptions/BindingException.hpp"
@@ -41,7 +40,7 @@ namespace kt
 	/**
 	 * Poll the provided socket descriptor for the provided timeout in microseconds.
 	 */
-	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal)
+	int Socket::pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal) const
 	{
 		if (kt::isInvalidSocket(socketDescriptor))
 		{
@@ -53,9 +52,8 @@ namespace kt
 		if (timeOutVal == nullptr)
 		{
 			timeOutVal = &timeoutVal;
+			timeOutVal->tv_usec = timeout;
 		}
-		
-		timeOutVal->tv_usec = timeout;
 
 		FD_ZERO(&sReady);
 		FD_SET(socketDescriptor, &sReady);
@@ -67,7 +65,7 @@ namespace kt
 		return result;
 	}
 
-	void close(SOCKET socket)
+	void Socket::close(SOCKET socket)
 	{
 #ifdef _WIN32
 		closesocket(socket);

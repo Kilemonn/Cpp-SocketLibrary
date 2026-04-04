@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 
 #include "../../src/socket/TCPSocket.h"
-#include "../../src/serversocket/ServerSocket.h"
+#include "../../src/serversocket/TCPServerSocket.h"
 #include "../../src/socketexceptions/BindingException.hpp"
 #include "../../src/socketexceptions/SocketError.h"
 
@@ -19,7 +19,7 @@ namespace kt
     class TCPSocketTest : public ::testing::Test
     {
     protected:
-        ServerSocket serverSocket;
+        TCPServerSocket serverSocket;
         TCPSocket socket;
 
     protected:
@@ -129,11 +129,20 @@ namespace kt
         ASSERT_EQ(0, std::memcmp(&initialAddress, &copiedAddress, sizeof(initialAddress)));
 
         const std::string testString = "Test";
-        ASSERT_EQ(copiedSocket.send(testString), testString.size());
-        const std::string response = server.receiveAmount(testString.size());
+        ASSERT_EQ(server.send(testString), testString.size());
+
+        ASSERT_TRUE(socket.ready());
+        ASSERT_TRUE(copiedSocket.ready());
+
+        const std::string response = copiedSocket.receiveAmount(testString.size());
         ASSERT_EQ(response, testString);
 
+        ASSERT_FALSE(socket.ready());
+        ASSERT_FALSE(copiedSocket.ready());
+
         copiedSocket.close();
+        ASSERT_FALSE(socket.connected());
+        
         server.close();
     }
 
@@ -303,7 +312,7 @@ namespace kt
 
     TEST_F(TCPSocketTest, IPV6Address)
     {
-        ServerSocket ipv6ServerSocket(std::nullopt, 0, 20, InternetProtocolVersion::IPV6);
+        TCPServerSocket ipv6ServerSocket(std::nullopt, 0, 20, InternetProtocolVersion::IPV6);
         
         TCPSocket ipv6Socket("0:0:0:0:0:0:0:1", ipv6ServerSocket.getPort());
 

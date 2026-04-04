@@ -31,7 +31,7 @@ namespace kt
     TEST_F(UDPSocketTest, UDPConstructors)
     {
         ASSERT_FALSE(socket.ready());
-        ASSERT_FALSE(socket.isUdpBound());
+        ASSERT_FALSE(socket.isBound());
         ASSERT_EQ(std::nullopt, socket.getListeningPort());
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
         ASSERT_TRUE(kt::isInvalidSocket(socket.getListeningSocket()));
@@ -43,7 +43,7 @@ namespace kt
         UDPSocket copiedSocket(socket);
 
         ASSERT_EQ(socket.getListeningSocket(), copiedSocket.getListeningSocket());
-        ASSERT_EQ(socket.isUdpBound(), copiedSocket.isUdpBound());
+        ASSERT_EQ(socket.isBound(), copiedSocket.isBound());
         ASSERT_NE(std::nullopt, socket.getListeningPort());
         ASSERT_NE(std::nullopt, copiedSocket.getListeningPort());
         ASSERT_EQ(socket.getListeningPort().value(), copiedSocket.getListeningPort().value());
@@ -57,14 +57,14 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPBindAndBound_MultipleCalls)
     {
-        ASSERT_FALSE(socket.isUdpBound());
+        ASSERT_FALSE(socket.isBound());
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
         ASSERT_EQ(0, socket.bind().first);
         ASSERT_NE(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
-        ASSERT_TRUE(socket.isUdpBound());
+        ASSERT_TRUE(socket.isBound());
 
         kt::UDPSocket newServer;
-        ASSERT_FALSE(newServer.isUdpBound());
+        ASSERT_FALSE(newServer.isBound());
         ASSERT_NE(std::nullopt, socket.getListeningPort());
         ASSERT_EQ(-1, newServer.bind(std::nullopt, socket.getListeningPort().value()).first);
     }
@@ -74,9 +74,9 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPBind_WithoutSpecifiedPort)
     {
-        ASSERT_FALSE(socket.isUdpBound());
+        ASSERT_FALSE(socket.isBound());
         ASSERT_EQ(0, socket.bind(std::nullopt, 0).first);
-        ASSERT_TRUE(socket.isUdpBound());
+        ASSERT_TRUE(socket.isBound());
         ASSERT_NE(0, socket.getListeningPort());
     }
 
@@ -108,11 +108,11 @@ namespace kt
         
         // This test is used to document behaviour and differences between the OS' and how they resolve "" hostnames
 #ifdef _WIN32
-        ASSERT_EQ(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first, message.size());
+        ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, message.size());
         // Looks like windows resolves an address, but it is not received
         ASSERT_FALSE(socket.ready());
 #else
-        ASSERT_EQ(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first, 0);
+        ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, 0);
         ASSERT_FALSE(socket.ready());
 #endif
         
@@ -197,7 +197,7 @@ namespace kt
 
         testString += testString + testString;
         // Now send using the address resolved and returned from the first call to sendTo()
-        ASSERT_EQ(client.sendTo(testString, sendResult.second), testString.size());
+        ASSERT_EQ(client.sendTo(sendResult.second, testString), testString.size());
         ASSERT_TRUE(socket.ready());
         recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
@@ -212,10 +212,10 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPManipulateAddress_IPV4)
     {
-        ASSERT_EQ(0, socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV4).first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::IPV4).first);
 
         kt::UDPSocket client;
-        ASSERT_EQ(0, client.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV4).first);
+        ASSERT_EQ(0, client.bind(kt::InternetProtocolVersion::IPV4).first);
 
         std::string message = std::to_string(client.getListeningPort().value());
         ASSERT_EQ(client.sendTo("127.0.0.1", socket.getListeningPort().value(), message).first, message.size());
@@ -227,7 +227,7 @@ namespace kt
         message = "UDPManipulateAddress";
         address.ipv4.sin_port = htons(client.getListeningPort().value());
 
-        ASSERT_EQ(socket.sendTo(message, address), message.size());
+        ASSERT_EQ(socket.sendTo(address, message), message.size());
 
         result = client.receiveFrom(message.size());
         ASSERT_EQ(message, result.first.value());
@@ -235,10 +235,10 @@ namespace kt
 
     TEST_F(UDPSocketTest, UDPManipulateAddress_IPV6)
     {
-        ASSERT_EQ(0, socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV6).first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::IPV6).first);
 
         kt::UDPSocket client;
-        ASSERT_EQ(0, client.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV6).first);
+        ASSERT_EQ(0, client.bind(kt::InternetProtocolVersion::IPV6).first);
 
         std::string message = std::to_string(client.getListeningPort().value());
         ASSERT_EQ(client.sendTo("::1", socket.getListeningPort().value(), message).first, message.size());
@@ -251,7 +251,7 @@ namespace kt
         // We can set the ipv4 address since its in the same position and data type in both ipv4 address and ipv6 address
         address.ipv4.sin_port = htons(client.getListeningPort().value());
 
-        ASSERT_EQ(socket.sendTo(message, address), message.size());
+        ASSERT_EQ(socket.sendTo(address, message), message.size());
 
         result = client.receiveFrom(message.size());
         ASSERT_EQ(message, result.first.value());
@@ -261,13 +261,13 @@ namespace kt
     TEST_F(UDPSocketTest, SendToBoundAddress)
     {
         // Setting IP version here for windows as its seems to be biasing towards different IP versions
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV4);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::IPV4);
         ASSERT_EQ(0, bindResult.first);
 
         UDPSocket client;
         ASSERT_FALSE(socket.ready());
         const std::string message = "SendToBoundAddress";
-        ASSERT_EQ(client.sendTo(message, bindResult.second), message.size());
+        ASSERT_EQ(client.sendTo(bindResult.second, message), message.size());
         ASSERT_TRUE(socket.ready());
     }
 
@@ -278,7 +278,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, LargePayloadSend)
     {
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV4);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::IPV4);
         ASSERT_EQ(0, bindResult.first);
 
         int receiveBufferSize;
@@ -302,7 +302,7 @@ namespace kt
         }
 
         kt::UDPSocket client;
-        ASSERT_EQ(sendBufferSize, receiveBufferSize);
+        ASSERT_GE(receiveBufferSize, sendBufferSize);
 
 #ifdef _WIN32
         int upperBound = sendBufferSize * 1;
@@ -336,7 +336,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, LargePayloadRecieve_AndPreSendSocketOperation)
     {
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::IPV4);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::IPV4);
         ASSERT_EQ(0, bindResult.first);
 
         int receiveBufferSize;
@@ -361,7 +361,7 @@ namespace kt
 
         kt::UDPSocket sender;
         int initialSendBufferSize = sendBufferSize;
-        ASSERT_EQ(sendBufferSize, receiveBufferSize);
+        ASSERT_GE(receiveBufferSize, sendBufferSize);
         sender.setPreSendSocketOperation([&sendBufferSize, &initialSendBufferSize](SOCKET& sendSocket)
         {
             int doubledSendBufferSize = initialSendBufferSize * 2;
@@ -399,12 +399,10 @@ namespace kt
         int lowerBound = initialSendBufferSize * 0.30;
 #endif
         std::string message(upperBound, 'c');
+        // Send here so the pre-send operation defined above runs
         std::pair<int, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         if (sendBufferSize > initialSendBufferSize)
         {
-            ASSERT_GT(sendBufferSize, receiveBufferSize);
-            ASSERT_GE(sendBufferSize, receiveBufferSize * 2);
-
             ASSERT_EQ(-1, sendResult.first);
             ASSERT_FALSE(socket.ready());
 

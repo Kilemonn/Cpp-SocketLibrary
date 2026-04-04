@@ -15,7 +15,7 @@ A ServerSocket and Socket library for Windows and Linux that supports Wifi commu
 1. To build the library, firstly run cmake: `cmake . -B build-linux` in the root directory of the repository (`CppSocketLibrary/`).
 2. Then move into the new `build-linux` folder: `cd build-linux`.
 3. Then you can run `make` to build the library.
-4. Then you can run `make check` to run the available tests.
+4. Then you can run `make check` to run the available tests. Or you can run `ctest --test-dir build-linux/tests --output-on-failure`
 
 ### Building the Library and Running the Tests - Windows
 
@@ -26,19 +26,19 @@ A ServerSocket and Socket library for Windows and Linux that supports Wifi commu
 
 ## Usage Examples
 
-- TCP Example using IPV6:
+### TCP Example using IPV6:
 
 ```cpp
 void tcpExample()
 {
-    // Create a new Wifi ServerSocket
-    kt::ServerSocket server(std::nullopt, 56756, 20, kt::InternetProtocolVersion::IPV6);
+    // Create a new TCP ServerSocket
+    kt::TCPServerSocket server(std::nullopt, 56756, 20, kt::InternetProtocolVersion::IPV6);
 
     // Create new TCP socket
     kt::TCPSocket client("::1", server.getPort());
 
     // Accept the incoming connection at the server
-    kt::TCPSocket serverSocket = server.acceptTCPConnection();
+    kt::TCPSocket serverSocket = server.accept();
 
     // Send string with text before and after the delimiter
     const std::string testString = "TCP Delimiter Test";
@@ -58,19 +58,19 @@ void tcpExample()
 
     // Close all sockets
     client.close();
-    serverSocket.close();
     server.close();
+    serverSocket.close();
 }
 ```
 
-- UDP Example using IPV4 (the default protocol version - so protocol related arguments are omitted):
+### UDP Example using IPV4 (the default protocol version - so protocol related arguments are omitted):
 
 ```cpp
 void udpExample() 
 {
     // The socket receiving data must first be bound
     kt::UDPSocket socket;
-    socket.bind(std::nullopt, 37893, kt::InternetProtocolVersion::IPV4);
+    socket.bind(kt::InternetProtocolVersion::IPV4, std::nullopt, 37893);
 
     kt::UDPSocket client;
     const std::string testString = "UDP test string";
@@ -87,6 +87,43 @@ void udpExample()
     }
 
     socket.close();
+}
+```
+
+### IPC Example - Very similar to the TCPSocket example
+
+```cpp
+void ipcExample()
+{
+    const std::string ipcChannel = "/tmp/ipcExample.sock";
+    // Create a new IPCSocket
+    kt::IPCServerSocket server(ipcChannel);
+
+    // Create new IPC socket
+    kt::IPCSocket client(ipcChannel);
+
+    // Accept the incoming connection at the server
+    kt::IPCSocket serverSocket = server.accept();
+
+    // Send string with text before and after the delimiter
+    const std::string testString = "IPC Delimiter Test";
+    if (client.send(testString) == 0)
+    {
+        std::cout << "Failed to send test string" << std::endl;
+        return;
+    }
+
+    if (serverSocket.ready())
+    {
+        std::string response = serverSocket.receiveAll();
+        // Check that the received string is the same as the string sent by the client
+        ASSERT_EQ(response, testString);
+    }
+
+    // Close all sockets
+    client.close();
+    server.close();
+    serverSocket.close();
 }
 ```
 
