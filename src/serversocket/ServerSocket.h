@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../socket/Socket.h"
 
 namespace kt

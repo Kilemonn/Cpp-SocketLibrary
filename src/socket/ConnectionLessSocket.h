@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Socket.h"
 #include "../address/SocketAddress.h"
 

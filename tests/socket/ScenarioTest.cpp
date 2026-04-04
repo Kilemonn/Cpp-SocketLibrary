@@ -3,6 +3,7 @@
 
 #include "../../src/socket/UDPSocket.h"
 #include "../../src/serversocket/TCPServerSocket.h"
+#include "../../src/ipc/IPCServerSocket.h"
 
 namespace kt
 {
@@ -111,8 +112,8 @@ namespace kt
 
         // Close all sockets
         client.close();
-        serverSocket.close();
         server.close();
+        serverSocket.close();
     }
 
     // The udp README example
@@ -137,5 +138,39 @@ namespace kt
         }
 
         socket.close();
+    }
+
+    // The ipc README example
+    TEST(ScenarioTest, IpcExampleTest)
+    {
+        const std::string ipcChannel = "/tmp/ipcExample.sock";
+        // Create a new IPCSocket
+        kt::IPCServerSocket server(ipcChannel);
+
+        // Create new IPC socket
+        kt::IPCSocket client(ipcChannel);
+
+        // Accept the incoming connection at the server
+        kt::IPCSocket serverSocket = server.accept();
+
+        // Send string with text before and after the delimiter
+        const std::string testString = "IPC Delimiter Test";
+        if (client.send(testString) == 0)
+        {
+            std::cout << "Failed to send test string" << std::endl;
+            return;
+        }
+
+        if (serverSocket.ready())
+        {
+            std::string response = serverSocket.receiveAll();
+            // Check that the received string is the same as the string sent by the client
+            ASSERT_EQ(response, testString);
+        }
+
+        // Close all sockets
+        client.close();
+        server.close();
+        serverSocket.close();
     }
 }

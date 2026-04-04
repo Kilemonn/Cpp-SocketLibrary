@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../serversocket/ServerSocket.h"
 #include "IPCSocket.h"
 
