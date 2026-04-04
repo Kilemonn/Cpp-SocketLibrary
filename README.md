@@ -31,14 +31,14 @@ A ServerSocket and Socket library for Windows and Linux that supports Wifi commu
 ```cpp
 void tcpExample()
 {
-    // Create a new Wifi ServerSocket
-    kt::ServerSocket server(std::nullopt, 56756, 20, kt::InternetProtocolVersion::IPV6);
+    // Create a new TCP ServerSocket
+    kt::TCPServerSocket server(std::nullopt, 56756, 20, kt::InternetProtocolVersion::IPV6);
 
     // Create new TCP socket
     kt::TCPSocket client("::1", server.getPort());
 
     // Accept the incoming connection at the server
-    kt::TCPSocket serverSocket = server.acceptTCPConnection();
+    kt::TCPSocket serverSocket = server.accept();
 
     // Send string with text before and after the delimiter
     const std::string testString = "TCP Delimiter Test";
@@ -70,7 +70,7 @@ void udpExample()
 {
     // The socket receiving data must first be bound
     kt::UDPSocket socket;
-    socket.bind(std::nullopt, 37893, kt::InternetProtocolVersion::IPV4);
+    socket.bind(kt::InternetProtocolVersion::IPV4, std::nullopt, 37893);
 
     kt::UDPSocket client;
     const std::string testString = "UDP test string";

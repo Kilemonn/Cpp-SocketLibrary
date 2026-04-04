@@ -52,9 +52,8 @@ namespace kt
 		if (timeOutVal == nullptr)
 		{
 			timeOutVal = &timeoutVal;
+			timeOutVal->tv_usec = timeout;
 		}
-		
-		timeOutVal->tv_usec = timeout;
 
 		FD_ZERO(&sReady);
 		FD_SET(socketDescriptor, &sReady);

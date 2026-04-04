@@ -40,7 +40,7 @@ typedef int SOCKET;
 
 namespace kt
 {
-	class UDPSocket : public ConnectionLessSocket
+	class UDPSocket : public ConnectionLessSocket<kt::SocketAddress>
 	{
 	protected:
 		bool bound = false;
@@ -61,16 +61,23 @@ namespace kt
 		kt::InternetProtocolVersion getInternetProtocolVersion() const;
 		std::optional<unsigned short> getListeningPort() const;
 
-		std::pair<int, kt::SocketAddress> bind(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
-		bool isUdpBound() const override;
+		using ConnectionLessSocket::bind;
+		std::pair<int, kt::SocketAddress> bind(const kt::InternetProtocolVersion, const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
+		std::pair<int, kt::SocketAddress> bind(const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
+		bool isBound() const override;
 		
 		bool ready(const unsigned long = 100) const override;
 
-		int sendTo(const std::string&, const kt::SocketAddress&, const int& = 0) override;
-		int sendTo(const char*, const int&, const kt::SocketAddress&, const int& = 0) override;
-		std::pair<int, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const std::string&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any) override;
-		std::pair<int, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const char*, const int&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any) override;
+		using ConnectionLessSocket::sendTo;
+		int sendTo(const kt::SocketAddress&, const std::string&, const int& = 0) override;
+		int sendTo(const kt::SocketAddress&, const char*, const int&, const int& = 0) override;
+		std::pair<int, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const std::string&, const int& = 0) override;
+		std::pair<int, kt::SocketAddress> sendTo(const kt::InternetProtocolVersion, const std::string&, const unsigned short&, const std::string&, const int& = 0);
+
+		std::pair<int, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const char*, const int&, const int& = 0) override;
+		std::pair<int, kt::SocketAddress> sendTo(const kt::InternetProtocolVersion, const std::string&, const unsigned short&, const char*, const int&, const int& = 0);
 		
+		using ConnectionLessSocket::receiveFrom;
 		std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> receiveFrom(const int&, const int& = 0) override;
 		std::pair<int, kt::SocketAddress> receiveFrom(char*, const int&, const int& = 0) const override;
 

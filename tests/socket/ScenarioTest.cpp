@@ -57,11 +57,11 @@ namespace kt
         };
 
         kt::UDPSocket socket;
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, kt::InternetProtocolVersion::Any, setReuseAddrOption);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, setReuseAddrOption);
         ASSERT_EQ(0, bindResult.first);
 
         kt::UDPSocket socket2;
-        bindResult = socket2.bind(std::nullopt, socket.getListeningPort().value(), kt::InternetProtocolVersion::Any, setReuseAddrOption);
+        bindResult = socket2.bind(std::nullopt, socket.getListeningPort().value(), setReuseAddrOption);
         ASSERT_EQ(0, bindResult.first);
 
         ASSERT_EQ(socket.getListeningPort().value(), socket2.getListeningPort().value());
@@ -79,5 +79,63 @@ namespace kt
         socket2.close();
 
         sendSocket.close();
+    }
+
+    // The tcp README example
+    TEST(ScenarioTest, TcpExampleTest)
+    {
+        // Create a new TCP ServerSocket
+        kt::TCPServerSocket server(std::nullopt, 56756, 20, kt::InternetProtocolVersion::IPV6);
+
+        // Create new TCP socket
+        kt::TCPSocket client("::1", server.getPort());
+
+        // Accept the incoming connection at the server
+        kt::TCPSocket serverSocket = server.accept();
+
+        // Send string with text before and after the delimiter
+        const std::string testString = "TCP Delimiter Test";
+        const char delimiter = '~';
+        if (client.send(testString + delimiter + "other string") == 0)
+        {
+            std::cout << "Failed to send test string" << std::endl;
+            return;
+        }
+
+        if (serverSocket.ready())
+        {
+            std::string response = serverSocket.receiveToDelimiter(delimiter);
+            // Check that the received string is the same as the string sent by the client
+            ASSERT_EQ(response, testString);
+        }
+
+        // Close all sockets
+        client.close();
+        serverSocket.close();
+        server.close();
+    }
+
+    // The udp README example
+    TEST(ScenarioTest, UdpExampleTest)
+    {
+        // The socket receiving data must first be bound
+        kt::UDPSocket socket;
+        socket.bind(kt::InternetProtocolVersion::IPV4, std::nullopt, 37893);
+
+        kt::UDPSocket client;
+        const std::string testString = "UDP test string";
+        if (client.sendTo("localhost", 37893, testString).first == 0)
+        {
+            std::cout << "Failed to send to address." << std::endl;
+            return;
+        }
+
+        if (socket.ready())
+        {
+            std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
+            ASSERT_EQ(testString, recieved.first.value());
+        }
+
+        socket.close();
     }
 }

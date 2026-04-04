@@ -52,7 +52,7 @@ namespace kt
     {
         sockaddr_un addr{};
         addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, socketPath.c_str(), 108);
+        strncpy(addr.sun_path, socketPath.c_str(), std::size(addr.sun_path));
 
         socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
         if (!isInvalidSocket(this->socket))

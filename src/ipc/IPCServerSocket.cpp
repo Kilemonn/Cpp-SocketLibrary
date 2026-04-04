@@ -39,7 +39,7 @@ namespace kt
     {
         sockaddr_un addr{};
         addr.sun_family = AF_UNIX;
-        strncpy(addr.sun_path, socketPath.c_str(), 108);
+        strncpy(addr.sun_path, socketPath.c_str(), std::size(addr.sun_path));
 
         // TODO: Call unlink(socketPath); if they provide "force" flag as "true", otherwise throw an error if the 
         // socket path is already used - Should already happen
