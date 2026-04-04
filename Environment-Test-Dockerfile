@@ -16,8 +16,7 @@ RUN ["cmake", "-B", "build", "."]
 WORKDIR /alpine/build
 RUN ["make", "all"]
 
-WORKDIR /alpine/build/tests
-RUN ["./CppSocketLibraryTests"]
+RUN ["ctest", "--test-dir", "tests", "--output-on-failure"]
 
 FROM ubuntu:24.04 AS ubuntu
 
@@ -34,8 +33,7 @@ RUN ["cmake", "-B", "build", "."]
 WORKDIR /ubuntu/build
 RUN ["make", "all"]
 
-WORKDIR /ubuntu/build/tests
-RUN ["./CppSocketLibraryTests"]
+RUN ["ctest", "--test-dir", "tests", "--output-on-failure"]
 
 # Do a fake copy to make sure it runs both stages
 COPY --from=alpine /alpine/build/tests/CppSocketLibraryTests /ubuntu/CppSocketLibraryTests
