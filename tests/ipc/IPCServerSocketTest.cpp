@@ -19,7 +19,6 @@ namespace kt
         void TearDown() override
         {
             serverSocket.close();
-            IPCSocket::closePath(SOCKET_PATH);
         }
     };
 

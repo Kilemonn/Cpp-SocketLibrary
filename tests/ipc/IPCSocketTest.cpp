@@ -24,7 +24,6 @@ namespace kt
         {
             socket.close();
             serverSocket.close();
-            IPCSocket::closePath(SOCKET_PATH);
         }
     };
 
@@ -76,6 +75,12 @@ namespace kt
         ASSERT_TRUE(server.connected());
 
         server.close();
+    }
+
+    TEST_F(IPCSocketTest, IPCUnlinkTest)
+    {
+        serverSocket.close();
+        ASSERT_THROW(IPCSocket client(SOCKET_PATH), SocketException);
     }
 
     TEST_F(IPCSocketTest, TCPReceiveAmount)

@@ -101,6 +101,7 @@ namespace kt
     void IPCServerSocket::close()
     {
         Socket::close(socket);
+        IPCSocket::closePath(socketPath);
         socket = kt::getInvalidSocketValue();
     }
 }
