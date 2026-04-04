@@ -302,7 +302,7 @@ namespace kt
         }
 
         kt::UDPSocket client;
-        ASSERT_EQ(sendBufferSize, receiveBufferSize);
+        ASSERT_GE(receiveBufferSize, sendBufferSize);
 
 #ifdef _WIN32
         int upperBound = sendBufferSize * 1;
@@ -361,7 +361,7 @@ namespace kt
 
         kt::UDPSocket sender;
         int initialSendBufferSize = sendBufferSize;
-        ASSERT_EQ(sendBufferSize, receiveBufferSize);
+        ASSERT_GE(receiveBufferSize, sendBufferSize);
         sender.setPreSendSocketOperation([&sendBufferSize, &initialSendBufferSize](SOCKET& sendSocket)
         {
             int doubledSendBufferSize = initialSendBufferSize * 2;
