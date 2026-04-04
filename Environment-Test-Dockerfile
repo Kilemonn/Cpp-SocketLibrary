@@ -5,7 +5,7 @@ FROM alpine:3.23.0 AS alpine
 WORKDIR /alpine
 
 # bluez-dev bluez
-RUN apk update && apk upgrade && apk add g++ cmake make git glib-dev
+RUN apk update && apk upgrade && apk add g++ cmake make git
 
 COPY ./src ./src
 COPY ./tests ./tests
@@ -22,7 +22,7 @@ FROM ubuntu:24.04 AS ubuntu
 
 WORKDIR /ubuntu
 
-RUN apt update && apt upgrade -y && apt install g++ make cmake git libglib2.0-dev -y
+RUN apt update && apt upgrade -y && apt install g++ make cmake git -y
 
 COPY ./src ./src
 COPY ./tests ./tests

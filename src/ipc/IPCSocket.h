@@ -48,7 +48,7 @@ namespace kt
             IPCSocket(const IPCSocket&);
 			IPCSocket& operator=(const IPCSocket&);
 
-            SOCKET getSocket() const;
+            SOCKET getSocket() const override;
             std::string getSocketPath() const;
 
             void close() override;

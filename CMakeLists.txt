@@ -45,10 +45,7 @@ if(CMAKE_HOST_WIN32)
 endif()
 
 if(CMAKE_HOST_UNIX)
-    include_directories(/usr/include/glib-2.0)
-    include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include)
 
-    target_link_libraries(${PROJECT_NAME} PRIVATE glib-2.0)
 endif()
 
 add_subdirectory(tests)
