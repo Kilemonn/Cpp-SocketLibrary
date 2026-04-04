@@ -19,6 +19,7 @@ namespace kt
         void TearDown() override
         {
             serverSocket.close();
+            IPCSocket::closePath(SOCKET_PATH);
         }
     };
 
@@ -69,6 +70,8 @@ namespace kt
     TEST_F(IPCServerSocketTest, TestSocketPathAlreadyUsed)
     {
         EXPECT_THROW(IPCServerSocket server2(SOCKET_PATH), BindingException);
+        IPCServerSocket server2(SOCKET_PATH, true);
+        server2.close();
     }
 
     /**

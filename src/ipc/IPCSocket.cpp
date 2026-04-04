@@ -44,8 +44,12 @@ namespace kt
     void IPCSocket::close()
     {
         Socket::close(socket);
-        unlink(socketPath.c_str());
         this->socket = getInvalidSocketValue();
+    }
+
+    void IPCSocket::closePath(const std::string &socketPath)
+    {
+        unlink(socketPath.c_str());
     }
 
     void IPCSocket::constructSocket()

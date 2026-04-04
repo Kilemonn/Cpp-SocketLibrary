@@ -8,7 +8,7 @@
 #include "../../src/socketexceptions/SocketError.h"
 #include "../../src/socketexceptions/SocketException.hpp"
 
-const std::string SOCKET_PATH = "/tmp/IPCSocketTest";
+const std::string SOCKET_PATH = "/tmp/IPCSocketTest.sock";
 
 namespace kt
 {
@@ -24,6 +24,7 @@ namespace kt
         {
             socket.close();
             serverSocket.close();
+            IPCSocket::closePath(SOCKET_PATH);
         }
     };
 

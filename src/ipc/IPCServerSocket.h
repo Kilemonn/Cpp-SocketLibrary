@@ -13,11 +13,11 @@ namespace kt
             SOCKET socket;
             std::string socketPath;
 
-            void constructSocket(const unsigned int& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
+            void constructSocket(const bool& = false, const unsigned int& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
             
         public:
             IPCServerSocket() = delete;
-            IPCServerSocket(const std::string&, const unsigned int& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
+            IPCServerSocket(const std::string&, const bool& = false, const unsigned int& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 
             IPCServerSocket(const IPCServerSocket&);
 			IPCServerSocket& operator=(const IPCServerSocket&);

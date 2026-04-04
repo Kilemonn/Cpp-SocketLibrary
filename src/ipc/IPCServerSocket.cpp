@@ -6,9 +6,9 @@
 
 namespace kt
 {
-    IPCServerSocket::IPCServerSocket(const std::string &socketPath, const unsigned int& connectionBacklogSize, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation) : socketPath(socketPath)
+    IPCServerSocket::IPCServerSocket(const std::string &socketPath, const bool& override, const unsigned int& connectionBacklogSize, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation) : socketPath(socketPath)
     {
-        constructSocket(connectionBacklogSize, preBindSocketOperation);
+        constructSocket(override, connectionBacklogSize, preBindSocketOperation);
     }
 
     IPCServerSocket::IPCServerSocket(const IPCServerSocket &socket)
@@ -35,14 +35,17 @@ namespace kt
         return socketPath;
     }
 
-    void IPCServerSocket::constructSocket(const unsigned int& connectionBacklogSize, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
+    void IPCServerSocket::constructSocket(const bool& override, const unsigned int& connectionBacklogSize, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
     {
         sockaddr_un addr{};
         addr.sun_family = AF_UNIX;
         strncpy(addr.sun_path, socketPath.c_str(), std::size(addr.sun_path));
 
-        // TODO: Call unlink(socketPath); if they provide "force" flag as "true", otherwise throw an error if the 
-        // socket path is already used - Should already happen
+        // When override is true, attempt to remove any existing socket path file before attempting to bind/create it
+        if (override)
+        {
+            IPCSocket::closePath(socketPath.c_str());
+        }
 
         socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
         if (isInvalidSocket(this->socket))
@@ -98,7 +101,6 @@ namespace kt
     void IPCServerSocket::close()
     {
         Socket::close(socket);
-        unlink(socketPath.c_str());
         socket = kt::getInvalidSocketValue();
     }
 }
