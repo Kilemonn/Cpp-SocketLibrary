@@ -8,6 +8,7 @@
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"
 #include "../socketexceptions/SocketError.h"
+#include "ConnectionOrientedSocket.h"
 
 #include "Socket.h"
 
@@ -37,7 +38,7 @@ typedef int SOCKET;
 #endif
 
 namespace kt
-{	class TCPSocket
+{	class TCPSocket : public ConnectionOrientedSocket
 	{
 		protected:
 			SOCKET socketDescriptor = getInvalidSocketValue();
@@ -46,7 +47,7 @@ namespace kt
 			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {}; // The remote address that we will be connected to
 
-			void constructWifiSocket();
+			void constructSocket();
 
 		public:
 			TCPSocket() = delete;
@@ -56,26 +57,16 @@ namespace kt
 
 			TCPSocket(const kt::TCPSocket&);
 			kt::TCPSocket& operator=(const kt::TCPSocket&);
-			
-			void close() const;
-			
-			int pollSocket(SOCKET socket, const long& = 100) const;
-			bool ready(const unsigned long = 100) const;
-			bool connected(const unsigned long = 100) const;
-			std::pair<bool, int> send(const char*, const int&, const int& = 0) const;
-			std::pair<bool, int> send(const std::string&, const int& = 0) const;
 
-			SOCKET getSocket() const;
+			SOCKET getSocket() const override;
             std::string getHostname() const;
 			unsigned short getPort() const;
 			kt::InternetProtocolVersion getInternetProtocolVersion() const;
 			kt::SocketAddress getSocketAddress() const;
 
-			std::optional<char> get(const int& = 0) const;
-			std::string receiveAmount(const unsigned int, const int& = 0) const;
-			int receiveAmount(char*, const unsigned int, const int& = 0) const;
-			std::string receiveToDelimiter(const char&, const int& = 0);
-			std::string receiveAll(const unsigned long = 100, const int& = 0);
+			using ConnectionOrientedSocket::receiveAmount;
+
+			void close() override;
 	};
 
 } // End namespace kt 

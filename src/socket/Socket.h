@@ -24,8 +24,14 @@ typedef int SOCKET;
 
 namespace kt
 {
-	int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal = nullptr);
-
-	void close(SOCKET socket);
+	class Socket
+	{
+		protected:
+			int pollSocket(const SOCKET& socketDescriptor, const long& timeout, timeval* timeOutVal = nullptr) const;
+			void close(SOCKET socket);
+		
+		public:
+			virtual void close() = 0;
+	};
 
 } // End namespace kt 

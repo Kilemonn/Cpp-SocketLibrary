@@ -18,9 +18,11 @@ FetchContent_MakeAvailable(googletest)
 
 
 set(SOURCE
-        serversocket/ServerSocketTCPTest.cpp
+        serversocket/TCPServerSocketTest.cpp
         socket/TCPSocketTest.cpp
         socket/UDPSocketTest.cpp
+        ipc/IPCSocketTest.cpp
+        ipc/IPCServerSocketTest.cpp
 
         address/SocketAddressTest.cpp
 

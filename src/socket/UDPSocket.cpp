@@ -37,13 +37,13 @@ namespace kt
 	 * The socket that is listening for new connections will need to call this before they begin listening (accepting connections).
 	 * This ensures the socket is bound to the port and can receive new connections. *Only a single process can be bound to a single port at one time*.
 	 *
-	 * @return bool - true if the socket was bound successfully, otherwise false
+	 * @return the int result of the call to bind(), if this is -1 then there was an error. Along with the bound address if the result code is not an error.
 	 *
 	 * @throw BindingException - if the socket fails to bind
 	 */
-	std::pair<bool, kt::SocketAddress> kt::UDPSocket::bind(const std::optional<std::string>& localHostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
+	std::pair<int, kt::SocketAddress> kt::UDPSocket::bind(const kt::InternetProtocolVersion protocolVersion, const std::optional<std::string>& localHostname, const unsigned short& port, const std::optional<std::function<void(SOCKET&)>>& preBindSocketOperation)
 	{
-		if (this->isUdpBound())
+		if (this->isBound())
 		{
 			this->close();
 		}
@@ -93,7 +93,7 @@ namespace kt
 		this->bound = bindResult != -1;
 		if (!this->bound)
 		{
-			throw kt::BindingException("Error binding connection, the port " + std::to_string(port) + " is already being used. Response code from ::bind()" + std::to_string(bindResult) + ". Latest Error code: " + getErrorCode());
+			return std::make_pair(bindResult, kt::SocketAddress{});
 		}
 
 		if (port == 0)
@@ -106,12 +106,18 @@ namespace kt
 			this->listeningPort = std::make_optional(port);
 		}
 
-		return std::make_pair(this->bound, firstAddress);
+		return std::make_pair(bindResult, firstAddress);
 	}
 
-	void UDPSocket::close()
+    std::pair<int, kt::SocketAddress> UDPSocket::bind(const std::optional<std::string> &localHostname, const unsigned short &port, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
+    {
+        return bind(InternetProtocolVersion::Any, localHostname, port, preBindSocketOperation);
+    }
+
+    void UDPSocket::close()
 	{
-		this->close(this->receiveSocket);
+		Socket::close(this->receiveSocket);
+		this->receiveSocket = kt::getInvalidSocketValue();
 		
 		this->bound = false;
 		this->listeningPort = std::nullopt;
@@ -124,17 +130,17 @@ namespace kt
 		return result > 0;
 	}
 
-	std::pair<bool, int> UDPSocket::sendTo(const std::string& message, const kt::SocketAddress& address, const int& flags)
+	int UDPSocket::sendTo(const kt::SocketAddress& address, const std::string& message, const int& flags)
 	{
-		return this->sendTo(&message[0], message.size(), address, flags);
+		return this->sendTo(address, &message[0], message.size(), flags);
 	}
 
-	std::pair<bool, int> UDPSocket::sendTo(const char* buffer, const int& bufferLength, const kt::SocketAddress& address, const int& flags)
+	int UDPSocket::sendTo(const kt::SocketAddress& address, const char* buffer, const int& bufferLength, const int& flags)
 	{
 		SOCKET tempSocket = socket(address.address.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 		if (kt::isInvalidSocket(tempSocket))
 		{
-			return std::make_pair(false, -2);
+			return -2;
 		}
 
 		if (preSendSocketOperation.has_value())
@@ -143,25 +149,35 @@ namespace kt
 		}
 
 		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
-		this->close(tempSocket);
-		return std::make_pair(result != -1, result);
+		Socket::close(tempSocket);
+		return result;
 	}
 
-	std::pair<std::pair<bool, int>, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags, const kt::InternetProtocolVersion protocolVersion)
+    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string &hostname, const unsigned short &port, const std::string &message, const int &flags)
+    {
+        return this->sendTo(InternetProtocolVersion::Any, hostname, port, message, flags);
+    }
+
+    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const kt::InternetProtocolVersion protocolVersion, const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags)
 	{
-		return this->sendTo(hostname, port, &message[0], message.size(), flags, protocolVersion);
+		return this->sendTo(protocolVersion, hostname, port, &message[0], message.size(), flags);
 	}
 
-	std::pair<std::pair<bool, int>, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const char* buffer, const int& bufferLength, const int& flags, const kt::InternetProtocolVersion protocolVersion)
-	{
+    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string &hostname, const unsigned short &port, const char *buffer, const int &bufferLength, const int &flags)
+    {
+        return this->sendTo(InternetProtocolVersion::Any, hostname, port, buffer, bufferLength, flags);
+    }
+
+    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const kt::InternetProtocolVersion protocolVersion, const std::string &hostname, const unsigned short &port, const char *buffer, const int &bufferLength, const int &flags)
+    {
 		addrinfo hints = kt::createUdpHints(protocolVersion);
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname, port, hints);
 		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
 		{
-			return std::make_pair(std::make_pair(false, resolvedAddresses.second), kt::SocketAddress{});
+			return std::make_pair(0, kt::SocketAddress{});
 		}
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
-		std::pair<bool, int> result = this->sendTo(buffer, bufferLength, firstAddress, flags);
+		int result = this->sendTo(firstAddress, buffer, bufferLength, flags);
 		return std::make_pair(result, firstAddress);
 	}
 
@@ -205,13 +221,13 @@ namespace kt
         return this->receiveSocket;
     }
 
-    bool UDPSocket::isUdpBound() const
+    bool UDPSocket::isBound() const
     {
 		return this->bound;
 	}
 
 	/**
-	* This is only applicable and useful if the UDPSocket is isUdpBound() returns *true*.
+	* This is only applicable and useful if the UDPSocket is isBound() returns *true*.
 	*/
 	kt::InternetProtocolVersion UDPSocket::getInternetProtocolVersion() const
 	{
@@ -228,11 +244,6 @@ namespace kt
 		this->preSendSocketOperation = std::make_optional(newOperation);
     }
 
-	void UDPSocket::setPreBindSocketOperation(std::function<void(SOCKET&)> newOperation)
-    {
-		this->preBindSocketOperation = std::make_optional(newOperation);
-    }
-
     int UDPSocket::pollSocket(SOCKET socket, const long& timeout) const
 	{
 		if (kt::isInvalidSocket(socket))
@@ -241,7 +252,7 @@ namespace kt
 		}
 
 		timeval timeOutVal{};
-		int res = kt::pollSocket(socket, timeout, &timeOutVal);
+		int res = Socket::pollSocket(socket, timeout, &timeOutVal);
 		return res;
 	}
 
@@ -256,11 +267,5 @@ namespace kt
 
 		this->listeningPort = std::make_optional(kt::getPortNumber(address.first.value()));
 	}
-
-	void UDPSocket::close(SOCKET socket)
-	{
-		kt::close(socket);
-	}
-	
 }
 
