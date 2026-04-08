@@ -2,6 +2,7 @@
 
 #include "../serversocket/ServerSocket.h"
 #include "StreamIPCSocket.h"
+#include "IPCSocket.h"
 
 #include <string>
 #include <optional>
@@ -9,7 +10,7 @@
 
 namespace kt
 {
-    class IPCServerSocket : public ServerSocket<StreamIPCSocket>
+    class IPCServerSocket : public ServerSocket<StreamIPCSocket>, public IPCSocket
     {
         private:
             SOCKET socket;

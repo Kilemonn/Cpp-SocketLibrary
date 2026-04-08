@@ -52,7 +52,5 @@ namespace kt
             std::string getSocketPath() const;
 
             void close() override;
-
-            static void closePath(const std::string&);
     };
 } // namespace kt

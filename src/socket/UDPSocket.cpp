@@ -43,11 +43,6 @@ namespace kt
 	 */
 	std::pair<int, kt::SocketAddress> kt::UDPSocket::bind(const kt::InternetProtocolVersion protocolVersion, const std::optional<std::string>& localHostname, const unsigned short& port, const std::optional<std::function<void(SOCKET&)>>& preBindSocketOperation)
 	{
-		if (this->isBound())
-		{
-			this->close();
-		}
-
 #ifdef _WIN32
 		WSADATA wsaData{};
 		if (int res = WSAStartup(MAKEWORD(2, 2), &wsaData); res != 0)
@@ -65,8 +60,20 @@ namespace kt
 		}
 
 		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
-		this->protocolVersion = static_cast<kt::InternetProtocolVersion>(firstAddress.address.sa_family);
-		this->receiveSocket = socket(firstAddress.address.sa_family, hints.ai_socktype, hints.ai_protocol);
+		return bind(firstAddress, preBindSocketOperation);
+	}
+
+    std::pair<int, kt::SocketAddress> UDPSocket::bind(const std::optional<kt::SocketAddress> &addressOpt, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
+    {
+		if (!addressOpt.has_value())
+		{
+			throw kt::BindingException("Failed to resolve bind address");
+		}
+		kt::SocketAddress address = addressOpt.value();
+
+		addrinfo hints = kt::createUdpHints(protocolVersion, AI_PASSIVE);
+        this->protocolVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
+		this->receiveSocket = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);
 		if (kt::isInvalidSocket(this->receiveSocket))
 		{
 			throw kt::SocketException("Unable to construct socket from local host details. " + getErrorCode());
@@ -84,34 +91,27 @@ namespace kt
 
 #endif
 
+		if (this->isBound())
+		{
+			this->close();
+		}
+
 		if (preBindSocketOperation.has_value())
 		{
 			preBindSocketOperation.value()(this->receiveSocket);
 		}
 
-		int bindResult = ::bind(this->receiveSocket, &firstAddress.address, kt::getAddressLength(firstAddress));
+		int bindResult = ::bind(this->receiveSocket, &address.address, kt::getAddressLength(address));
 		this->bound = bindResult != -1;
 		if (!this->bound)
 		{
 			return std::make_pair(bindResult, kt::SocketAddress{});
 		}
 
-		if (port == 0)
-		{
-			this->initialiseListeningPortNumber();
-			firstAddress.ipv4.sin_port = htons(this->listeningPort.value());
-		}
-		else
-		{
-			this->listeningPort = std::make_optional(port);
-		}
+		this->initialiseListeningPortNumber();
+		address.ipv4.sin_port = htons(this->listeningPort.value());
 
-		return std::make_pair(bindResult, firstAddress);
-	}
-
-    std::pair<int, kt::SocketAddress> UDPSocket::bind(const std::optional<std::string> &localHostname, const unsigned short &port, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
-    {
-        return bind(InternetProtocolVersion::Any, localHostname, port, preBindSocketOperation);
+		return std::make_pair(bindResult, address);
     }
 
     void UDPSocket::close()
@@ -153,22 +153,12 @@ namespace kt
 		return result;
 	}
 
-    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string &hostname, const unsigned short &port, const std::string &message, const int &flags)
-    {
-        return this->sendTo(InternetProtocolVersion::Any, hostname, port, message, flags);
-    }
-
-    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const kt::InternetProtocolVersion protocolVersion, const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags)
+    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string& hostname, const unsigned short& port, const std::string& message, const int& flags, const kt::InternetProtocolVersion protocolVersion)
 	{
-		return this->sendTo(protocolVersion, hostname, port, &message[0], message.size(), flags);
+		return this->sendTo(hostname, port, &message[0], message.size(), flags, protocolVersion);
 	}
 
-    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string &hostname, const unsigned short &port, const char *buffer, const int &bufferLength, const int &flags)
-    {
-        return this->sendTo(InternetProtocolVersion::Any, hostname, port, buffer, bufferLength, flags);
-    }
-
-    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const kt::InternetProtocolVersion protocolVersion, const std::string &hostname, const unsigned short &port, const char *buffer, const int &bufferLength, const int &flags)
+    std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string &hostname, const unsigned short &port, const char *buffer, const int &bufferLength, const int &flags, const kt::InternetProtocolVersion protocolVersion)
     {
 		addrinfo hints = kt::createUdpHints(protocolVersion);
 		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname, port, hints);

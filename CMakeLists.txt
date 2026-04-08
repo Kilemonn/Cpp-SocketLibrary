@@ -17,6 +17,8 @@ set(HEADERS
         src/address/SocketAddress.h
         src/ipc/StreamIPCSocket.h
         src/ipc/IPCServerSocket.h
+        src/ipc/IPCSocket.h
+        src/ipc/DatagramIPCSocket.h
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
         src/socketexceptions/TimeoutException.hpp
@@ -35,6 +37,8 @@ set(SOURCE
         src/address/SocketAddress.cpp
         src/ipc/StreamIPCSocket.cpp
         src/ipc/IPCServerSocket.cpp
+        src/ipc/IPCSocket.cpp
+        src/ipc/DatagramIPCSocket.cpp
 )
 
 # Project Configuration - Adding as a lib

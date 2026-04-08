@@ -56,7 +56,7 @@ namespace kt
         // When override is true, attempt to remove any existing socket path file before attempting to bind/create it
         if (override)
         {
-            StreamIPCSocket::closePath(socketPath.c_str());
+            IPCSocket::removeSocketPath(socketPath);
         }
 
         socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
@@ -113,7 +113,7 @@ namespace kt
     void IPCServerSocket::close()
     {
         Socket::close(socket);
-        StreamIPCSocket::closePath(socketPath);
         socket = kt::getInvalidSocketValue();
+        IPCSocket::removeSocketPath(socketPath);
     }
 }

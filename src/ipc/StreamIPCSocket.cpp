@@ -47,11 +47,6 @@ namespace kt
         this->socket = getInvalidSocketValue();
     }
 
-    void StreamIPCSocket::closePath(const std::string &socketPath)
-    {
-        unlink(socketPath.c_str());
-    }
-
     void StreamIPCSocket::constructSocket()
     {
         sockaddr_un addr{};

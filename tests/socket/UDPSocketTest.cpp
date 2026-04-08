@@ -42,7 +42,7 @@ namespace kt
 
     TEST_F(UDPSocketTest, UDPCopyConstructors)
     {
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         UDPSocket copiedSocket(socket);
 
         ASSERT_EQ(socket.getListeningSocket(), copiedSocket.getListeningSocket());
@@ -62,14 +62,14 @@ namespace kt
     {
         ASSERT_FALSE(socket.isBound());
         ASSERT_EQ(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         ASSERT_NE(kt::InternetProtocolVersion::Any, socket.getInternetProtocolVersion());
         ASSERT_TRUE(socket.isBound());
 
         kt::UDPSocket newServer;
         ASSERT_FALSE(newServer.isBound());
         ASSERT_NE(std::nullopt, socket.getListeningPort());
-        ASSERT_EQ(-1, newServer.bind(std::nullopt, socket.getListeningPort().value()).first);
+        ASSERT_EQ(-1, newServer.bind(socket.getInternetProtocolVersion(), std::nullopt, socket.getListeningPort().value()).first);
     }
 
     /*
@@ -78,7 +78,7 @@ namespace kt
     TEST_F(UDPSocketTest, UDPBind_WithoutSpecifiedPort)
     {
         ASSERT_FALSE(socket.isBound());
-        ASSERT_EQ(0, socket.bind(std::nullopt, 0).first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         ASSERT_TRUE(socket.isBound());
         ASSERT_NE(0, socket.getListeningPort());
     }
@@ -88,7 +88,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPSendTo)
     {
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
 
         UDPSocket client;
 
@@ -105,7 +105,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, TestEmptyHostname)
     {
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         
         UDPSocket client;
         ASSERT_FALSE(socket.ready());
@@ -113,15 +113,15 @@ namespace kt
         
         // This test is used to document behaviour and differences between the OS' and how they resolve "" hostnames
 #ifdef _WIN32
-        ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, message.size());
+        ASSERT_EQ(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first, message.size());
         // Looks like windows resolves an address, but it is not received
         ASSERT_FALSE(socket.ready());
 #elif __APPLE__
-        ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, message.size());
+        ASSERT_EQ(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first, message.size());
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
 #else // __linux__
-        ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, 0);
+        ASSERT_EQ(client.sendTo("", socket.getListeningPort().value(), message, 0, socket.getInternetProtocolVersion()).first, 0);
         ASSERT_FALSE(socket.ready());
 #endif
         
@@ -132,7 +132,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveFrom)
     {
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
@@ -153,7 +153,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveAmount_NotEnoughRead)
     {
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
@@ -173,7 +173,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPReceiveAmount_TooMuchRead)
     {
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
@@ -193,7 +193,7 @@ namespace kt
      */
     TEST_F(UDPSocketTest, UDPSendToAddress)
     {
-        ASSERT_EQ(0, socket.bind().first);
+        ASSERT_EQ(0, socket.bind(kt::InternetProtocolVersion::Any).first);
         ASSERT_FALSE(socket.ready());
 
         UDPSocket client;
