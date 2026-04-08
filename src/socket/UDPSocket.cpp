@@ -125,6 +125,11 @@ namespace kt
 
 	bool UDPSocket::ready(const unsigned long timeout) const
 	{
+		if (!isBound())
+		{
+			return false;
+		}
+
 		int result = this->pollSocket(this->receiveSocket, timeout);
 		// 0 indicates that there is no data
 		return result > 0;
@@ -190,7 +195,7 @@ namespace kt
 	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const int& receiveLength, const int& flags) const
 	{
 		kt::SocketAddress receiveAddress{};
-		if (!this->bound || receiveLength == 0)
+		if (!isBound() || receiveLength == 0)
 		{
 			return std::make_pair(-1, receiveAddress);
 		}

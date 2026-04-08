@@ -45,9 +45,21 @@ namespace kt
 
             using ConnectionLessSocket::bind;
             std::pair<int, std::string> bind(const std::optional<std::string>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
+            std::pair<int, std::string> bind(const bool&, const std::optional<std::string>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
             bool isBound() const override;
 
+            SOCKET getListeningSocket() const;
+            std::optional<std::string> getSocketPath() const;
+
             void setPreSendSocketOperation(std::function<void(SOCKET&)>);
+
+            bool ready(const unsigned long = 100) const override;
+
+            int sendTo(const std::string&, const std::string&, const int& = 0) override;
+            int sendTo(const std::string&, const char*, const int&, const int& = 0) override;
+            
+            std::pair<std::optional<std::string>, std::pair<int, std::string>> receiveFrom(const int&, const int& = 0) override;
+            std::pair<int, std::string> receiveFrom(char*, const int&, const int& = 0) const override;
 
 		    void close() override;
     };
