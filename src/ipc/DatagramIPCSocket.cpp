@@ -37,7 +37,7 @@ namespace kt
             IPCSocket::removeSocketPath(path);
         }
 
-        receiveSocket = ::socket(AF_UNIX, SOCK_STREAM, 0);
+        receiveSocket = ::socket(AF_UNIX, SOCK_DGRAM, 0);
         if (isInvalidSocket(this->receiveSocket))
         {
             throw kt::SocketException("Error creating IPC server socket: " + getErrorCode());
