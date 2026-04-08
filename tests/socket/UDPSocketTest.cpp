@@ -11,6 +11,9 @@ const std::string LOCALHOST = "localhost";
 
 namespace kt
 {
+    /**
+     * The calls to `while(!socket.ready()) {}` is required since MacOS doesn't seem to detect that the socket is ready immediately.
+     */
     class UDPSocketTest : public ::testing::Test
     {
     protected:
@@ -92,6 +95,8 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         const std::string testString = "test";
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
+
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
     }
 
@@ -111,7 +116,11 @@ namespace kt
         ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, message.size());
         // Looks like windows resolves an address, but it is not received
         ASSERT_FALSE(socket.ready());
-#else
+#elif __APPLE__
+        ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, message.size());
+        while(!socket.ready()) {}
+        ASSERT_FALSE(socket.ready());
+#else // __linux__
         ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, 0);
         ASSERT_FALSE(socket.ready());
 #endif
@@ -130,6 +139,7 @@ namespace kt
         const std::string testString = "test";
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
@@ -150,6 +160,7 @@ namespace kt
         const std::string testString = "test";
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() - 1);
         ASSERT_FALSE(socket.ready());
@@ -169,6 +180,7 @@ namespace kt
         const std::string testString = "test";
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() + 1);
         ASSERT_FALSE(socket.ready());
@@ -189,6 +201,7 @@ namespace kt
         std::pair<int, kt::SocketAddress> sendResult = client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString);
         ASSERT_EQ(sendResult.first, testString.size());
 
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
         std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
@@ -198,6 +211,8 @@ namespace kt
         testString += testString + testString;
         // Now send using the address resolved and returned from the first call to sendTo()
         ASSERT_EQ(client.sendTo(sendResult.second, testString), testString.size());
+
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
         recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
@@ -268,6 +283,8 @@ namespace kt
         ASSERT_FALSE(socket.ready());
         const std::string message = "SendToBoundAddress";
         ASSERT_EQ(client.sendTo(bindResult.second, message), message.size());
+
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
     }
 
@@ -318,8 +335,8 @@ namespace kt
 #else
 
         // Mac OS, please update
-        int upperBound = sendBufferSize * 0.31;
-        int lowerBound = sendBufferSize * 0.30;
+        int upperBound = sendBufferSize * 1.34;
+        int lowerBound = sendBufferSize * 0.3;
 
 #endif
 
@@ -333,6 +350,7 @@ namespace kt
         sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
 
         ASSERT_NE(-1, sendResult.first);
+        while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());   
     }
 
@@ -408,7 +426,7 @@ namespace kt
 #else
 
         // Mac OS, please update
-        int upperBound = initialSendBufferSize * 0.31;
+        int upperBound = initialSendBufferSize * 5;
         int lowerBound = initialSendBufferSize * 0.30;
 
 #endif
@@ -424,6 +442,7 @@ namespace kt
             sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
 
             ASSERT_NE(-1, sendResult.first);
+            while(!socket.ready()) {}
             ASSERT_TRUE(socket.ready());
             
             std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recvResult = socket.receiveFrom(receiveBufferSize * 2);

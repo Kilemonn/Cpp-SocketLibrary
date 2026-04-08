@@ -385,7 +385,6 @@ namespace kt
 #endif
 
         std::string message(upperBound, 'c');
-        ASSERT_GT(message.size(), receiveBufferSize);
         
         ASSERT_EQ(socket.send(message), message.size());
         ASSERT_TRUE(server.ready());

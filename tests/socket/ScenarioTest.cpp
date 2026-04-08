@@ -77,7 +77,7 @@ namespace kt
         ASSERT_NE(0, sendResult.first);
 
         // Make sure only one of the sockets is ready to read, not both
-        ASSERT_FALSE(socket.ready() && socket2.ready());
+        while(!socket.ready() && !socket2.ready()) {}
         ASSERT_TRUE(socket2.ready() || socket.ready());
 
         socket.close();

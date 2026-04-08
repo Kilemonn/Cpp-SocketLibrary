@@ -51,7 +51,8 @@ namespace kt
 		if (timeOutVal == nullptr)
 		{
 			timeOutVal = &timeoutVal;
-			timeOutVal->tv_usec = timeout;
+			timeOutVal->tv_sec = timeout / 1000000;
+			timeOutVal->tv_usec = timeout % 1000000;
 		}
 
 		FD_ZERO(&sReady);
