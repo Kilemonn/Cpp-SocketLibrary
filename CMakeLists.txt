@@ -15,7 +15,7 @@ set(HEADERS
         src/socket/TCPSocket.h
         src/socket/UDPSocket.h
         src/address/SocketAddress.h
-        src/ipc/IPCSocket.h
+        src/ipc/StreamIPCSocket.h
         src/ipc/IPCServerSocket.h
         src/socketexceptions/BindingException.hpp
         src/socketexceptions/SocketException.hpp
@@ -33,7 +33,7 @@ set(SOURCE
         src/socket/UDPSocket.cpp
         src/socketexceptions/SocketError.cpp
         src/address/SocketAddress.cpp
-        src/ipc/IPCSocket.cpp
+        src/ipc/StreamIPCSocket.cpp
         src/ipc/IPCServerSocket.cpp
 )
 

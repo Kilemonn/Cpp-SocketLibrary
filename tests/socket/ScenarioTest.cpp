@@ -148,14 +148,14 @@ namespace kt
     TEST(ScenarioTest, IpcExampleTest)
     {
         const std::string ipcChannel = "/tmp/ipcExample.sock";
-        // Create a new IPCSocket
+        // Create a new StreamIPCSocket
         kt::IPCServerSocket server(ipcChannel);
 
         // Create new IPC socket
-        kt::IPCSocket client(ipcChannel);
+        kt::StreamIPCSocket client(ipcChannel);
 
         // Accept the incoming connection at the server
-        kt::IPCSocket serverSocket = server.accept();
+        kt::StreamIPCSocket serverSocket = server.accept();
 
         // Send string with text before and after the delimiter
         const std::string testString = "IPC Delimiter Test";

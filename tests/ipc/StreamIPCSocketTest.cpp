@@ -3,23 +3,23 @@
 #include <gtest/gtest.h>
 
 #include "../../src/ipc/IPCServerSocket.h"
-#include "../../src/ipc/IPCSocket.h"
+#include "../../src/ipc/StreamIPCSocket.h"
 
 #include "../../src/socketexceptions/SocketError.h"
 #include "../../src/socketexceptions/SocketException.hpp"
 
-const std::string SOCKET_PATH = "/tmp/IPCSocketTest.sock";
+const std::string SOCKET_PATH = "/tmp/StreamIPCSocketTest.sock";
 
 namespace kt
 {
-    class IPCSocketTest : public ::testing::Test
+    class StreamIPCSocketTest : public ::testing::Test
     {
     protected:
         IPCServerSocket serverSocket;
-        IPCSocket socket;
+        StreamIPCSocket socket;
 
     protected:
-        IPCSocketTest() : serverSocket(SOCKET_PATH), socket(SOCKET_PATH) { }
+        StreamIPCSocketTest() : serverSocket(SOCKET_PATH), socket(SOCKET_PATH) { }
         void TearDown() override
         {
             socket.close();
@@ -27,7 +27,7 @@ namespace kt
         }
     };
 
-    TEST_F(IPCSocketTest, IPCConstructor)
+    TEST_F(StreamIPCSocketTest, IPCConstructor)
     {
         ASSERT_TRUE(socket.connected());
         ASSERT_FALSE(socket.ready());
@@ -38,10 +38,10 @@ namespace kt
     /*
      * Ensure that a Socket created from the copy constructor is still able to send and receive from the copied socket.
      */
-    TEST_F(IPCSocketTest, IPCCopyConstructor)
+    TEST_F(StreamIPCSocketTest, IPCCopyConstructor)
     {
-        IPCSocket server = serverSocket.accept();
-        IPCSocket copiedSocket(socket);
+        StreamIPCSocket server = serverSocket.accept();
+        StreamIPCSocket copiedSocket(socket);
         
         ASSERT_EQ(socket.getSocket(), copiedSocket.getSocket());
         ASSERT_EQ(socket.getSocketPath(), copiedSocket.getSocketPath());
@@ -68,24 +68,24 @@ namespace kt
     /*
      * Ensure that a connected socket and accepted socket are correcly marked as connected.
      */
-    TEST_F(IPCSocketTest, IPCConnected)
+    TEST_F(StreamIPCSocketTest, IPCConnected)
     {
-        IPCSocket server = serverSocket.accept();
+        StreamIPCSocket server = serverSocket.accept();
         ASSERT_TRUE(socket.connected());
         ASSERT_TRUE(server.connected());
 
         server.close();
     }
 
-    TEST_F(IPCSocketTest, IPCUnlinkTest)
+    TEST_F(StreamIPCSocketTest, IPCUnlinkTest)
     {
         serverSocket.close();
-        ASSERT_THROW(IPCSocket client(SOCKET_PATH), SocketException);
+        ASSERT_THROW(StreamIPCSocket client(SOCKET_PATH), SocketException);
     }
 
-    TEST_F(IPCSocketTest, TCPReceiveAmount)
+    TEST_F(StreamIPCSocketTest, TCPReceiveAmount)
     {
-        IPCSocket server = serverSocket.accept();
+        StreamIPCSocket server = serverSocket.accept();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
         ASSERT_EQ(socket.send(testString), testString.size());
@@ -96,9 +96,9 @@ namespace kt
         server.close();
     }
 
-    TEST_F(IPCSocketTest, TCPReceiveAll)
+    TEST_F(StreamIPCSocketTest, TCPReceiveAll)
     {
-        IPCSocket server = serverSocket.accept();
+        StreamIPCSocket server = serverSocket.accept();
         const std::string testString = "test";
         ASSERT_FALSE(server.ready());
         ASSERT_EQ(socket.send(testString + testString + testString), testString.size() * 3);
@@ -109,9 +109,9 @@ namespace kt
         server.close();
     }
 
-    TEST_F(IPCSocketTest, TCPReceiveToDelimiter)
+    TEST_F(StreamIPCSocketTest, TCPReceiveToDelimiter)
     {
-        IPCSocket server = serverSocket.accept();
+        StreamIPCSocket server = serverSocket.accept();
         const std::string testString = "test";
         char delimiter = '&';
         ASSERT_FALSE(socket.ready());
@@ -124,14 +124,14 @@ namespace kt
         server.close();
     }
 
-    TEST_F(IPCSocketTest, TCPReceiveToDelimiter_InvalidDelimiter)
+    TEST_F(StreamIPCSocketTest, TCPReceiveToDelimiter_InvalidDelimiter)
     {
         ASSERT_THROW(socket.receiveToDelimiter('\0'), SocketException);
     }
 
-    TEST_F(IPCSocketTest, TCPGet)
+    TEST_F(StreamIPCSocketTest, TCPGet)
     {
-        IPCSocket server = serverSocket.accept();
+        StreamIPCSocket server = serverSocket.accept();
         const std::string testString = "test";
         ASSERT_FALSE(socket.ready());
         ASSERT_EQ(server.send(testString), testString.size());
@@ -155,9 +155,9 @@ namespace kt
         server.close();
     }
 
-    TEST_F(IPCSocketTest, TCPClose)
+    TEST_F(StreamIPCSocketTest, TCPClose)
     {
-        IPCSocket server = serverSocket.accept();
+        StreamIPCSocket server = serverSocket.accept();
         ASSERT_TRUE(socket.connected());
         socket.close();
         ASSERT_FALSE(socket.connected());

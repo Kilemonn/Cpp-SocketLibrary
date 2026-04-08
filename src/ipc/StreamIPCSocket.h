@@ -33,7 +33,7 @@ typedef int SOCKET;
 
 namespace kt
 {
-    class IPCSocket : public ConnectionOrientedSocket
+    class StreamIPCSocket : public ConnectionOrientedSocket
     {
         private:
             SOCKET socket;
@@ -41,12 +41,12 @@ namespace kt
 
             void constructSocket();
         public:
-            IPCSocket() = delete;
-            IPCSocket(const std::string&);
-            IPCSocket(const SOCKET&, const std::string&);
+            StreamIPCSocket() = delete;
+            StreamIPCSocket(const std::string&);
+            StreamIPCSocket(const SOCKET&, const std::string&);
 
-            IPCSocket(const IPCSocket&);
-			IPCSocket& operator=(const IPCSocket&);
+            StreamIPCSocket(const StreamIPCSocket&);
+			StreamIPCSocket& operator=(const StreamIPCSocket&);
 
             SOCKET getSocket() const override;
             std::string getSocketPath() const;

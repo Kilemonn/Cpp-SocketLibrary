@@ -1,4 +1,4 @@
-#include "IPCSocket.h"
+#include "StreamIPCSocket.h"
 #include "../socket/Socket.h"
 #include "../socketexceptions/SocketError.h"
 #include "../socketexceptions/SocketException.hpp"
@@ -7,23 +7,23 @@
 
 namespace kt
 {
-    IPCSocket::IPCSocket(const std::string& socketPath) : socketPath(socketPath) 
+    StreamIPCSocket::StreamIPCSocket(const std::string& socketPath) : socketPath(socketPath) 
     {
         constructSocket();
     }
 
-    IPCSocket::IPCSocket(const SOCKET &socket, const std::string &socketPath) : socket(socket), socketPath(socketPath)
+    StreamIPCSocket::StreamIPCSocket(const SOCKET &socket, const std::string &socketPath) : socket(socket), socketPath(socketPath)
     {
 
     }
 
-    IPCSocket::IPCSocket(const IPCSocket &socket)
+    StreamIPCSocket::StreamIPCSocket(const StreamIPCSocket &socket)
     {
         this->socket = socket.socket;
         this->socketPath = socket.socketPath;
     }
 
-    IPCSocket &IPCSocket::operator=(const IPCSocket &socket)
+    StreamIPCSocket &StreamIPCSocket::operator=(const StreamIPCSocket &socket)
     {
         this->socket = socket.socket;
         this->socketPath = socket.socketPath;
@@ -31,28 +31,28 @@ namespace kt
         return *this;
     }
 
-    SOCKET IPCSocket::getSocket() const
+    SOCKET StreamIPCSocket::getSocket() const
     {
         return socket;
     }
 
-    std::string IPCSocket::getSocketPath() const
+    std::string StreamIPCSocket::getSocketPath() const
     {
         return socketPath;
     }
 
-    void IPCSocket::close()
+    void StreamIPCSocket::close()
     {
         Socket::close(socket);
         this->socket = getInvalidSocketValue();
     }
 
-    void IPCSocket::closePath(const std::string &socketPath)
+    void StreamIPCSocket::closePath(const std::string &socketPath)
     {
         unlink(socketPath.c_str());
     }
 
-    void IPCSocket::constructSocket()
+    void StreamIPCSocket::constructSocket()
     {
         sockaddr_un addr{};
         addr.sun_family = AF_UNIX;

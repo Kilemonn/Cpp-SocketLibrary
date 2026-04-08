@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../serversocket/ServerSocket.h"
-#include "IPCSocket.h"
+#include "StreamIPCSocket.h"
 
 #include <string>
 #include <optional>
@@ -9,7 +9,7 @@
 
 namespace kt
 {
-    class IPCServerSocket : public ServerSocket<IPCSocket>
+    class IPCServerSocket : public ServerSocket<StreamIPCSocket>
     {
         private:
             SOCKET socket;
@@ -27,7 +27,7 @@ namespace kt
             SOCKET getSocket() const;
             std::string getSocketPath() const;
 
-            IPCSocket accept(const long& = 0) const override;
+            StreamIPCSocket accept(const long& = 0) const override;
 
             void close() override;
     };
