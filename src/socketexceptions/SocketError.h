@@ -14,7 +14,7 @@
 
 #include <WinSock2.h>
 
-#elif __linux__
+#else
 
 typedef int SOCKET;
 

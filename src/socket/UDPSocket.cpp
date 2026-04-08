@@ -148,7 +148,7 @@ namespace kt
 			preSendSocketOperation.value()(tempSocket);
 		}
 
-		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), sizeof(address));
+		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), kt::getAddressLength(address));
 		Socket::close(tempSocket);
 		return result;
 	}

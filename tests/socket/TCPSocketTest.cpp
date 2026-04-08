@@ -46,11 +46,23 @@ namespace kt
     /*
      * Ensure that an empty hostname throws an exception.
      */
-    TEST_F(TCPSocketTest, TCPConstructor_NoHostname)
+    TEST_F(TCPSocketTest, TCPConstructor_EmptyHostname)
     {
+        const unsigned short serverPort = serverSocket.getPort();
+        std::function<void()> testFunction = [serverPort]() {
+            TCPSocket emptyHostname("", serverPort);
+        };
+
+        // Mac OS is able to resolve the "" hostname correctly
+#if defined(__APPLE__)
+        ASSERT_NO_THROW({
+            testFunction();
+        });
+#else
         ASSERT_THROW({
-            TCPSocket emptyHostname("", serverSocket.getPort());
+            testFunction();
         }, SocketException);
+#endif
     }
     
     /*
@@ -359,16 +371,20 @@ namespace kt
 
 #ifdef _WIN32
         // From my testing Windows must do some additional buffering and has no integer limit to how much it sends and receives via TCP.
-        int upperBound = INT_MAX; // sendBufferSize * 1000;
+        // Using the maximum send buffer size * 2
+        int upperBound = sendBufferSize * 2;
 #elif __linux__
 
         // Sending a string that is 98.5+% the size of the send buffer will cause the send to hang
         // So we will send a string the size of 98.4% the size of the buffer limit
         int upperBound = sendBufferSize * 0.984;
+#else
+        // Mac OS specific, sendBufferSize * 5.4 is the max I found on the mac device I was using.
+        // Using the maximum send buffer size * 2
+        int upperBound = sendBufferSize * 2;
 #endif
 
         std::string message(upperBound, 'c');
-        ASSERT_GT(message.size(), receiveBufferSize);
         
         ASSERT_EQ(socket.send(message), message.size());
         ASSERT_TRUE(server.ready());

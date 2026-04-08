@@ -23,13 +23,12 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-#elif __linux__
+#else
 
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <ifaddrs.h>
-#include <netpacket/packet.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -52,7 +51,8 @@ namespace kt
 		if (timeOutVal == nullptr)
 		{
 			timeOutVal = &timeoutVal;
-			timeOutVal->tv_usec = timeout;
+			timeOutVal->tv_sec = timeout / 1000000;
+			timeOutVal->tv_usec = timeout % 1000000;
 		}
 
 		FD_ZERO(&sReady);
@@ -70,7 +70,7 @@ namespace kt
 #ifdef _WIN32
 		closesocket(socket);
 
-#elif __linux__
+#else
 		::close(socket);
 #endif
 	}

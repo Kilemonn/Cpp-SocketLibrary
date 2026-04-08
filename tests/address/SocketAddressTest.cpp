@@ -218,12 +218,12 @@ namespace kt
 		addrinfo hints = kt::createUdpHints(kt::InternetProtocolVersion::Any);
 		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses("", port, hints);
 
-		// Ideally we shouldn't make the behaviour consistent, but I don't want to override how the OS handles name resolution
+		// Ideally we should make the behaviour consistent, but I don't want to override how the OS handles name resolution
 		// Leaving this test here to "document" the OS behaviour
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
 		ASSERT_EQ(0, results.second);
 		ASSERT_FALSE(results.first.empty());
-#elif __linux__
+#else
 		ASSERT_NE(0, results.second);
 		ASSERT_TRUE(results.first.empty());
 #endif
@@ -231,10 +231,10 @@ namespace kt
 		hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
 		results = kt::resolveToAddresses("", port, hints);
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__APPLE__)
 		ASSERT_EQ(0, results.second);
 		ASSERT_FALSE(results.first.empty());
-#elif __linux__
+#else
 		ASSERT_NE(0, results.second);
 		ASSERT_TRUE(results.first.empty());
 #endif

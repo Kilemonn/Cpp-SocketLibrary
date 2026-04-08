@@ -27,7 +27,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-#elif __linux__
+#else
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -115,7 +115,7 @@ namespace kt
             throw kt::SocketException("Error establishing TCP server socket: " + getErrorCode());
         }
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
         const int enableOption = 1;
         if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
         {
@@ -138,7 +138,7 @@ namespace kt
             preBindSocketOperation.value()(this->socketDescriptor);
         }
 
-        socklen_t socketSize = sizeof(this->serverAddress);
+        socklen_t socketSize = kt::getAddressLength(serverAddress);
         if (bind(this->socketDescriptor, &this->serverAddress.address, socketSize) == -1)
         {
             this->close();
@@ -204,7 +204,7 @@ namespace kt
             int res = Socket::pollSocket(this->socketDescriptor, timeout);
             if (res == -1)
             {
-                throw kt::SocketException("Failed to poll as socket is no longer valid.");
+                throw kt::SocketException("Failed to poll as socket is no longer valid: " + kt::getErrorCode() + "(" + std::to_string(errno) + ")");
             }
             else if (res == 0)
             {

@@ -19,7 +19,7 @@
 #include <ws2tcpip.h>
 #include <afunix.h>
 
-#elif __linux__
+#else
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -48,7 +48,7 @@ namespace kt
             IPCSocket(const IPCSocket&);
 			IPCSocket& operator=(const IPCSocket&);
 
-            SOCKET getSocket() const;
+            SOCKET getSocket() const override;
             std::string getSocketPath() const;
 
             void close() override;

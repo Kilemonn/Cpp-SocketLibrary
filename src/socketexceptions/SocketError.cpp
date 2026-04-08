@@ -8,7 +8,7 @@
 
 #include <WinSock2.h>
 
-#elif __linux__
+#else
 
 typedef int SOCKET;
 
@@ -32,7 +32,7 @@ namespace kt
 #ifdef _WIN32
 		return INVALID_SOCKET;
 
-#elif __linux__
+#else
 		return -1;
 
 #endif
