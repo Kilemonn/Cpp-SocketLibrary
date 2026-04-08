@@ -119,7 +119,7 @@ namespace kt
 #elif __APPLE__
         ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, message.size());
         while(!socket.ready()) {}
-        ASSERT_FALSE(socket.ready());
+        ASSERT_TRUE(socket.ready());
 #else // __linux__
         ASSERT_EQ(client.sendTo(socket.getInternetProtocolVersion(), "", socket.getListeningPort().value(), message, 0).first, 0);
         ASSERT_FALSE(socket.ready());
