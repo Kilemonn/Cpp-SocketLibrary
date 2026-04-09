@@ -4,6 +4,7 @@
 #include "../../src/socket/UDPSocket.h"
 #include "../../src/serversocket/TCPServerSocket.h"
 #include "../../src/ipc/IPCServerSocket.h"
+#include "../../src/ipc/DatagramIPCSocket.h"
 
 namespace kt
 {
@@ -144,8 +145,8 @@ namespace kt
         socket.close();
     }
 
-    // The ipc README example
-    TEST(ScenarioTest, IpcExampleTest)
+    // The stream ipc README example
+    TEST(ScenarioTest, StreamIpcExampleTest)
     {
         const std::string ipcChannel = "/tmp/ipcExample.sock";
         // Create a new StreamIPCSocket
@@ -177,4 +178,32 @@ namespace kt
         server.close();
         serverSocket.close();
     }
+
+#ifndef _WIN32
+    // The datagram ipc README example
+    TEST(ScenarioTest, DatagramIpcExampleTest)
+    {
+        const std::string socketPath = "/tmp/my-socket.sock";
+
+        // The socket receiving data must first be bound
+        kt::DatagramIPCSocket socket;
+        socket.bind(socketPath);
+
+        kt::DatagramIPCSocket client;
+        const std::string testString = "UDP test string";
+        if (client.sendTo(socketPath, testString) == 0)
+        {
+            std::cout << "Failed to send." << std::endl;
+            return;
+        }
+
+        if (socket.ready())
+        {
+            std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
+            ASSERT_EQ(testString, recieved.first.value());
+        }
+
+        socket.close();
+    }
+#endif
 }

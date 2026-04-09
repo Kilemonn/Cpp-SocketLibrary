@@ -90,10 +90,10 @@ void udpExample()
 }
 ```
 
-### IPC Example - Very similar to the TCPSocket example
+### Stream IPC Example - Very similar to the TCPSocket example
 
 ```cpp
-void ipcExample()
+void streamIpcExample()
 {
     const std::string ipcChannel = "/tmp/ipcExample.sock";
     // Create a new IPCSocket
@@ -126,6 +126,41 @@ void ipcExample()
     serverSocket.close();
 }
 ```
+
+---
+
+### Datagram IPC Example - Very similar to the UDPSocket example
+
+**DatagramIPCSocket is not supported on Windows**
+
+```cpp
+void datagramIpcExample()
+{
+    const std::string socketPath = "/tmp/my-socket.sock";
+
+    // The socket receiving data must first be bound
+    kt::DatagramIPCSocket socket;
+    socket.bind(socketPath);
+
+    kt::DatagramIPCSocket client;
+    const std::string testString = "UDP test string";
+    if (client.sendTo(socketPath, testString) == 0)
+    {
+        std::cout << "Failed to send." << std::endl;
+        return;
+    }
+
+    if (socket.ready())
+    {
+        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
+        ASSERT_EQ(testString, recieved.first.value());
+    }
+
+    socket.close();
+}
+```
+
+---
 
 ## SIGPIPE Errors
 

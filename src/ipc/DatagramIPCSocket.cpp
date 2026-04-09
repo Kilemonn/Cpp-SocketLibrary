@@ -4,6 +4,13 @@
 
 namespace kt
 {
+    DatagramIPCSocket::DatagramIPCSocket()
+    {
+#ifdef _WIN32
+        throw SocketException("DatagramIPCSocket is not supported on Windows.");
+#endif
+    }
+
     std::pair<int, std::string> DatagramIPCSocket::bind(const std::optional<std::string> &socketPath, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
     {
         return bind(false, socketPath, preBindSocketOperation);
@@ -40,7 +47,7 @@ namespace kt
         receiveSocket = ::socket(AF_UNIX, SOCK_DGRAM, 0);
         if (isInvalidSocket(this->receiveSocket))
         {
-            throw kt::SocketException("Error creating IPC server socket: " + getErrorCode());
+            throw kt::SocketException("Error creating binding socket: " + getErrorCode());
         }
 
         if (isBound())
@@ -163,7 +170,9 @@ namespace kt
 		// we are on, so I am letting the definition of kt::getAddressLength() drive this type via auto
 		socklen_t addressLength = sizeof(receiveAddress);
         int flag = ::recvfrom(this->receiveSocket, buffer, receiveLength, flags, (sockaddr*)&receiveAddress, &addressLength);
-		return std::make_pair(flag, std::string{receiveAddress.sun_path});
+
+        // Just return "socketPath" since we know that messages can only come from that path since we are bound to it
+		return std::make_pair(flag, socketPath.value());
     }
 
     void DatagramIPCSocket::close()

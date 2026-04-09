@@ -5,7 +5,7 @@
 #include "../../src/socketexceptions/BindingException.hpp"
 #include "../../src/socketexceptions/TimeoutException.hpp"
 
-const std::string SOCKET_PATH = "/tmp/IPCServerSocketTest";
+const std::string SOCKET_PATH = "/tmp/IPCServerSocketTest.sock";
 
 namespace kt
 {

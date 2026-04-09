@@ -41,7 +41,7 @@ namespace kt
             std::optional<std::function<void(SOCKET&)>> preSendSocketOperation = std::nullopt;
 
         public:
-            DatagramIPCSocket() = default;
+            DatagramIPCSocket();
 
             using ConnectionLessSocket::bind;
             std::pair<int, std::string> bind(const std::optional<std::string>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
