@@ -5,7 +5,7 @@
 #include "../../src/socketexceptions/BindingException.hpp"
 #include "../../src/socketexceptions/TimeoutException.hpp"
 
-const std::string SOCKET_PATH = "/tmp/IPCServerSocketTest";
+const std::string SOCKET_PATH = "/tmp/IPCServerSocketTest.sock";
 
 namespace kt
 {
@@ -49,9 +49,9 @@ namespace kt
         ASSERT_EQ(serverSocket.getSocket(), server2.getSocket());
         ASSERT_EQ(serverSocket.getSocketPath(), server2.getSocketPath());
 
-        IPCSocket client(SOCKET_PATH);
+        StreamIPCSocket client(SOCKET_PATH);
 
-        IPCSocket serverClient = server2.accept();
+        StreamIPCSocket serverClient = server2.accept();
         const std::string testString = "test";
 
         ASSERT_EQ(client.send(testString), testString.size());
@@ -80,7 +80,7 @@ namespace kt
     {
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         EXPECT_THROW({
-            IPCSocket serverClient = serverSocket.accept(1 * 1000000);
+            StreamIPCSocket serverClient = serverSocket.accept(1 * 1000000);
         }, TimeoutException);
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

@@ -56,7 +56,7 @@ namespace kt
         // When override is true, attempt to remove any existing socket path file before attempting to bind/create it
         if (override)
         {
-            IPCSocket::closePath(socketPath.c_str());
+            IPCSocket::removeSocketPath(socketPath);
         }
 
         socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
@@ -84,7 +84,7 @@ namespace kt
         }
     }
 
-    IPCSocket IPCServerSocket::accept(const long &timeout) const
+    StreamIPCSocket IPCServerSocket::accept(const long &timeout) const
     {
         if (timeout > 0)
         {
@@ -107,13 +107,13 @@ namespace kt
             throw kt::SocketException("Failed to accept connection. Socket is in an invalid state.");
         }
 
-        return kt::IPCSocket(temp, std::string(acceptedAddress.sun_path));
+        return kt::StreamIPCSocket(temp, std::string(acceptedAddress.sun_path));
     }
 
     void IPCServerSocket::close()
     {
         Socket::close(socket);
-        IPCSocket::closePath(socketPath);
         socket = kt::getInvalidSocketValue();
+        IPCSocket::removeSocketPath(socketPath);
     }
 }

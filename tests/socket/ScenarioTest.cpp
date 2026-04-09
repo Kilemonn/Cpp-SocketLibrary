@@ -4,6 +4,7 @@
 #include "../../src/socket/UDPSocket.h"
 #include "../../src/serversocket/TCPServerSocket.h"
 #include "../../src/ipc/IPCServerSocket.h"
+#include "../../src/ipc/DatagramIPCSocket.h"
 
 namespace kt
 {
@@ -15,11 +16,11 @@ namespace kt
     TEST(ScenarioTest, UDPThenTCPBindSamePort)
     {
         kt::UDPSocket socket;
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind();
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::IPV4);
         ASSERT_EQ(0, bindResult.first);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
-        kt::TCPServerSocket server(std::nullopt, socket.getListeningPort().value());
+        kt::TCPServerSocket server(std::nullopt, socket.getListeningPort().value(), 20, kt::InternetProtocolVersion::IPV4);
 
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
 
@@ -37,7 +38,7 @@ namespace kt
         kt::TCPServerSocket server;
 
         kt::UDPSocket socket;
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, server.getPort());
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::Any, std::nullopt, server.getPort());
         ASSERT_EQ(0, bindResult.first);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
@@ -62,11 +63,11 @@ namespace kt
         };
 
         kt::UDPSocket socket;
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(std::nullopt, 0, setReuseAddrOption);
+        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::Any, std::nullopt, 0, setReuseAddrOption);
         ASSERT_EQ(0, bindResult.first);
 
         kt::UDPSocket socket2;
-        bindResult = socket2.bind(std::nullopt, socket.getListeningPort().value(), setReuseAddrOption);
+        bindResult = socket2.bind(kt::InternetProtocolVersion::Any, std::nullopt, socket.getListeningPort().value(), setReuseAddrOption);
         ASSERT_EQ(0, bindResult.first);
 
         ASSERT_EQ(socket.getListeningPort().value(), socket2.getListeningPort().value());
@@ -144,18 +145,18 @@ namespace kt
         socket.close();
     }
 
-    // The ipc README example
-    TEST(ScenarioTest, IpcExampleTest)
+    // The stream ipc README example
+    TEST(ScenarioTest, StreamIpcExampleTest)
     {
         const std::string ipcChannel = "/tmp/ipcExample.sock";
-        // Create a new IPCSocket
+        // Create a new StreamIPCSocket
         kt::IPCServerSocket server(ipcChannel);
 
         // Create new IPC socket
-        kt::IPCSocket client(ipcChannel);
+        kt::StreamIPCSocket client(ipcChannel);
 
         // Accept the incoming connection at the server
-        kt::IPCSocket serverSocket = server.accept();
+        kt::StreamIPCSocket serverSocket = server.accept();
 
         // Send string with text before and after the delimiter
         const std::string testString = "IPC Delimiter Test";
@@ -177,4 +178,32 @@ namespace kt
         server.close();
         serverSocket.close();
     }
+
+#ifndef _WIN32
+    // The datagram ipc README example
+    TEST(ScenarioTest, DatagramIpcExampleTest)
+    {
+        const std::string socketPath = "/tmp/my-socket.sock";
+
+        // The socket receiving data must first be bound
+        kt::DatagramIPCSocket socket;
+        socket.bind(socketPath);
+
+        kt::DatagramIPCSocket client;
+        const std::string testString = "UDP test string";
+        if (client.sendTo(socketPath, testString) == 0)
+        {
+            std::cout << "Failed to send." << std::endl;
+            return;
+        }
+
+        if (socket.ready())
+        {
+            std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
+            ASSERT_EQ(testString, recieved.first.value());
+        }
+
+        socket.close();
+    }
+#endif
 }

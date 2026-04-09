@@ -21,7 +21,8 @@ set(SOURCE
         serversocket/TCPServerSocketTest.cpp
         socket/TCPSocketTest.cpp
         socket/UDPSocketTest.cpp
-        ipc/IPCSocketTest.cpp
+        ipc/StreamIPCSocketTest.cpp
+        ipc/DatagramIPCSocketTest.cpp
         ipc/IPCServerSocketTest.cpp
 
         address/SocketAddressTest.cpp
