@@ -142,27 +142,34 @@ namespace kt
 		return result;
     }
 
-    std::pair<std::optional<std::string>, std::pair<int, std::string>> DatagramIPCSocket::receiveFrom(const int &receiveLength, const int &flags)
+    std::expected<std::pair<std::string, std::string>, int> DatagramIPCSocket::receiveFrom(const int &receiveLength, const int &flags)
     {
         std::string data;
 		data.resize(receiveLength);
 
-		std::pair<int, std::string> result = this->receiveFrom(&data[0], receiveLength, flags);
+		std::pair<std::string, int> result = this->receiveFrom(&data[0], receiveLength, flags);
 
-		// Need to substring to remove any null terminating bytes
-		if (result.first >= 0 && result.first < receiveLength)
+		// Need to substring to remove any null trailing bytes
+		if (result.second >= 0)
 		{
-			data = data.substr(0, result.first);
+            if (result.second < receiveLength)
+            {
+                data = data.substr(0, result.second);
+            }
 		}
+        else
+        {
+            return std::unexpected(kt::getErrorCodeValue());
+        }
 
-		return std::make_pair(data.size() == 0 ? std::nullopt : std::make_optional(data), result);
+		return std::make_pair(data, result.first);
     }
 
-    std::pair<int, std::string> DatagramIPCSocket::receiveFrom(char *buffer, const int &receiveLength, const int &flags) const
+    std::pair<std::string, int> DatagramIPCSocket::receiveFrom(char *buffer, const int &receiveLength, const int &flags) const
     {
 		if (!isBound() || receiveLength == 0)
 		{
-			return std::make_pair(-1, "");
+			return std::make_pair("", -1);
 		}
 
         sockaddr_un receiveAddress{};
@@ -172,7 +179,7 @@ namespace kt
         int flag = ::recvfrom(this->receiveSocket, buffer, receiveLength, flags, (sockaddr*)&receiveAddress, &addressLength);
 
         // Just return "socketPath" since we know that messages can only come from that path since we are bound to it
-		return std::make_pair(flag, socketPath.value());
+		return std::make_pair(socketPath.value(), flag);
     }
 
     void DatagramIPCSocket::close()

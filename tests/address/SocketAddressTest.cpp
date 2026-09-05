@@ -14,7 +14,7 @@ namespace kt
 	TEST(SocketAddressTest, SocketAddressGetInternetProtocolVersion_DefaultStruct)
 	{
 		kt::SocketAddress address{};
-		ASSERT_EQ(kt::InternetProtocolVersion::Any, kt::getInternetProtocolVersion(address));
+		ASSERT_EQ(kt::InternetProtocolVersion::Any, address.getInternetProtocolVersion());
 	}
 
 	/**
@@ -28,13 +28,13 @@ namespace kt
 		kt::InternetProtocolVersion version = kt::InternetProtocolVersion::IPV4;
 
 		addrinfo hints = kt::createTcpHints(version);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
+		std::expected<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
 		
-		ASSERT_FALSE(results.first.empty());
-		kt::SocketAddress firstAddress = results.first.at(0);
-		ASSERT_EQ(version, kt::getInternetProtocolVersion(firstAddress));
+		ASSERT_TRUE(results);
+		kt::SocketAddress firstAddress = results.value().at(0);
+		ASSERT_EQ(version, firstAddress.getInternetProtocolVersion());
 
-		ASSERT_EQ("127.0.0.1", kt::getAddress(firstAddress).value());
+		ASSERT_EQ("127.0.0.1", firstAddress.getAddress().value());
 	}
 
 	/**
@@ -48,13 +48,13 @@ namespace kt
 		kt::InternetProtocolVersion version = kt::InternetProtocolVersion::IPV6;
 
 		addrinfo hints = kt::createUdpHints(version);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
+		std::expected<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
 		
-		ASSERT_FALSE(results.first.empty());
-		kt::SocketAddress firstAddress = results.first.at(0);
-		ASSERT_EQ(version, kt::getInternetProtocolVersion(firstAddress));
+		ASSERT_TRUE(results);
+		kt::SocketAddress firstAddress = results.value().at(0);
+		ASSERT_EQ(version, firstAddress.getInternetProtocolVersion());
 
-		ASSERT_EQ("::1", kt::getAddress(firstAddress).value());
+		ASSERT_EQ("::1", firstAddress.getAddress().value());
 	}
 
 	/**
@@ -69,7 +69,7 @@ namespace kt
 		ASSERT_NE(address.address.sa_family, static_cast<int>(kt::InternetProtocolVersion::IPV4));
 		ASSERT_NE(address.address.sa_family, static_cast<int>(kt::InternetProtocolVersion::IPV6));
 
-		ASSERT_EQ(kt::InternetProtocolVersion::Any, kt::getInternetProtocolVersion(address));
+		ASSERT_EQ(kt::InternetProtocolVersion::Any, address.getInternetProtocolVersion());
 	}
 
 	/**
@@ -78,7 +78,7 @@ namespace kt
 	TEST(SocketAddressTest, SocketAddressGetPortNumber_NoPortNumberSet)
 	{
 		kt::SocketAddress address{};
-		ASSERT_EQ(0, kt::getPortNumber(address));
+		ASSERT_EQ(0, address.getPortNumber());
 	}
 
 	/**
@@ -91,7 +91,7 @@ namespace kt
 		address.address.sa_family = static_cast<int>(kt::InternetProtocolVersion::IPV4);
 
 		address.ipv4.sin_port = htons(port);
-		ASSERT_EQ(port, kt::getPortNumber(address));
+		ASSERT_EQ(port, address.getPortNumber());
 	}
 
 	/**
@@ -106,7 +106,7 @@ namespace kt
 		address.address.sa_family = static_cast<int>(kt::InternetProtocolVersion::IPV6);
 
 		address.ipv4.sin_port = htons(port);
-		ASSERT_EQ(port, kt::getPortNumber(address));
+		ASSERT_EQ(port, address.getPortNumber());
 	}
 
 	/**
@@ -119,7 +119,7 @@ namespace kt
 		address.address.sa_family = static_cast<int>(kt::InternetProtocolVersion::IPV6);
 
 		address.ipv6.sin6_port = htons(port);
-		ASSERT_EQ(port, kt::getPortNumber(address));
+		ASSERT_EQ(port, address.getPortNumber());
 	}
 
 	/**
@@ -134,7 +134,7 @@ namespace kt
 		address.address.sa_family = static_cast<int>(kt::InternetProtocolVersion::IPV4);
 
 		address.ipv6.sin6_port = htons(port);
-		ASSERT_EQ(port, kt::getPortNumber(address));
+		ASSERT_EQ(port, address.getPortNumber());
 	}
 
 	/**
@@ -143,7 +143,7 @@ namespace kt
 	TEST(SocketAddressTest, SocketAddressGetAddressLength_DefaultAddress)
 	{
 		kt::SocketAddress address{};
-		ASSERT_EQ(sizeof(address.ipv6), kt::getAddressLength(address));
+		ASSERT_EQ(sizeof(address.ipv6), address.getAddressLength());
 	}
 
 	/**
@@ -153,7 +153,7 @@ namespace kt
 	{
 		kt::SocketAddress address{};
 		address.address.sa_family = static_cast<int>(kt::InternetProtocolVersion::IPV6);
-		ASSERT_EQ(sizeof(address.ipv6), kt::getAddressLength(address));
+		ASSERT_EQ(sizeof(address.ipv6), address.getAddressLength());
 	}
 
 	/**
@@ -163,7 +163,7 @@ namespace kt
 	{
 		kt::SocketAddress address{};
 		address.address.sa_family = static_cast<int>(kt::InternetProtocolVersion::IPV4);
-		ASSERT_EQ(sizeof(address.ipv4), kt::getAddressLength(address));
+		ASSERT_EQ(sizeof(address.ipv4), address.getAddressLength());
 	}
 
 	/**
@@ -172,7 +172,7 @@ namespace kt
 	TEST(SocketAddressTest, SocketAddressGetAddress_DefaultAddress)
 	{
 		kt::SocketAddress address{};
-		std::optional<std::string> result = kt::getAddress(address);
+		std::optional<std::string> result = address.getAddress();
 		ASSERT_EQ(std::nullopt, result);
 	}
 
@@ -182,9 +182,9 @@ namespace kt
 	TEST(SocketAddressTest, SocketAddressSocketToAddress_InvalidSocket)
 	{
 		SOCKET socket = kt::getInvalidSocketValue();
-		std::pair<std::optional<kt::SocketAddress>, int> result = kt::socketToAddress(socket);
-		ASSERT_EQ(std::nullopt, result.first);
-		ASSERT_EQ(-1, result.second);
+		std::expected<kt::SocketAddress, int> result = kt::socketToAddress(socket);
+		ASSERT_FALSE(result);
+		ASSERT_EQ(-1, result.error());
 	}
 
 	TEST(SocketAddressTest, SocketAddressResolveToAddresses_InvalidAddress)
@@ -193,10 +193,10 @@ namespace kt
 		unsigned short port = 0;
 
 		addrinfo hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(hostname, port, hints);
+		std::expected<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(hostname, port, hints);
 		
-		ASSERT_NE(0, results.second);
-		ASSERT_TRUE(results.first.empty());
+		ASSERT_FALSE(results);
+		ASSERT_NE(0, results.error());
 	}
 
 	TEST(SocketAddressTest, SocketAddressResolveToAddresses_ResolveLocalhost)
@@ -205,10 +205,10 @@ namespace kt
 		unsigned short port = 0;
 
 		addrinfo hints = kt::createUdpHints(kt::InternetProtocolVersion::Any);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
+		std::expected<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, port, hints);
 		
-		ASSERT_EQ(0, results.second);
-		ASSERT_FALSE(results.first.empty());
+		ASSERT_TRUE(results);
+		ASSERT_FALSE(results.value().empty());
 	}
 
 	TEST(SocketAddressTest, SocketAddressResolveToAddresses_ResolveEmptyString)
@@ -216,27 +216,27 @@ namespace kt
 		unsigned short port = 0;
 
 		addrinfo hints = kt::createUdpHints(kt::InternetProtocolVersion::Any);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses("", port, hints);
+		std::expected<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses("", port, hints);
 
 		// Ideally we should make the behaviour consistent, but I don't want to override how the OS handles name resolution
 		// Leaving this test here to "document" the OS behaviour
 #if defined(_WIN32) || defined(__APPLE__)
-		ASSERT_EQ(0, results.second);
-		ASSERT_FALSE(results.first.empty());
+		ASSERT_TRUE(results);
+		ASSERT_FALSE(results.value().empty());
 #else
-		ASSERT_NE(0, results.second);
-		ASSERT_TRUE(results.first.empty());
+		ASSERT_FALSE(results);
+		ASSERT_NE(0, results.error());
 #endif
 
 		hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
 		results = kt::resolveToAddresses("", port, hints);
 
 #if defined(_WIN32) || defined(__APPLE__)
-		ASSERT_EQ(0, results.second);
-		ASSERT_FALSE(results.first.empty());
+		ASSERT_TRUE(results);
+		ASSERT_FALSE(results.value().empty());
 #else
-		ASSERT_NE(0, results.second);
-		ASSERT_TRUE(results.first.empty());
+		ASSERT_FALSE(results);
+		ASSERT_NE(0, results.error());
 #endif
 	}
 
@@ -244,14 +244,21 @@ namespace kt
 	{
 		std::string localhost = "localhost";
 		addrinfo hints = kt::createTcpHints(kt::InternetProtocolVersion::Any);
-		std::pair<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, 0, hints);
+		std::expected<std::vector<kt::SocketAddress>, int> results = kt::resolveToAddresses(localhost, 0, hints);
 		
-		ASSERT_EQ(0, results.second);
-		ASSERT_FALSE(results.first.empty());
+		ASSERT_TRUE(results);
+		ASSERT_FALSE(results.value().empty());
 
-		kt::SocketAddress address = results.first[0];
+		kt::SocketAddress address = results.value()[0];
 		kt::SocketAddress copiedAddress = address;
 		ASSERT_NE(&address, &copiedAddress);
-		ASSERT_EQ(0, std::memcmp(&address, &copiedAddress, sizeof(address)));
+		
+		ASSERT_TRUE(address.getAddress().has_value());
+		ASSERT_TRUE(copiedAddress.getAddress().has_value());
+		
+		ASSERT_EQ(address.getAddress().value(), copiedAddress.getAddress().value());
+		ASSERT_EQ(address.getPortNumber(), copiedAddress.getPortNumber());
+		ASSERT_EQ(address.getAddressLength(), copiedAddress.getAddressLength());
+		ASSERT_EQ(address.getInternetProtocolVersion(), copiedAddress.getInternetProtocolVersion());
 	}
 }

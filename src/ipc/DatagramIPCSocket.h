@@ -1,5 +1,7 @@
 #pragma once
 
+#include <expected>
+
 #include "../socket/ConnectionLessSocket.h"
 #include "IPCSocket.h"
 #include "../socketexceptions/SocketError.h"
@@ -58,8 +60,8 @@ namespace kt
             int sendTo(const std::string&, const std::string&, const int& = 0) override;
             int sendTo(const std::string&, const char*, const int&, const int& = 0) override;
             
-            std::pair<std::optional<std::string>, std::pair<int, std::string>> receiveFrom(const int&, const int& = 0) override;
-            std::pair<int, std::string> receiveFrom(char*, const int&, const int& = 0) const override;
+            std::expected<std::pair<std::string, std::string>, int> receiveFrom(const int&, const int& = 0) override;
+            std::pair<std::string, int> receiveFrom(char*, const int&, const int& = 0) const override;
 
 		    void close() override;
     };

@@ -6,7 +6,7 @@
 #include <string>
 #include <optional>
 #include <vector>
-#include <cstring>
+#include <expected>
 
 #ifdef _WIN32
 
@@ -19,7 +19,6 @@
 #endif
 
 #include <WinSock2.h>
-#include <ws2bth.h>
 #include <ws2tcpip.h>
 
 #else
@@ -41,22 +40,26 @@ namespace kt
     /**
      * A union object that represents all different sockaddr representations for both ipv4 and ipv6.
     */
-    typedef union
+    union SocketAddress
     {
         sockaddr address;
         sockaddr_in ipv4;
         sockaddr_in6 ipv6;
-    } SocketAddress;
+        
+        kt::InternetProtocolVersion getInternetProtocolVersion() const;
+        unsigned short getPortNumber() const;
+        std::optional<std::string> getAddress() const;
+        
+#ifdef _WIN32
+        int getAddressLength() const;
+#else
+        socklen_t getAddressLength() const;
+#endif
+    };
+    
+    std::expected<kt::SocketAddress, int> socketToAddress(const SOCKET&);
 
-    kt::InternetProtocolVersion getInternetProtocolVersion(const kt::SocketAddress&);
-
-    unsigned int getPortNumber(const kt::SocketAddress&);
-
-    std::optional<std::string> getAddress(const kt::SocketAddress&);
-
-    std::pair<std::optional<kt::SocketAddress>, int> socketToAddress(const SOCKET&);
-
-    std::pair<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::string&, const unsigned short&, addrinfo&);
+    std::expected<std::vector<kt::SocketAddress>, int> resolveToAddresses(const std::string&, const unsigned short&, addrinfo&);
 
     addrinfo createUdpHints(const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const int = 0);
 
@@ -65,10 +68,4 @@ namespace kt
     std::optional<std::string> getEmptyAddress(const kt::InternetProtocolVersion);
 
     std::string getLocalAddress(const kt::InternetProtocolVersion);
-
-#ifdef _WIN32
-	int getAddressLength(const kt::SocketAddress&);
-#else
-	socklen_t getAddressLength(const kt::SocketAddress&);
-#endif
 }

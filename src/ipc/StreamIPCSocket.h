@@ -3,7 +3,6 @@
 #include "../socket/ConnectionOrientedSocket.h"
 
 #include <string>
-#include <optional>
 
 #ifdef _WIN32
 

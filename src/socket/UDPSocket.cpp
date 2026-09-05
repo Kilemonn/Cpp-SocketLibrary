@@ -53,13 +53,13 @@ namespace kt
 #endif
 
 		addrinfo hints = kt::createUdpHints(protocolVersion, AI_PASSIVE);
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname.value().c_str() : kt::getLocalAddress(protocolVersion), port, hints);
-		if (resolvedAddresses.second != 0 || resolvedAddresses.first.empty())
+		std::expected<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname.value().c_str() : kt::getLocalAddress(protocolVersion), port, hints);
+		if (!resolvedAddresses)
 		{
 			throw kt::BindingException("Failed to resolve bind address with the provided port: " + std::to_string(port));
 		}
 
-		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
+		kt::SocketAddress firstAddress = resolvedAddresses.value().at(0);
 		return bind(firstAddress, preBindSocketOperation);
 	}
 
@@ -101,7 +101,7 @@ namespace kt
 			preBindSocketOperation.value()(this->receiveSocket);
 		}
 
-		int bindResult = ::bind(this->receiveSocket, &address.address, kt::getAddressLength(address));
+		int bindResult = ::bind(this->receiveSocket, &address.address, address.getAddressLength());
 		this->bound = bindResult != -1;
 		if (!this->bound)
 		{
@@ -153,7 +153,7 @@ namespace kt
 			preSendSocketOperation.value()(tempSocket);
 		}
 
-		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), kt::getAddressLength(address));
+		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), address.getAddressLength());
 		Socket::close(tempSocket);
 		return result;
 	}
@@ -166,12 +166,12 @@ namespace kt
     std::pair<int, kt::SocketAddress> UDPSocket::sendTo(const std::string &hostname, const unsigned short &port, const char *buffer, const int &bufferLength, const int &flags, const kt::InternetProtocolVersion protocolVersion)
     {
 		addrinfo hints = kt::createUdpHints(protocolVersion);
-		std::pair<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname, port, hints);
-		if (resolvedAddresses.first.empty() || resolvedAddresses.second != 0)
+		std::expected<std::vector<kt::SocketAddress>, int> resolvedAddresses = kt::resolveToAddresses(hostname, port, hints);
+		if (!resolvedAddresses)
 		{
 			return std::make_pair(0, kt::SocketAddress{});
 		}
-		kt::SocketAddress firstAddress = resolvedAddresses.first.at(0);
+		kt::SocketAddress firstAddress = resolvedAddresses.value().at(0);
 		int result = this->sendTo(firstAddress, buffer, bufferLength, flags);
 		return std::make_pair(result, firstAddress);
 	}
@@ -182,7 +182,6 @@ namespace kt
 		data.resize(receiveLength);
 
 		std::pair<kt::SocketAddress, int> result = this->receiveFrom(&data[0], receiveLength, flags);
-
 		
 		if (result.second >= 0)
 		{
@@ -210,7 +209,7 @@ namespace kt
 
 		// Using auto here since the "addressLength" argument for "::recvfrom()" has differing types depending what platform
 		// we are on, so I am letting the definition of kt::getAddressLength() drive this type via auto
-		auto addressLength = kt::getAddressLength(receiveAddress);
+		auto addressLength = receiveAddress.getAddressLength();
 
 		// In some scenarios Windows will return a -1 flag value but the buffer is populated properly with the correct length
 		// The code it is returning is 10040 this is indicating that the provided buffer is too small for the incoming
@@ -261,14 +260,14 @@ namespace kt
 
 	void UDPSocket::initialiseListeningPortNumber()
 	{
-		std::pair<std::optional<kt::SocketAddress>, int> address = kt::socketToAddress(this->receiveSocket);
-		if (address.second != 0 && !address.first.has_value())
+		std::expected<kt::SocketAddress, int> address = kt::socketToAddress(this->receiveSocket);
+		if (!address)
 		{
 			this->close();
 			throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
 		}
 
-		this->listeningPort = std::make_optional(kt::getPortNumber(address.first.value()));
+		this->listeningPort = std::make_optional(address.value().getPortNumber());
 	}
 }
 

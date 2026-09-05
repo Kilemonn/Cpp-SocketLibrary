@@ -53,7 +53,7 @@ namespace kt
      */
     TEST(ScenarioTest, TwoUDPSocketsBindingToSamePort)
     {
-        std::function setReuseAddrOption = [](SOCKET& s) {
+        std::function<void(SOCKET&)> setReuseAddrOption = [](SOCKET& s) {
             const int enableOption = 1;
             ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)));
 #ifdef __APPLE__
@@ -66,10 +66,12 @@ namespace kt
         std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::Any, std::nullopt, 0, setReuseAddrOption);
         ASSERT_EQ(0, bindResult.first);
 
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         kt::UDPSocket socket2;
         bindResult = socket2.bind(kt::InternetProtocolVersion::Any, std::nullopt, socket.getListeningPort().value(), setReuseAddrOption);
         ASSERT_EQ(0, bindResult.first);
-
+        ASSERT_TRUE(socket2.getListeningPort().has_value());
+        
         ASSERT_EQ(socket.getListeningPort().value(), socket2.getListeningPort().value());
 
         kt::UDPSocket sendSocket;

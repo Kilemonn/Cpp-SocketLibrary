@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
 #include <utility>
 #include <optional>
 #include <functional>
@@ -11,8 +10,6 @@
 #include "../address/SocketAddress.h"
 #include "../socketexceptions/SocketError.h"
 #include "ConnectionLessSocket.h"
-
-#include "Socket.h"
 
 #ifdef _WIN32
 

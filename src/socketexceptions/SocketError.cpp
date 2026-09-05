@@ -1,6 +1,6 @@
 #include <string>
-#include <cstring>
 #include <cerrno>
+#include <cstring> // Needed for strerror()
 
 #include "SocketError.h"
 

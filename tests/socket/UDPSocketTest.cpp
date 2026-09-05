@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 
 #include "../../src/socket/UDPSocket.h"
-#include "../../src/socketexceptions/BindingException.hpp"
 
 const std::string LOCALHOST = "localhost";
 
@@ -50,6 +49,8 @@ namespace kt
         ASSERT_EQ(socket.isBound(), copiedSocket.isBound());
         ASSERT_NE(std::nullopt, socket.getListeningPort());
         ASSERT_NE(std::nullopt, copiedSocket.getListeningPort());
+        ASSERT_TRUE(socket.getListeningPort().has_value());
+        ASSERT_TRUE(copiedSocket.getListeningPort().has_value());
         ASSERT_EQ(socket.getListeningPort().value(), copiedSocket.getListeningPort().value());
         ASSERT_EQ(socket.getInternetProtocolVersion(), copiedSocket.getInternetProtocolVersion());
 
@@ -95,6 +96,7 @@ namespace kt
 
         ASSERT_FALSE(socket.ready());
         const std::string testString = "test";
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
         while(!socket.ready()) {}
@@ -111,6 +113,8 @@ namespace kt
         UDPSocket client;
         ASSERT_FALSE(socket.ready());
         const std::string message = "test";
+        
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         
         // This test is used to document behaviour and differences between the OS' and how they resolve "" hostnames
 #ifdef _WIN32
@@ -138,6 +142,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
         while(!socket.ready()) {}
@@ -159,6 +164,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
         while(!socket.ready()) {}
@@ -179,6 +185,7 @@ namespace kt
 
         UDPSocket client;
         const std::string testString = "test";
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         ASSERT_EQ(client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString).first, testString.size());
 
         while(!socket.ready()) {}
@@ -199,6 +206,7 @@ namespace kt
 
         UDPSocket client;
         std::string testString = "test";
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         std::pair<int, kt::SocketAddress> sendResult = client.sendTo(LOCALHOST, socket.getListeningPort().value(), testString);
         ASSERT_EQ(sendResult.first, testString.size());
 
@@ -232,7 +240,8 @@ namespace kt
 
         kt::UDPSocket client;
         ASSERT_EQ(0, client.bind(kt::InternetProtocolVersion::IPV4).first);
-
+        ASSERT_TRUE(socket.getListeningPort().has_value());
+        
         std::string message = std::to_string(client.getListeningPort().value());
         ASSERT_EQ(client.sendTo("127.0.0.1", socket.getListeningPort().value(), message).first, message.size());
 
@@ -256,7 +265,8 @@ namespace kt
 
         kt::UDPSocket client;
         ASSERT_EQ(0, client.bind(kt::InternetProtocolVersion::IPV6).first);
-
+        ASSERT_TRUE(socket.getListeningPort().has_value());
+        
         std::string message = std::to_string(client.getListeningPort().value());
         ASSERT_EQ(client.sendTo("::1", socket.getListeningPort().value(), message).first, message.size());
 
@@ -303,7 +313,7 @@ namespace kt
 
         int receiveBufferSize;
         socklen_t size = sizeof(receiveBufferSize);
-        int result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_RCVBUF, (char*)&receiveBufferSize, &size);
+        int result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_RCVBUF, reinterpret_cast<char*>(&receiveBufferSize), &size);
         if (result == -1)
         {
             std::cout << "Unable to get recv buffer size, skipping test." << std::endl;
@@ -313,7 +323,7 @@ namespace kt
 
         int sendBufferSize;
         size = sizeof(sendBufferSize);
-        result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, &size);
+        result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&sendBufferSize), &size);
         if (result == -1)
         {
             std::cout << "Unable to get send buffer size, skipping test." << std::endl;
@@ -344,6 +354,7 @@ namespace kt
 #endif
 
         std::string message(upperBound, 'c');
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         std::pair<int, kt::SocketAddress> sendResult = client.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         
         ASSERT_EQ(-1, sendResult.first);
@@ -369,7 +380,7 @@ namespace kt
 
         int receiveBufferSize;
         socklen_t size = sizeof(receiveBufferSize);
-        int result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_RCVBUF, (char*)&receiveBufferSize, &size);
+        int result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_RCVBUF, reinterpret_cast<char*>(&receiveBufferSize), &size);
         if (result == -1)
         {
             std::cout << "Unable to get recv buffer size, skipping test." << std::endl;
@@ -379,7 +390,7 @@ namespace kt
 
         int sendBufferSize;
         size = sizeof(sendBufferSize);
-        result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, &size);
+        result = getsockopt(socket.getListeningSocket(), SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&sendBufferSize), &size);
         if (result == -1)
         {
             std::cout << "Unable to get send buffer size, skipping test." << std::endl;
@@ -394,7 +405,7 @@ namespace kt
         {
             int doubledSendBufferSize = initialSendBufferSize * 2;
             socklen_t size = sizeof(doubledSendBufferSize);
-            int result = setsockopt(sendSocket, SOL_SOCKET, SO_SNDBUF, (char*)&doubledSendBufferSize, size);
+            int result = setsockopt(sendSocket, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&doubledSendBufferSize), size);
             if (result == -1)
             {
                 std::cout << "Returning early from LargePayloadSend, since we can't set the buffer size" << std::endl;
@@ -402,7 +413,7 @@ namespace kt
             }
 
             int updatedBufferSize = initialSendBufferSize;
-            result = getsockopt(sendSocket, SOL_SOCKET, SO_SNDBUF, (char*)&updatedBufferSize, &size);
+            result = getsockopt(sendSocket, SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&updatedBufferSize), &size);
 
             if (initialSendBufferSize == updatedBufferSize)
             {
@@ -435,6 +446,7 @@ namespace kt
 #endif
         std::string message(upperBound, 'c');
         // Send here so the pre-send operation defined above runs
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         std::pair<int, kt::SocketAddress> sendResult = sender.sendTo("127.0.0.1", socket.getListeningPort().value(), message);
         if (sendBufferSize > initialSendBufferSize)
         {

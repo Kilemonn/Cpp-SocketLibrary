@@ -4,8 +4,6 @@
 #include "../socketexceptions/BindingException.hpp"
 #include "../socketexceptions/TimeoutException.hpp"
 
-#include <cstring>
-
 namespace kt
 {
     IPCServerSocket::IPCServerSocket(const std::string &socketPath, const bool& override, const unsigned int& connectionBacklogSize, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation) : socketPath(socketPath)

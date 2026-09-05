@@ -1,16 +1,11 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
-#include <utility>
-#include <optional>
 
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"
 #include "../socketexceptions/SocketError.h"
 #include "ConnectionOrientedSocket.h"
-
-#include "Socket.h"
 
 #ifdef _WIN32
 
