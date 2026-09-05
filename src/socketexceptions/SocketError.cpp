@@ -27,6 +27,16 @@ namespace kt
 		return toReturn;
 	}
 
+	int getErrorCodeValue()
+	{
+		int toReturn = errno;
+#ifdef _WIN32
+		toReturn = WSAGetLastError();
+#endif
+
+		return toReturn;
+	}
+
 	SOCKET getInvalidSocketValue()
 	{
 #ifdef _WIN32

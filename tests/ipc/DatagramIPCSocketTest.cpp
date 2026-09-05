@@ -137,12 +137,12 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
+        std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString.size(), recieved.second.first);
-        ASSERT_EQ(testString, recieved.first.value());
-        ASSERT_EQ(SOCKET_PATH, recieved.second.second);
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString.size(), recieved.value().first.size());
+        ASSERT_EQ(testString, recieved.value().first);
+        ASSERT_EQ(SOCKET_PATH, recieved.value().second);
     }
 
     /**
@@ -160,10 +160,10 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size() - 1);
+        std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size() - 1);
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.value().first);
     }
 
     /*
@@ -180,10 +180,10 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size() + 1);
+        std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size() + 1);
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString, recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
     }
 
     // Use the returned .bind() address to use as the socket address that is used to send a message

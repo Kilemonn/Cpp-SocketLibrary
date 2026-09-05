@@ -1,6 +1,7 @@
 
 #include <string>
 #include <optional>
+#include <expected>
 
 #include <gtest/gtest.h>
 
@@ -141,10 +142,10 @@ namespace kt
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString, recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
     }
 
     /**
@@ -162,10 +163,10 @@ namespace kt
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() - 1);
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size() - 1);
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.value().first);
     }
 
     /*
@@ -182,10 +183,10 @@ namespace kt
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size() + 1);
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size() + 1);
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString, recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
     }
 
     /**
@@ -203,10 +204,10 @@ namespace kt
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString, recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
 
         testString += testString + testString;
         // Now send using the address resolved and returned from the first call to sendTo()
@@ -216,8 +217,8 @@ namespace kt
         ASSERT_TRUE(socket.ready());
         recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString, recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
     }
 
     /**
@@ -235,9 +236,9 @@ namespace kt
         std::string message = std::to_string(client.getListeningPort().value());
         ASSERT_EQ(client.sendTo("127.0.0.1", socket.getListeningPort().value(), message).first, message.size());
 
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> result = socket.receiveFrom(50);
-        ASSERT_NE(result.second.first, -1);
-        kt::SocketAddress address = result.second.second;
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> result = socket.receiveFrom(50);
+        ASSERT_TRUE(result);
+        kt::SocketAddress address = result.value().second;
 
         message = "UDPManipulateAddress";
         address.ipv4.sin_port = htons(client.getListeningPort().value());
@@ -245,7 +246,8 @@ namespace kt
         ASSERT_EQ(socket.sendTo(address, message), message.size());
 
         result = client.receiveFrom(message.size());
-        ASSERT_EQ(message, result.first.value());
+        ASSERT_TRUE(result);
+        ASSERT_EQ(message, result.value().first);
     }
 
     TEST_F(UDPSocketTest, UDPManipulateAddress_IPV6)
@@ -258,9 +260,9 @@ namespace kt
         std::string message = std::to_string(client.getListeningPort().value());
         ASSERT_EQ(client.sendTo("::1", socket.getListeningPort().value(), message).first, message.size());
 
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> result = socket.receiveFrom(50);
-        ASSERT_NE(result.second.first, -1);
-        kt::SocketAddress address = result.second.second;
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> result = socket.receiveFrom(50);
+        ASSERT_TRUE(result);
+        kt::SocketAddress address = result.value().second;
 
         message = "UDPManipulateAddress";
         // We can set the ipv4 address since its in the same position and data type in both ipv4 address and ipv6 address
@@ -269,7 +271,8 @@ namespace kt
         ASSERT_EQ(socket.sendTo(address, message), message.size());
 
         result = client.receiveFrom(message.size());
-        ASSERT_EQ(message, result.first.value());
+        ASSERT_TRUE(result);
+        ASSERT_EQ(message, result.value().first);
     }
 
     // Use the returned .bind() address to use as the socket address that is used to send a message
@@ -445,9 +448,10 @@ namespace kt
             while(!socket.ready()) {}
             ASSERT_TRUE(socket.ready());
             
-            std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recvResult = socket.receiveFrom(receiveBufferSize * 2);
-            ASSERT_EQ(recvResult.second.first, message.size());
-            ASSERT_EQ(message, recvResult.first.value());
+            std::expected<std::pair<std::string, kt::SocketAddress>, int> recvResult = socket.receiveFrom(receiveBufferSize * 2);
+            ASSERT_TRUE(recvResult);
+            ASSERT_EQ(recvResult.value().first.size(), message.size());
+            ASSERT_EQ(message, recvResult.value().first);
         }
         else
         {

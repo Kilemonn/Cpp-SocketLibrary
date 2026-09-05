@@ -23,6 +23,8 @@ typedef int SOCKET;
 namespace kt
 {
 	std::string getErrorCode();
+	
+	int getErrorCodeValue();
 
 	SOCKET getInvalidSocketValue();
 

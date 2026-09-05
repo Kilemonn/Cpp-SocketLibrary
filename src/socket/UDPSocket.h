@@ -5,6 +5,7 @@
 #include <utility>
 #include <optional>
 #include <functional>
+#include <expected>
 
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"
@@ -75,8 +76,8 @@ namespace kt
 		std::pair<int, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const char*, const int&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		
 		using ConnectionLessSocket::receiveFrom;
-		std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> receiveFrom(const int&, const int& = 0) override;
-		std::pair<int, kt::SocketAddress> receiveFrom(char*, const int&, const int& = 0) const override;
+		std::expected<std::pair<std::string, kt::SocketAddress>, int> receiveFrom(const int&, const int& = 0) override;
+		std::pair<kt::SocketAddress, int> receiveFrom(char*, const int&, const int& = 0) const override;
 
 		void setPreSendSocketOperation(std::function<void(SOCKET&)>);
 

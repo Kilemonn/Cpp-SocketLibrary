@@ -138,8 +138,9 @@ namespace kt
 
         if (socket.ready())
         {
-            std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
-            ASSERT_EQ(testString, recieved.first.value());
+            std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size());
+            ASSERT_TRUE(recieved);
+            ASSERT_EQ(testString, recieved.value().first);
         }
 
         socket.close();
@@ -199,8 +200,9 @@ namespace kt
 
         if (socket.ready())
         {
-            std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
-            ASSERT_EQ(testString, recieved.first.value());
+            std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size());
+            ASSERT_TRUE(recieved);
+            ASSERT_EQ(testString, recieved.value().first);
         }
 
         socket.close();

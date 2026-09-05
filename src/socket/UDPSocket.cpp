@@ -176,28 +176,36 @@ namespace kt
 		return std::make_pair(result, firstAddress);
 	}
 
-	std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> UDPSocket::receiveFrom(const int& receiveLength, const int& flags)
+	std::expected<std::pair<std::string, kt::SocketAddress>, int> UDPSocket::receiveFrom(const int& receiveLength, const int& flags)
 	{
 		std::string data;
 		data.resize(receiveLength);
 
-		std::pair<int, kt::SocketAddress> result = this->receiveFrom(&data[0], receiveLength, flags);
+		std::pair<kt::SocketAddress, int> result = this->receiveFrom(&data[0], receiveLength, flags);
 
-		// Need to substring to remove any null terminating bytes
-		if (result.first >= 0 && result.first < receiveLength)
+		
+		if (result.second >= 0)
 		{
-			data = data.substr(0, result.first);
+			// Need to substring to remove trailing null bytes
+			if (result.second < receiveLength)
+			{
+				data = data.substr(0, result.second);
+			}
+		}
+		else
+		{
+			return std::unexpected(kt::getErrorCodeValue());
 		}
 
-		return std::make_pair(data.size() == 0 ? std::nullopt : std::make_optional(data), result);
+		return std::make_pair(data, result.first);
 	}
 
-	std::pair<int, kt::SocketAddress> UDPSocket::receiveFrom(char* buffer, const int& receiveLength, const int& flags) const
+	std::pair<kt::SocketAddress, int> UDPSocket::receiveFrom(char* buffer, const int& receiveLength, const int& flags) const
 	{
 		kt::SocketAddress receiveAddress{};
 		if (!isBound() || receiveLength == 0)
 		{
-			return std::make_pair(-1, receiveAddress);
+			return std::make_pair(receiveAddress, -1);
 		}
 
 		// Using auto here since the "addressLength" argument for "::recvfrom()" has differing types depending what platform
@@ -208,7 +216,7 @@ namespace kt
 		// The code it is returning is 10040 this is indicating that the provided buffer is too small for the incoming
 		// message, there is probably some settings we can tweak, however I think this is okay to return for now.
 		int flag = ::recvfrom(this->receiveSocket, buffer, receiveLength, flags, &receiveAddress.address, &addressLength);
-		return std::make_pair(flag, receiveAddress);
+		return std::make_pair(receiveAddress, flag);
 	}
 
     SOCKET UDPSocket::getListeningSocket() const
