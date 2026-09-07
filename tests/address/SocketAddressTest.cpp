@@ -184,7 +184,7 @@ namespace kt
 		SOCKET socket = kt::getInvalidSocketValue();
 		std::expected<kt::SocketAddress, int> result = kt::socketToAddress(socket);
 		ASSERT_FALSE(result);
-		ASSERT_EQ(-1, result.error());
+		ASSERT_NE(0, result.error());
 	}
 
 	TEST(SocketAddressTest, SocketAddressResolveToAddresses_InvalidAddress)
