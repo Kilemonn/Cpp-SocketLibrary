@@ -171,8 +171,16 @@ namespace kt
         ASSERT_TRUE(socket.ready());
         std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size() - 1);
         ASSERT_FALSE(socket.ready());
+        
+#ifdef _WIN32
+        ASSERT_FALSE(recieved);
+        // Ensure for windows we get the WSAEMSGSIZE error indicating that the attempted read length is less than the
+        // size of the incoming UDP packet
+        ASSERT_EQ(10040, recieved.error());
+#else
         ASSERT_TRUE(recieved);
         ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.value().first);
+#endif
     }
 
     /*
