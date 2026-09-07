@@ -1,4 +1,5 @@
 #include "SocketAddress.h"
+#include "../socketexceptions/SocketError.h"
 
 #include <optional>
 #include <string>
@@ -73,7 +74,7 @@ namespace kt
 		int result = getsockname(socket, &address.address, &socketSize);
 		if (result == -1)
 		{
-			return std::unexpected(result);
+			return std::unexpected(kt::getErrorCodeValue());
 		}
 		return address;
 	}
@@ -90,7 +91,7 @@ namespace kt
 			{
 				freeaddrinfo(resolvedAddresses);
 			}
-			return std::unexpected(result);
+			return std::unexpected(kt::getErrorCodeValue());
 		}
 
 		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
