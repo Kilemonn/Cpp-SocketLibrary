@@ -60,8 +60,8 @@ namespace kt
 		std::optional<unsigned short> getListeningPort() const;
 
 		using ConnectionLessSocket::bind;
-		std::pair<int, kt::SocketAddress> bind(const kt::InternetProtocolVersion, const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
-		std::pair<int, kt::SocketAddress> bind(const std::optional<kt::SocketAddress>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
+		std::expected<kt::SocketAddress, int> bind(const kt::InternetProtocolVersion, const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
+		std::expected<kt::SocketAddress, int> bind(const std::optional<kt::SocketAddress>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
 		bool isBound() const override;
 		
 		bool ready(const unsigned long = 100) const override;

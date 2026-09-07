@@ -40,11 +40,11 @@ namespace kt
 
 		if (protocolVersion == kt::InternetProtocolVersion::IPV6)
 		{
-			inet_ntop(static_cast<int>(protocolVersion), &ipv6.sin6_addr, &asString[0], addressLength);
+			inet_ntop(static_cast<int>(protocolVersion), &ipv6.sin6_addr, asString.data(), addressLength);
 		}
 		else
 		{
-			inet_ntop(static_cast<int>(protocolVersion), &ipv4.sin_addr, &asString[0], addressLength);
+			inet_ntop(static_cast<int>(protocolVersion), &ipv4.sin_addr, asString.data(), addressLength);
 		}
 
 		// Removing trailing \0 bytes

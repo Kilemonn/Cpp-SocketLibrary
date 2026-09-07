@@ -87,8 +87,8 @@ namespace kt
 			throw kt::SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + ":" + std::to_string(this->port) + "]. Look up response code: [" + std::to_string(addresses.error()) + "]. " + getErrorCode());
 		}
 
-		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
-		// we will return, otherwise we will throw is we are unable to connect to any.
+		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is successful 
+		// we will return, otherwise we will throw as we are unable to connect to any.
 		for (const kt::SocketAddress& address : addresses.value())
 		{
 			this->socketDescriptor = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);

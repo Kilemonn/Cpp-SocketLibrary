@@ -66,7 +66,7 @@ namespace kt
         socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
         if (!isInvalidSocket(this->socket))
         {
-            int connectionResult = connect(socket, (sockaddr*)&addr, sizeof(addr));
+            int connectionResult = connect(socket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
             if (connectionResult == 0)
             {
                 return;

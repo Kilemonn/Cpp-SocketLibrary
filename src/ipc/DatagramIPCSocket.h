@@ -46,8 +46,8 @@ namespace kt
             DatagramIPCSocket();
 
             using ConnectionLessSocket::bind;
-            std::pair<int, std::string> bind(const std::optional<std::string>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
-            std::pair<int, std::string> bind(const bool&, const std::optional<std::string>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
+            std::expected<std::string, int> bind(const std::optional<std::string>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
+            std::expected<std::string, int> bind(const bool&, const std::optional<std::string>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
             bool isBound() const override;
 
             SOCKET getListeningSocket() const;

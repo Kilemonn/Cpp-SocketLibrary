@@ -95,7 +95,9 @@ namespace kt
 #endif
 
         addrinfo hints = kt::createTcpHints(this->protocolVersion, AI_PASSIVE);
-        std::expected<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname.value().c_str() : kt::getLocalAddress(protocolVersion), this->port, hints);
+        std::expected<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname
+            .value()
+            : kt::getLocalAddress(protocolVersion), this->port, hints);
 
         if (!resolveAddresses)
         {
@@ -112,8 +114,8 @@ namespace kt
         }
 
 #if defined(__linux__) || defined(__APPLE__)
-        const int enableOption = 1;
-        if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
+        constexpr int enableOption = 1;
+        if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&enableOption), sizeof(enableOption)) != 0)
         {
             throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
         }
@@ -122,8 +124,8 @@ namespace kt
 #ifdef _WIN32
         if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
         {
-            const int disableOption = 0;
-            if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+            constexpr int disableOption = 0;
+            if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<const char*>(&disableOption), sizeof(disableOption)) != 0)
             {
                 throw kt::SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
             }
@@ -216,7 +218,7 @@ namespace kt
             throw kt::SocketException("Failed to accept connection. Socket is in an invalid state.");
         }
 
-        unsigned int portNum = this->getInternetProtocolVersion() == kt::InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
+        unsigned short portNum = acceptedAddress.getPortNumber();
         std::optional<std::string> hostname = acceptedAddress.getAddress();
 		if (!hostname.has_value())
 		{

@@ -11,12 +11,12 @@ namespace kt
 #endif
     }
 
-    std::pair<int, std::string> DatagramIPCSocket::bind(const std::optional<std::string> &socketPath, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
+    std::expected<std::string, int> DatagramIPCSocket::bind(const std::optional<std::string> &socketPath, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
     {
         return bind(false, socketPath, preBindSocketOperation);
     }
 
-    std::pair<int, std::string> DatagramIPCSocket::bind(const bool &override, const std::optional<std::string> &socketPathOpt, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
+    std::expected<std::string, int> DatagramIPCSocket::bind(const bool &override, const std::optional<std::string> &socketPathOpt, const std::optional<std::function<void(SOCKET &)>> &preBindSocketOperation)
     {
         if (!socketPathOpt.has_value())
 		{
@@ -43,16 +43,17 @@ namespace kt
         {
             IPCSocket::removeSocketPath(path);
         }
+    	
+    	// If we are bound then close the current socket before we create a new one
+    	if (isBound())
+    	{
+    		this->close();
+    	}
 
         receiveSocket = ::socket(AF_UNIX, SOCK_DGRAM, 0);
         if (isInvalidSocket(this->receiveSocket))
         {
-            throw kt::SocketException("Error creating binding socket: " + getErrorCode());
-        }
-
-        if (isBound())
-        {
-            this->close();
+            return std::unexpected(getErrorCodeValue());
         }
 
         if (preBindSocketOperation.has_value())
@@ -60,16 +61,16 @@ namespace kt
             preBindSocketOperation.value()(this->receiveSocket);
         }
 
-        socklen_t socketSize = sizeof(address);
-        int bindResult = ::bind(this->receiveSocket, (sockaddr*)&address, socketSize);
+        const socklen_t socketSize = sizeof(address);
+        int bindResult = ::bind(this->receiveSocket, reinterpret_cast<sockaddr*>(&address), socketSize);
 		this->bound = bindResult != -1;
 		if (!this->bound)
 		{
-			return std::make_pair(bindResult, "");
+			return std::unexpected(getErrorCodeValue());
 		}
 
         this->socketPath = path;
-		return std::make_pair(bindResult, socketPath.value());
+		return socketPath.value();
     }
 
     bool DatagramIPCSocket::isBound() const
@@ -137,7 +138,7 @@ namespace kt
         strncpy(address.sun_path, sendPath.c_str(), std::size(address.sun_path));
 #endif
 
-		int result = ::sendto(tempSocket, buffer, bufferLength, flags, (sockaddr*)&address, sizeof(address));
+		int result = ::sendto(tempSocket, buffer, bufferLength, flags, reinterpret_cast<sockaddr*>(&address), sizeof(address));
 		Socket::close(tempSocket);
 		return result;
     }
@@ -147,7 +148,7 @@ namespace kt
         std::string data;
 		data.resize(receiveLength);
 
-		std::pair<std::string, int> result = this->receiveFrom(&data[0], receiveLength, flags);
+		std::pair<std::string, int> result = this->receiveFrom(data.data(), receiveLength, flags);
 
 		// Need to substring to remove any null trailing bytes
 		if (result.second >= 0)
@@ -176,7 +177,7 @@ namespace kt
         // Using auto here since the "addressLength" argument for "::recvfrom()" has differing types depending what platform
 		// we are on, so I am letting the definition of kt::getAddressLength() drive this type via auto
 		socklen_t addressLength = sizeof(receiveAddress);
-        int flag = ::recvfrom(this->receiveSocket, buffer, receiveLength, flags, (sockaddr*)&receiveAddress, &addressLength);
+        int flag = ::recvfrom(this->receiveSocket, buffer, receiveLength, flags, reinterpret_cast<sockaddr*>(&receiveAddress), &addressLength);
 
         // Just return "socketPath" since we know that messages can only come from that path since we are bound to it
 		return std::make_pair(socketPath.value(), flag);

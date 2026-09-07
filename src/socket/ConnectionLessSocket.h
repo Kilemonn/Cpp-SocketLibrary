@@ -15,7 +15,7 @@ namespace kt
     class ConnectionLessSocket : public Socket
     {
         public:
-            virtual std::pair<int, T> bind(const std::optional<T>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) = 0;
+            virtual std::expected<T, int> bind(const std::optional<T>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) = 0;
             virtual bool isBound() const = 0;
 
             virtual bool ready(const unsigned long = 100) const = 0;
