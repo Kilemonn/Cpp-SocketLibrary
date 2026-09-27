@@ -4,13 +4,13 @@
 
 namespace kt
 {
-	TCPSocket::TCPSocket(const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
+	TCPSocket::TCPSocket(const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->protocolVersion = protocolVersion;
 
-		constructSocket();
+		constructSocket(preConnectSocketOperation);
 	}
 
 	TCPSocket::TCPSocket(const SOCKET& socket, const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const kt::SocketAddress& acceptedAddress)
@@ -22,7 +22,7 @@ namespace kt
 		this->serverAddress = acceptedAddress;
 	}
 
-    TCPSocket::TCPSocket(const kt::SocketAddress address)
+    TCPSocket::TCPSocket(const kt::SocketAddress address, const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation)
     {
 		std::optional<std::string> resolvedHostname = address.getAddress();
 		this->hostname = resolvedHostname.value_or("");
@@ -34,6 +34,11 @@ namespace kt
 		if (isInvalidSocket(this->socketDescriptor))
 		{
 			throw kt::SocketException("Unable to construct socket to provided addresses with hostname [" + this->hostname + ":" + std::to_string(this->port) + "] " + getErrorCode());
+		}
+		
+		if (preConnectSocketOperation.has_value())
+		{
+			preConnectSocketOperation.value()(this->socketDescriptor);
 		}
 
 		int connectionResult = connect(this->socketDescriptor, &address.address, sizeof(address));
@@ -68,7 +73,7 @@ namespace kt
 		return *this;
 	}
 
-	void TCPSocket::constructSocket()
+	void TCPSocket::constructSocket(const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation)
 	{
 #ifdef _WIN32
 		WSADATA wsaData{};
@@ -94,6 +99,11 @@ namespace kt
 			this->socketDescriptor = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);
 			if (!isInvalidSocket(this->socketDescriptor))
 			{
+				if (preConnectSocketOperation.has_value())
+				{
+					preConnectSocketOperation.value()(this->socketDescriptor);
+				}
+				
 				int connectionResult = connect(this->socketDescriptor, &address.address, sizeof(address));
 				if (connectionResult == 0)
 				{

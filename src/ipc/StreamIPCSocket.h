@@ -3,6 +3,7 @@
 #include "../socket/ConnectionOrientedSocket.h"
 
 #include <string>
+#include <functional>
 
 #ifdef _WIN32
 
@@ -38,10 +39,10 @@ namespace kt
             SOCKET socket;
             std::string socketPath;
 
-            void constructSocket();
+            void constructSocket(const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
         public:
             StreamIPCSocket() = delete;
-            StreamIPCSocket(const std::string&);
+            StreamIPCSocket(const std::string&, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
             StreamIPCSocket(const SOCKET&, const std::string&);
 
             StreamIPCSocket(const StreamIPCSocket&);

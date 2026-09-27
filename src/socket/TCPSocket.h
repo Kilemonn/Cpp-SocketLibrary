@@ -1,11 +1,11 @@
 #pragma once
 
-#include <iostream>
-
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"
 #include "../socketexceptions/SocketError.h"
 #include "ConnectionOrientedSocket.h"
+
+#include <functional>
 
 #ifdef _WIN32
 
@@ -42,13 +42,13 @@ namespace kt
 			kt::InternetProtocolVersion protocolVersion = kt::InternetProtocolVersion::Any;
 			kt::SocketAddress serverAddress = {}; // The remote address that we will be connected to
 
-			void constructSocket();
+			void constructSocket(const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 
 		public:
 			TCPSocket() = delete;
-			TCPSocket(const std::string&, const unsigned short&, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
+			TCPSocket(const std::string&, const unsigned short&, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 			TCPSocket(const SOCKET&, const std::string&, const unsigned short&, const kt::InternetProtocolVersion, const kt::SocketAddress&);
-			TCPSocket(const kt::SocketAddress);
+			TCPSocket(const kt::SocketAddress, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
 
 			TCPSocket(const kt::TCPSocket&);
 			kt::TCPSocket& operator=(const kt::TCPSocket&);
