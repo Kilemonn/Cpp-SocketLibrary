@@ -318,6 +318,74 @@ namespace kt
         ASSERT_TRUE(socket.ready());
     }
 
+    // When bound() make sure that we sent from the bound port, instead of from a random port
+    TEST_F(UDPSocketTest, SendFromBoundPort)
+    {
+        std::expected<kt::SocketAddress, int> bindResult = socket.bind(kt::InternetProtocolVersion::IPV4);
+        ASSERT_TRUE(bindResult);
+
+        UDPSocket client;
+        std::expected<kt::SocketAddress, int> clientBind = client.bind(kt::InternetProtocolVersion::IPV4);
+        ASSERT_TRUE(clientBind);
+
+        // Send from the bound client socket
+        const std::string message = "SendFromBoundAddress";
+        ASSERT_TRUE(socket.isBound());
+        ASSERT_EQ(socket.sendTo(clientBind.value(), message), message.size());
+
+        ASSERT_FALSE(socket.ready());
+        while(!client.ready()) {}
+        ASSERT_TRUE(client.ready());
+
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> result = client.receiveFrom(100);
+        ASSERT_TRUE(result);
+
+        std::pair<std::string, kt::SocketAddress> response = result.value();
+        ASSERT_EQ(message, response.first);
+
+        // Make sure that we received a message from the bound address port instead of a random port
+        ASSERT_EQ(response.second.getPortNumber(), bindResult.value().getPortNumber());
+    }
+
+    // When we are not bound make sure that we send from a random port
+    TEST_F(UDPSocketTest, SendFromRandomPort)
+    {
+        UDPSocket client;
+        std::expected<kt::SocketAddress, int> clientBind = client.bind(kt::InternetProtocolVersion::IPV4);
+        ASSERT_TRUE(clientBind);
+
+        // Send from the bound client socket
+        const std::string message = "SendFromBoundAddress";
+        ASSERT_FALSE(socket.isBound());
+        ASSERT_EQ(socket.sendTo(clientBind.value(), message), message.size());
+
+        ASSERT_FALSE(socket.ready());
+        while(!client.ready()) {}
+        ASSERT_TRUE(client.ready());
+
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> result = client.receiveFrom(100);
+        ASSERT_TRUE(result);
+
+        std::pair<std::string, kt::SocketAddress> firstResponse = result.value();
+        ASSERT_EQ(message, firstResponse.first);
+
+        // Send a second message to use another random port
+        ASSERT_EQ(socket.sendTo(clientBind.value(), message), message.size());
+
+        ASSERT_FALSE(socket.ready());
+        while(!client.ready()) {}
+        ASSERT_TRUE(client.ready());
+
+        result = client.receiveFrom(100);
+        ASSERT_TRUE(result);
+
+        std::pair<std::string, kt::SocketAddress> secondResponse = result.value();
+        ASSERT_EQ(message, secondResponse.first);
+
+        // Make sure that the first and second ports are not equal since we use 
+        ASSERT_NE(secondResponse.second.getPortNumber(), firstResponse.second.getPortNumber());
+    }
+
     /**
      * Send a message larger than the send buffer to determine behaviour.
      * 

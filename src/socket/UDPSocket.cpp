@@ -143,19 +143,32 @@ namespace kt
 
 	int UDPSocket::sendTo(const kt::SocketAddress& address, const char* buffer, const int& bufferLength, const int& flags)
 	{
-		SOCKET tempSocket = socket(address.address.sa_family, SOCK_DGRAM, IPPROTO_UDP);
-		if (kt::isInvalidSocket(tempSocket))
+		SOCKET sendSocket = receiveSocket;
+		if (isBound())
 		{
-			return -2;
+
+		}
+		else
+		{
+			sendSocket = socket(address.address.sa_family, SOCK_DGRAM, IPPROTO_UDP);
+			if (kt::isInvalidSocket(sendSocket))
+			{
+				return -2;
+			}
+
+			if (preSendSocketOperation.has_value())
+			{
+				preSendSocketOperation.value()(sendSocket);
+			}
 		}
 
-		if (preSendSocketOperation.has_value())
-		{
-			preSendSocketOperation.value()(tempSocket);
-		}
+		int result = ::sendto(sendSocket, buffer, bufferLength, flags, &(address.address), address.getAddressLength());
 
-		int result = ::sendto(tempSocket, buffer, bufferLength, flags, &(address.address), address.getAddressLength());
-		Socket::close(tempSocket);
+		if (!isBound())
+		{
+			Socket::close(sendSocket);
+		}
+		
 		return result;
 	}
 
