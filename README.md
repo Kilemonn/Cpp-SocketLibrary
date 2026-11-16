@@ -82,8 +82,9 @@ void udpExample()
 
     if (socket.ready())
     {
-        std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
-        ASSERT_EQ(testString, recieved.first.value());
+        std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
     }
 
     socket.close();
@@ -96,14 +97,14 @@ void udpExample()
 void streamIpcExample()
 {
     const std::string ipcChannel = "/tmp/ipcExample.sock";
-    // Create a new IPCSocket
+    // Create a new StreamIPCSocket
     kt::IPCServerSocket server(ipcChannel);
 
     // Create new IPC socket
-    kt::IPCSocket client(ipcChannel);
+    kt::StreamIPCSocket client(ipcChannel);
 
     // Accept the incoming connection at the server
-    kt::IPCSocket serverSocket = server.accept();
+    kt::StreamIPCSocket serverSocket = server.accept();
 
     // Send string with text before and after the delimiter
     const std::string testString = "IPC Delimiter Test";
@@ -152,8 +153,9 @@ void datagramIpcExample()
 
     if (socket.ready())
     {
-        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
-        ASSERT_EQ(testString, recieved.first.value());
+        std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
     }
 
     socket.close();
