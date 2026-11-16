@@ -3,7 +3,7 @@
 #include "../socketexceptions/SocketError.h"
 #include "../socketexceptions/SocketException.hpp"
 
-#include <cstring>
+#include <cstring> // for strncpy()
 
 namespace kt
 {

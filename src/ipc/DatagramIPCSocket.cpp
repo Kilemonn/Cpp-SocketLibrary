@@ -2,6 +2,8 @@
 
 #include "../socketexceptions/BindingException.hpp"
 
+#include <cstring> // for strncpy()
+
 namespace kt
 {
     DatagramIPCSocket::DatagramIPCSocket()
