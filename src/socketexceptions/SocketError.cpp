@@ -1,6 +1,6 @@
 #include <string>
-#include <cstring>
 #include <cerrno>
+#include <cstring> // Needed for strerror()
 
 #include "SocketError.h"
 
@@ -22,6 +22,16 @@ namespace kt
 #ifdef _WIN32
 		toReturn += " " + std::to_string(WSAGetLastError());
 
+#endif
+
+		return toReturn;
+	}
+
+	int getErrorCodeValue()
+	{
+		int toReturn = errno;
+#ifdef _WIN32
+		toReturn = WSAGetLastError();
 #endif
 
 		return toReturn;

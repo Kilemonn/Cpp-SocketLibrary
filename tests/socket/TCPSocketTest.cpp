@@ -1,6 +1,5 @@
 #include <string>
 #include <optional>
-#include <climits>
 #include <chrono>
 #include <thread>
 #include <csignal>
@@ -53,8 +52,8 @@ namespace kt
             TCPSocket emptyHostname("", serverPort);
         };
 
+#ifdef __APPLE__
         // Mac OS is able to resolve the "" hostname correctly
-#if defined(__APPLE__)
         ASSERT_NO_THROW({
             testFunction();
         });
@@ -138,7 +137,14 @@ namespace kt
         ASSERT_EQ(socket.getInternetProtocolVersion(), copiedSocket.getInternetProtocolVersion());
         kt::SocketAddress initialAddress = socket.getSocketAddress();
         kt::SocketAddress copiedAddress = copiedSocket.getSocketAddress();
-        ASSERT_EQ(0, std::memcmp(&initialAddress, &copiedAddress, sizeof(initialAddress)));
+        
+        ASSERT_TRUE(initialAddress.getAddress().has_value());
+        ASSERT_TRUE(copiedAddress.getAddress().has_value());
+		
+        ASSERT_EQ(initialAddress.getAddress().value(), copiedAddress.getAddress().value());
+        ASSERT_EQ(initialAddress.getPortNumber(), copiedAddress.getPortNumber());
+        ASSERT_EQ(initialAddress.getAddressLength(), copiedAddress.getAddressLength());
+        ASSERT_EQ(initialAddress.getInternetProtocolVersion(), copiedAddress.getInternetProtocolVersion());
 
         const std::string testString = "Test";
         ASSERT_EQ(server.send(testString), testString.size());
@@ -351,7 +357,7 @@ namespace kt
 
         int receiveBufferSize = 0;
         socklen_t size = sizeof(receiveBufferSize);
-        int result = getsockopt(socket.getSocket(), SOL_SOCKET, SO_RCVBUF, (char*)&receiveBufferSize, &size);
+        int result = getsockopt(socket.getSocket(), SOL_SOCKET, SO_RCVBUF, reinterpret_cast<char*>(&receiveBufferSize), &size);
         if (result == -1)
         {
             std::cout << "Unable to get recv buffer size, skipping test." << std::endl;
@@ -361,7 +367,7 @@ namespace kt
 
         int sendBufferSize = 0;
         size = sizeof(sendBufferSize);
-        result = getsockopt(socket.getSocket(), SOL_SOCKET, SO_SNDBUF, (char*)&sendBufferSize, &size);
+        result = getsockopt(socket.getSocket(), SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&sendBufferSize), &size);
         if (result == -1)
         {
             std::cout << "Unable to get send buffer size, skipping test." << std::endl;

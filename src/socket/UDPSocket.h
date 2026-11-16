@@ -1,17 +1,15 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
 #include <utility>
 #include <optional>
 #include <functional>
+#include <expected>
 
 #include "../enums/InternetProtocolVersion.h"
 #include "../address/SocketAddress.h"
 #include "../socketexceptions/SocketError.h"
 #include "ConnectionLessSocket.h"
-
-#include "Socket.h"
 
 #ifdef _WIN32
 
@@ -62,8 +60,8 @@ namespace kt
 		std::optional<unsigned short> getListeningPort() const;
 
 		using ConnectionLessSocket::bind;
-		std::pair<int, kt::SocketAddress> bind(const kt::InternetProtocolVersion, const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
-		std::pair<int, kt::SocketAddress> bind(const std::optional<kt::SocketAddress>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
+		std::expected<kt::SocketAddress, int> bind(const kt::InternetProtocolVersion, const std::optional<std::string>& = std::nullopt, const unsigned short& = 0, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt);
+		std::expected<kt::SocketAddress, int> bind(const std::optional<kt::SocketAddress>& = std::nullopt, const std::optional<std::function<void(SOCKET&)>>& = std::nullopt) override;
 		bool isBound() const override;
 		
 		bool ready(const unsigned long = 100) const override;
@@ -75,8 +73,8 @@ namespace kt
 		std::pair<int, kt::SocketAddress> sendTo(const std::string&, const unsigned short&, const char*, const int&, const int& = 0, const kt::InternetProtocolVersion = kt::InternetProtocolVersion::Any);
 		
 		using ConnectionLessSocket::receiveFrom;
-		std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> receiveFrom(const int&, const int& = 0) override;
-		std::pair<int, kt::SocketAddress> receiveFrom(char*, const int&, const int& = 0) const override;
+		std::expected<std::pair<std::string, kt::SocketAddress>, int> receiveFrom(const int&, const int& = 0) override;
+		std::pair<kt::SocketAddress, int> receiveFrom(char*, const int&, const int& = 0) const override;
 
 		void setPreSendSocketOperation(std::function<void(SOCKET&)>);
 

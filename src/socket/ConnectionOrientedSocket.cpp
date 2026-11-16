@@ -51,7 +51,7 @@ namespace kt
 		std::string data;
 		data.resize(amountToReceive);
 
-		int amountReceived = this->receiveAmount(&data[0], amountToReceive, flags);
+		int amountReceived = this->receiveAmount(data.data(), amountToReceive, flags);
 		return data.substr(0, amountReceived);
     }
 

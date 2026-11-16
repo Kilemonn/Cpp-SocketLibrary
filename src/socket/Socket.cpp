@@ -1,14 +1,10 @@
 #include "Socket.h"
 #include "../socketexceptions/SocketException.hpp"
-#include "../socketexceptions/BindingException.hpp"
 #include "../socketexceptions/SocketError.h"
 
 #include <iostream>
 #include <vector>
-#include <utility>
-#include <cstring>
 #include <sstream>
-#include <iomanip>
 #include <optional>
 
 #ifdef _WIN32

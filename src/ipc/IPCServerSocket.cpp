@@ -4,7 +4,7 @@
 #include "../socketexceptions/BindingException.hpp"
 #include "../socketexceptions/TimeoutException.hpp"
 
-#include <cstring>
+#include <cstring> // for strncpy()
 
 namespace kt
 {
@@ -71,7 +71,7 @@ namespace kt
         }
 
         socklen_t socketSize = sizeof(addr);
-        if (bind(this->socket, (sockaddr*)&addr, socketSize) == -1)
+        if (bind(this->socket, reinterpret_cast<sockaddr*>(&addr), socketSize) == -1)
         {
             this->close();
             throw kt::BindingException("Error binding to socket path [" + socketPath + "]. " + getErrorCode());
@@ -101,7 +101,7 @@ namespace kt
 
         sockaddr_un acceptedAddress{};
         socklen_t sockLen = sizeof(acceptedAddress);
-        SOCKET temp = ::accept(this->socket, (sockaddr*)&acceptedAddress, &sockLen);
+        SOCKET temp = ::accept(this->socket, reinterpret_cast<sockaddr*>(&acceptedAddress), &sockLen);
         if (isInvalidSocket(temp))
         {
             throw kt::SocketException("Failed to accept connection. Socket is in an invalid state.");

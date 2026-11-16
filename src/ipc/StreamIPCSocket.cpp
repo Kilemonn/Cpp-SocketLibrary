@@ -3,13 +3,13 @@
 #include "../socketexceptions/SocketError.h"
 #include "../socketexceptions/SocketException.hpp"
 
-#include <cstring>
+#include <cstring> // for strncpy()
 
 namespace kt
 {
-    StreamIPCSocket::StreamIPCSocket(const std::string& socketPath) : socketPath(socketPath) 
+    StreamIPCSocket::StreamIPCSocket(const std::string& socketPath, const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation) : socketPath(socketPath) 
     {
-        constructSocket();
+        constructSocket(preConnectSocketOperation);
     }
 
     StreamIPCSocket::StreamIPCSocket(const SOCKET &socket, const std::string &socketPath) : socket(socket), socketPath(socketPath)
@@ -47,7 +47,7 @@ namespace kt
         this->socket = getInvalidSocketValue();
     }
 
-    void StreamIPCSocket::constructSocket()
+    void StreamIPCSocket::constructSocket(const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation)
     {
         sockaddr_un addr{};
         addr.sun_family = AF_UNIX;
@@ -66,7 +66,12 @@ namespace kt
         socket = ::socket(AF_UNIX, SOCK_STREAM, 0);
         if (!isInvalidSocket(this->socket))
         {
-            int connectionResult = connect(socket, (sockaddr*)&addr, sizeof(addr));
+            if (preConnectSocketOperation.has_value())
+            {
+                preConnectSocketOperation.value()(this->socket);
+            }
+            
+            int connectionResult = connect(socket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
             if (connectionResult == 0)
             {
                 return;

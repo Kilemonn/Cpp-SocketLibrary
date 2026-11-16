@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.8)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+cmake_minimum_required(VERSION 3.20)
 
 set(PROJECT_NAME CppSocketLibraryTests)
-project(${PROJECT_NAME})
+project(${PROJECT_NAME} LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Reference: https://github.com/google/googletest/tree/main/googletest#incorporating-into-an-existing-cmake-project
 include(FetchContent)

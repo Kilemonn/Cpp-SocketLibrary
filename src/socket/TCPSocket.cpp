@@ -2,17 +2,15 @@
 #include "TCPSocket.h"
 #include "../socketexceptions/SocketException.hpp"
 
-#include <cstring>
-
 namespace kt
 {
-	TCPSocket::TCPSocket(const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion)
+	TCPSocket::TCPSocket(const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation)
 	{
 		this->hostname = hostname;
 		this->port = port;
 		this->protocolVersion = protocolVersion;
 
-		constructSocket();
+		constructSocket(preConnectSocketOperation);
 	}
 
 	TCPSocket::TCPSocket(const SOCKET& socket, const std::string& hostname, const unsigned short& port, const kt::InternetProtocolVersion protocolVersion, const kt::SocketAddress& acceptedAddress)
@@ -24,18 +22,23 @@ namespace kt
 		this->serverAddress = acceptedAddress;
 	}
 
-    TCPSocket::TCPSocket(const kt::SocketAddress address)
+    TCPSocket::TCPSocket(const kt::SocketAddress address, const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation)
     {
-		std::optional<std::string> resolvedHostname = kt::getAddress(address);
+		std::optional<std::string> resolvedHostname = address.getAddress();
 		this->hostname = resolvedHostname.value_or("");
-		this->port = kt::getPortNumber(address);
-		this->protocolVersion = kt::getInternetProtocolVersion(address);
+		this->port = address.getPortNumber();
+		this->protocolVersion = address.getInternetProtocolVersion();
 
 		addrinfo hints = kt::createTcpHints();
 		this->socketDescriptor = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);
 		if (isInvalidSocket(this->socketDescriptor))
 		{
 			throw kt::SocketException("Unable to construct socket to provided addresses with hostname [" + this->hostname + ":" + std::to_string(this->port) + "] " + getErrorCode());
+		}
+		
+		if (preConnectSocketOperation.has_value())
+		{
+			preConnectSocketOperation.value()(this->socketDescriptor);
 		}
 
 		int connectionResult = connect(this->socketDescriptor, &address.address, sizeof(address));
@@ -70,7 +73,7 @@ namespace kt
 		return *this;
 	}
 
-	void TCPSocket::constructSocket()
+	void TCPSocket::constructSocket(const std::optional<std::function<void(SOCKET&)>>& preConnectSocketOperation)
 	{
 #ifdef _WIN32
 		WSADATA wsaData{};
@@ -82,20 +85,25 @@ namespace kt
 #endif
 
 		addrinfo hints = kt::createTcpHints(this->protocolVersion);
-		std::pair<std::vector<kt::SocketAddress>, int> addresses = kt::resolveToAddresses(this->hostname, this->port, hints);
-		if (addresses.second != 0)
+		std::expected<std::vector<kt::SocketAddress>, int> addresses = kt::resolveToAddresses(this->hostname, this->port, hints);
+		if (!addresses)
 		{
 			// std::cout << "Look up response code: [" <<gai_strerror(addresses.second) << "]" << std::endl;
-			throw kt::SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + ":" + std::to_string(this->port) + "]. Look up response code: [" + std::to_string(addresses.second) + "]. " + getErrorCode());
+			throw kt::SocketException("Unable to resolve IP of destination address with hostname: [" + this->hostname + ":" + std::to_string(this->port) + "]. Look up response code: [" + std::to_string(addresses.error()) + "]. " + getErrorCode());
 		}
 
-		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is succesful 
-		// we will return, otherwise we will throw is we are unable to connect to any.
-		for (const kt::SocketAddress& address : addresses.first)
+		// We need to iterate over the resolved address and attempt to connect to each of them, if a connection attempt is successful 
+		// we will return, otherwise we will throw as we are unable to connect to any.
+		for (const kt::SocketAddress& address : addresses.value())
 		{
 			this->socketDescriptor = socket(address.address.sa_family, hints.ai_socktype, hints.ai_protocol);
 			if (!isInvalidSocket(this->socketDescriptor))
 			{
+				if (preConnectSocketOperation.has_value())
+				{
+					preConnectSocketOperation.value()(this->socketDescriptor);
+				}
+				
 				int connectionResult = connect(this->socketDescriptor, &address.address, sizeof(address));
 				if (connectionResult == 0)
 				{

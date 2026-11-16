@@ -8,12 +8,10 @@
 #include "../address/SocketAddress.h"
 
 #include <iostream>
-#include <cstdlib>
 #include <random>
-#include <ctime>
 #include <cerrno>
-#include <cstring>
 #include <string>
+#include <expected>
 
 #ifdef _WIN32
 
@@ -21,8 +19,6 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <windows.h>
-#include <guiddef.h>
-#include <ws2bth.h>
 #include <winerror.h>
 
 #pragma comment(lib, "ws2_32.lib")
@@ -99,13 +95,15 @@ namespace kt
 #endif
 
         addrinfo hints = kt::createTcpHints(this->protocolVersion, AI_PASSIVE);
-        std::pair<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname.value().c_str() : kt::getLocalAddress(protocolVersion), this->port, hints);
+        std::expected<std::vector<kt::SocketAddress>, int> resolveAddresses = kt::resolveToAddresses(localHostname.has_value() ? localHostname
+            .value()
+            : kt::getLocalAddress(protocolVersion), this->port, hints);
 
-        if (resolveAddresses.second != 0 || resolveAddresses.first.empty())
+        if (!resolveAddresses)
         {
             throw kt::SocketException("Failed to retrieve address info of local hostname. " + getErrorCode());
         }
-        kt::SocketAddress address = resolveAddresses.first.at(0);
+        kt::SocketAddress address = resolveAddresses.value().at(0);
         this->protocolVersion = static_cast<kt::InternetProtocolVersion>(address.address.sa_family);
         this->serverAddress = address;
 
@@ -116,8 +114,8 @@ namespace kt
         }
 
 #if defined(__linux__) || defined(__APPLE__)
-        const int enableOption = 1;
-        if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)) != 0)
+        constexpr int enableOption = 1;
+        if (setsockopt(this->socketDescriptor, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&enableOption), sizeof(enableOption)) != 0)
         {
             throw SocketException("Failed to set SO_REUSEADDR socket option: " + getErrorCode());
         }
@@ -126,8 +124,8 @@ namespace kt
 #ifdef _WIN32
         if (this->protocolVersion == kt::InternetProtocolVersion::IPV6)
         {
-            const int disableOption = 0;
-            if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&disableOption, sizeof(disableOption)) != 0)
+            constexpr int disableOption = 0;
+            if (setsockopt(this->socketDescriptor, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<const char*>(&disableOption), sizeof(disableOption)) != 0)
             {
                 throw kt::SocketException("Failed to set IPV6_V6ONLY socket option: " + getErrorCode());
             }
@@ -138,7 +136,7 @@ namespace kt
             preBindSocketOperation.value()(this->socketDescriptor);
         }
 
-        socklen_t socketSize = kt::getAddressLength(serverAddress);
+        socklen_t socketSize = serverAddress.getAddressLength();
         if (bind(this->socketDescriptor, &this->serverAddress.address, socketSize) == -1)
         {
             this->close();
@@ -160,14 +158,14 @@ namespace kt
 
     void kt::TCPServerSocket::initialisePortNumber()
     {
-        std::pair<std::optional<kt::SocketAddress>, int> address = kt::socketToAddress(this->socketDescriptor);
-		if (address.second != 0 && !address.first.has_value())
+        std::expected<kt::SocketAddress, int> address = kt::socketToAddress(this->socketDescriptor);
+		if (!address)
 		{
 			this->close();
 			throw kt::BindingException("Unable to retrieve randomly bound port number during socket creation. " + getErrorCode());
 		}
 
-		this->port = kt::getPortNumber(address.first.value());
+		this->port = address.value().getPortNumber();
     }
 
     /**
@@ -220,8 +218,8 @@ namespace kt
             throw kt::SocketException("Failed to accept connection. Socket is in an invalid state.");
         }
 
-        unsigned int portNum = this->getInternetProtocolVersion() == kt::InternetProtocolVersion::IPV6 ? htons(acceptedAddress.ipv6.sin6_port) : htons(acceptedAddress.ipv4.sin_port);
-        std::optional<std::string> hostname = kt::getAddress(acceptedAddress);
+        unsigned short portNum = acceptedAddress.getPortNumber();
+        std::optional<std::string> hostname = acceptedAddress.getAddress();
 		if (!hostname.has_value())
 		{
             throw kt::SocketException("Unable to resolve accepted hostname from accepted socket.");

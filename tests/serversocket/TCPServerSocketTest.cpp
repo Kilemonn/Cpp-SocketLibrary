@@ -38,7 +38,7 @@ namespace kt
     TEST_F(TCPServerSocketTest, TestConstructors)
     {
         EXPECT_THROW({
-            TCPServerSocket server2(std::nullopt, serverSocket.getPort());
+            TCPServerSocket _(std::nullopt, serverSocket.getPort());
         }, BindingException);
     }
 

@@ -16,8 +16,8 @@ namespace kt
     TEST(ScenarioTest, UDPThenTCPBindSamePort)
     {
         kt::UDPSocket socket;
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::IPV4);
-        ASSERT_EQ(0, bindResult.first);
+        std::expected<kt::SocketAddress, int> bindResult = socket.bind(kt::InternetProtocolVersion::IPV4);
+        ASSERT_TRUE(bindResult);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
         kt::TCPServerSocket server(std::nullopt, socket.getListeningPort().value(), 20, kt::InternetProtocolVersion::IPV4);
@@ -38,8 +38,8 @@ namespace kt
         kt::TCPServerSocket server;
 
         kt::UDPSocket socket;
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::Any, std::nullopt, server.getPort());
-        ASSERT_EQ(0, bindResult.first);
+        std::expected<kt::SocketAddress, int> bindResult = socket.bind(kt::InternetProtocolVersion::Any, std::nullopt, server.getPort());
+        ASSERT_TRUE(bindResult);
         ASSERT_NE(std::nullopt, socket.getListeningPort());
 
         ASSERT_EQ(server.getPort(), socket.getListeningPort().value());
@@ -53,23 +53,25 @@ namespace kt
      */
     TEST(ScenarioTest, TwoUDPSocketsBindingToSamePort)
     {
-        std::function setReuseAddrOption = [](SOCKET& s) {
-            const int enableOption = 1;
-            ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&enableOption, sizeof(enableOption)));
+        std::function<void(SOCKET&)> setReuseAddrOption = [](SOCKET& s) {
+            constexpr int enableOption = 1;
+            ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&enableOption), sizeof(enableOption)));
 #ifdef __APPLE__
             // SO_REUSEPORT is not available in Windows and only required for MacOS
-            ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (const char*)&enableOption, sizeof(enableOption)));
+            ASSERT_EQ(0, setsockopt(s, SOL_SOCKET, SO_REUSEPORT, reinterpret_cast<const char*>(&enableOption), sizeof(enableOption)));
 #endif
         };
 
         kt::UDPSocket socket;
-        std::pair<int, kt::SocketAddress> bindResult = socket.bind(kt::InternetProtocolVersion::Any, std::nullopt, 0, setReuseAddrOption);
-        ASSERT_EQ(0, bindResult.first);
+        std::expected<kt::SocketAddress, int> bindResult = socket.bind(kt::InternetProtocolVersion::Any, std::nullopt, 0, setReuseAddrOption);
+        ASSERT_TRUE(bindResult);
 
+        ASSERT_TRUE(socket.getListeningPort().has_value());
         kt::UDPSocket socket2;
         bindResult = socket2.bind(kt::InternetProtocolVersion::Any, std::nullopt, socket.getListeningPort().value(), setReuseAddrOption);
-        ASSERT_EQ(0, bindResult.first);
-
+        ASSERT_TRUE(bindResult);
+        ASSERT_TRUE(socket2.getListeningPort().has_value());
+        
         ASSERT_EQ(socket.getListeningPort().value(), socket2.getListeningPort().value());
 
         kt::UDPSocket sendSocket;
@@ -138,8 +140,9 @@ namespace kt
 
         if (socket.ready())
         {
-            std::pair<std::optional<std::string>, std::pair<int, kt::SocketAddress>> recieved = socket.receiveFrom(testString.size());
-            ASSERT_EQ(testString, recieved.first.value());
+            std::expected<std::pair<std::string, kt::SocketAddress>, int> recieved = socket.receiveFrom(testString.size());
+            ASSERT_TRUE(recieved);
+            ASSERT_EQ(testString, recieved.value().first);
         }
 
         socket.close();
@@ -199,8 +202,9 @@ namespace kt
 
         if (socket.ready())
         {
-            std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
-            ASSERT_EQ(testString, recieved.first.value());
+            std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size());
+            ASSERT_TRUE(recieved);
+            ASSERT_EQ(testString, recieved.value().first);
         }
 
         socket.close();

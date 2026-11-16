@@ -44,7 +44,7 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
 
     TEST_F(DatagramIPCSocketTest, DatagramIPCCopyConstructors)
     {
-        ASSERT_EQ(0, socket.bind(true, SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(true, SOCKET_PATH));
         DatagramIPCSocket copiedSocket(socket);
 
         ASSERT_EQ(socket.getListeningSocket(), copiedSocket.getListeningSocket());
@@ -65,12 +65,12 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
     TEST_F(DatagramIPCSocketTest, DatagramIPCBindAndBound_MultipleCalls)
     {
         ASSERT_FALSE(socket.isBound());
-        ASSERT_EQ(0, socket.bind(SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(SOCKET_PATH));
         ASSERT_TRUE(socket.isBound());
 
         kt::DatagramIPCSocket newServer;
         ASSERT_FALSE(newServer.isBound());
-        ASSERT_EQ(-1, newServer.bind(SOCKET_PATH).first);
+        ASSERT_FALSE(newServer.bind(SOCKET_PATH));
     }
 
     /*
@@ -79,12 +79,12 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
     TEST_F(DatagramIPCSocketTest, DatagramIPCBindAndBound_Override)
     {
         ASSERT_FALSE(socket.isBound());
-        ASSERT_EQ(0, socket.bind(SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(SOCKET_PATH));
         ASSERT_TRUE(socket.isBound());
 
         kt::DatagramIPCSocket newServer;
         ASSERT_FALSE(newServer.isBound());
-        ASSERT_EQ(0, newServer.bind(true, SOCKET_PATH).first);
+        ASSERT_TRUE(newServer.bind(true, SOCKET_PATH));
         ASSERT_TRUE(newServer.isBound());
 
         newServer.close();
@@ -95,7 +95,7 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
      */
     TEST_F(DatagramIPCSocketTest, DatagramIPCSendTo)
     {
-        ASSERT_EQ(0, socket.bind(SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(SOCKET_PATH));
 
         DatagramIPCSocket client;
 
@@ -113,7 +113,7 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
      */
     TEST_F(DatagramIPCSocketTest, TestEmptyHostname)
     {
-        ASSERT_EQ(0, socket.bind(SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(SOCKET_PATH));
         
         DatagramIPCSocket client;
         ASSERT_FALSE(socket.ready());
@@ -128,7 +128,7 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
      */
     TEST_F(DatagramIPCSocketTest, DatagramIPCReceiveFrom)
     {
-        ASSERT_EQ(0, socket.bind(SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(SOCKET_PATH));
         ASSERT_FALSE(socket.ready());
 
         DatagramIPCSocket client;
@@ -137,12 +137,12 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size());
+        std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size());
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString.size(), recieved.second.first);
-        ASSERT_EQ(testString, recieved.first.value());
-        ASSERT_EQ(SOCKET_PATH, recieved.second.second);
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString.size(), recieved.value().first.size());
+        ASSERT_EQ(testString, recieved.value().first);
+        ASSERT_EQ(SOCKET_PATH, recieved.value().second);
     }
 
     /**
@@ -151,7 +151,7 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
      */
     TEST_F(DatagramIPCSocketTest, DatagramIPCReceiveAmount_NotEnoughRead)
     {
-        ASSERT_EQ(0, socket.bind(SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(SOCKET_PATH));
         ASSERT_FALSE(socket.ready());
 
         DatagramIPCSocket client;
@@ -160,10 +160,10 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size() - 1);
+        std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size() - 1);
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString.substr(0, testString.size() - 1), recieved.value().first);
     }
 
     /*
@@ -171,7 +171,7 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
      */
     TEST_F(DatagramIPCSocketTest, DatagramIPCReceiveAmount_TooMuchRead)
     {
-        ASSERT_EQ(0, socket.bind(SOCKET_PATH).first);
+        ASSERT_TRUE(socket.bind(SOCKET_PATH));
         ASSERT_FALSE(socket.ready());
 
         DatagramIPCSocket client;
@@ -180,22 +180,22 @@ TEST(DatagramIPCSocketTest, WindowsConstructorThrows)
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
-        std::pair<std::optional<std::string>, std::pair<int, std::string>> recieved = socket.receiveFrom(testString.size() + 1);
+        std::expected<std::pair<std::string, std::string>, int> recieved = socket.receiveFrom(testString.size() + 1);
         ASSERT_FALSE(socket.ready());
-        ASSERT_NE(std::nullopt, recieved.first);
-        ASSERT_EQ(testString, recieved.first.value());
+        ASSERT_TRUE(recieved);
+        ASSERT_EQ(testString, recieved.value().first);
     }
 
     // Use the returned .bind() address to use as the socket address that is used to send a message
     TEST_F(DatagramIPCSocketTest, SendToBoundAddress)
     {
-        std::pair<int, std::string> bindResult = socket.bind(SOCKET_PATH);
-        ASSERT_EQ(0, bindResult.first);
+        std::expected<std::string, int> bindResult = socket.bind(SOCKET_PATH);
+        ASSERT_TRUE(bindResult);
 
         DatagramIPCSocket client;
         ASSERT_FALSE(socket.ready());
         const std::string message = "SendToBoundAddress";
-        ASSERT_EQ(client.sendTo(bindResult.second, message), message.size());
+        ASSERT_EQ(client.sendTo(bindResult.value(), message), message.size());
 
         while(!socket.ready()) {}
         ASSERT_TRUE(socket.ready());
