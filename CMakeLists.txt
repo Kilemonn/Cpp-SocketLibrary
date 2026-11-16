@@ -6,7 +6,7 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(${PROJECT_NAME} VERSION 0.7.0)
+project(${PROJECT_NAME} VERSION 0.7.1)
 
 set(HEADERS
         src/serversocket/ServerSocket.h
